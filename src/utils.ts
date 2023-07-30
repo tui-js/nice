@@ -25,7 +25,7 @@ export function textWidth(text: string, start = 0): number {
   return width;
 }
 
-function strip(string: string): string {
+export function strip(string: string): string {
   let stripped = "";
   let ansi = false;
   const len = string.length;
