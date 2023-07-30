@@ -32,7 +32,7 @@ jobs:
         run: deno lint
 
       - name: Run checks
-        run: deno check --unstable mod.ts src/utils/mod.ts src/components/mod.ts
+        run: deno check mod.ts
 
       - name: Run tests
         run: deno test -A --unstable
