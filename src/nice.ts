@@ -173,16 +173,16 @@ export class Nice {
 
     const cell = style(" ");
 
-    let borderPieces: Border = this.borderPieces!;
+    const borderPieces: Border = this.borderPieces!;
 
     const marginX = (margin?.left ?? 0) + (margin?.right ?? 0);
-    const marginY = (margin?.top ?? 0) + (margin?.bottom ?? 0);
+    const _marginY = (margin?.top ?? 0) + (margin?.bottom ?? 0);
 
     const paddingX = (padding?.left ?? 0) + (padding?.right ?? 0);
-    const paddingY = (padding?.top ?? 0) + (padding?.bottom ?? 0);
+    const _paddingY = (padding?.top ?? 0) + (padding?.bottom ?? 0);
 
     const borderX = (border?.left ? 1 : 0) + (border?.right ? 1 : 0);
-    const borderY = (border?.top ? 1 : 0) + (border?.bottom ? 1 : 0);
+    const _borderY = (border?.top ? 1 : 0) + (border?.bottom ? 1 : 0);
 
     const marginLine = " ".repeat(width + marginX + paddingX + borderX);
 
