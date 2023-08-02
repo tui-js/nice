@@ -439,14 +439,15 @@ export class Nice {
       throw "You can't overlay foreground that's higher than background";
     }
 
-    const fgWidth = fgBlock.reduce((p, n) => {
-      const nextWidth = textWidth(n);
-      return p > nextWidth ? p : nextWidth;
-    }, 0);
-    const bgWidth = bgBlock.reduce((p, n) => {
-      const nextWidth = textWidth(n);
-      return p > nextWidth ? p : nextWidth;
-    }, 0);
+    let fgWidth = 0;
+    let bgWidth = 0;
+    for (let i = 0, j = fgBlock.length; i < bgBlock.length; ++i) {
+      if (i < j) {
+        fgWidth = Math.max(fgWidth, textWidth(fgBlock[i]));
+      }
+      bgWidth = Math.max(bgWidth, textWidth(bgBlock[i]));
+    }
+
     if (fgWidth > bgWidth) {
       throw "You can't overlay foreground that's wider than background";
     }
@@ -455,13 +456,15 @@ export class Nice {
     const offsetY = Math.round((bgHeight - fgHeight) * verticalPosition);
 
     for (const i in bgBlock) {
+      const index = +i - offsetY;
       const bgLine = bgBlock[i];
 
-      const fgLine = fgBlock[+i - offsetY];
-      if (!fgLine) {
+      if (index < 0 || index >= fgHeight) {
         string += bgLine + "\n";
         continue;
       }
+
+      const fgLine = fgBlock[index];
 
       const left = cropToWidth(bgLine, offsetX);
       const center = fgLine;
