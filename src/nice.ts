@@ -5,6 +5,22 @@ import { cropByWidth, cropToWidth, textWidth } from "./utils.ts";
 // TODO: Fit to console size
 // TODO: Tests, especially with weird characters
 
+export function isValidPosition(position: HorizontalPosition | VerticalPosition | number): boolean {
+  return position >= 0 && position <= 1;
+}
+
+export enum VerticalPosition {
+  Top = 0,
+  Middle = 0.5,
+  Bottom = 1,
+}
+
+export enum HorizontalPosition {
+  Left = 0,
+  Center = 0.5,
+  Right = 1,
+}
+
 export interface Style {
   (text: string): string;
 }
@@ -402,8 +418,16 @@ export class Nice {
   }
 
   // overlay one string on top of another
-  // TODO: Way to determine X and Y position (top/middle/bottom)
-  static overlay(fg: string, bg: string): string {
+  static overlay(
+    horizontalPosition: HorizontalPosition,
+    verticalPosition: VerticalPosition,
+    fg: string,
+    bg: string,
+  ): string {
+    if (!isValidPosition(horizontalPosition) || !isValidPosition(verticalPosition)) {
+      throw "Positions should be in range from 0 to 1.";
+    }
+
     let string = "";
 
     const fgBlock = fg.split("\n");
@@ -427,8 +451,8 @@ export class Nice {
       throw "You can't overlay foreground that's wider than background";
     }
 
-    const offsetY = Math.round((bgHeight - fgHeight) / 2);
-    const offsetX = Math.round((bgWidth - fgWidth) / 2);
+    const offsetX = Math.round((bgWidth - fgWidth) * horizontalPosition);
+    const offsetY = Math.round((bgHeight - fgHeight) * verticalPosition);
 
     for (const i in bgBlock) {
       const bgLine = bgBlock[i];

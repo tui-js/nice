@@ -1,6 +1,7 @@
 // Copyright 2023 Im-Beast. All rights reserved. MIT license.
 import { crayon } from "https://deno.land/x/crayon@3.3.3/mod.ts";
 import { Nice } from "../src/nice.ts";
+import { HorizontalPosition, VerticalPosition } from "../mod.ts";
 
 const a = new Nice({
   style: crayon.bgLightBlue.lightWhite.bold,
@@ -122,8 +123,12 @@ export function render() {
   const SCREEN_FG2 = popup2.render("Hi");
 
   return Nice.overlay(
+    HorizontalPosition.Left,
+    VerticalPosition.Middle,
     SCREEN_FG2,
     Nice.overlay(
+      HorizontalPosition.Center,
+      VerticalPosition.Middle,
       SCREEN_FG,
       SCREEN_BG,
     ),
