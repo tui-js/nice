@@ -1,5 +1,6 @@
 // Copyright 2023 Im-Beast. All rights reserved. MIT license.
 import { Border, Borders, BorderType, stylePieces } from "./border.ts";
+import { stripStyles } from "./deps.ts";
 import { cropByWidth, cropToWidth, textWidth } from "./utils.ts";
 
 // TODO: Fit to console size
@@ -359,6 +360,7 @@ export class Nice {
   }
 
   // TODO: Way to determine Y position (top/middle/bottom)
+  // TODO:  cache horizontal blocks too
   static layoutHorizontally(...strings: string[]): string {
     const blocks = strings.map((x) => x.split("\n"));
     const maxWidths = blocks.map((x) =>
@@ -392,18 +394,38 @@ export class Nice {
     return string;
   }
 
+  static #blockWidthCache = new Map<string | string[], number>();
+  static #blockCache = new Map<string, string[]>();
+  static #blocks: string[][] = [];
+
   // TODO: Way to determine X position (left/center/right)
   static layoutVertically(...strings: string[]): string {
-    const blocks = strings.map((x) => x.split("\n"));
-    const maxWidths = strings.map((string) => {
-      return textWidth(string.slice(0, string.indexOf("\n")));
-    });
-    const maxWidth = Math.max(...maxWidths);
+    const blockCache = this.#blockCache;
+    const blocks = this.#blocks;
+    const blockWidthCache = this.#blockWidthCache;
+
+    let maxWidth = 0;
+
+    for (const string of strings) {
+      const cachedBlock = blockCache.get(string);
+      const block = cachedBlock ?? string.split("\n");
+      if (!cachedBlock) blockCache.set(string, block);
+
+      blocks.push(block);
+
+      const cachedWidth = blockWidthCache.get(block);
+      if (cachedWidth) {
+        maxWidth = Math.max(maxWidth, cachedWidth);
+      } else {
+        const width = textWidth(block[0]);
+        maxWidth = Math.max(maxWidth, width);
+        blockWidthCache.set(block, width);
+      }
+    }
 
     let string = "";
 
-    for (const i in blocks) {
-      const block = blocks[i];
+    for (const block of blocks) {
       for (let line of block) {
         const lineWidth = textWidth(line);
         if (lineWidth < maxWidth) {
@@ -412,6 +434,11 @@ export class Nice {
 
         string += line + "\n";
       }
+    }
+
+    // Clean blocks
+    while (blocks.length) {
+      blocks.pop();
     }
 
     return string;
@@ -428,10 +455,16 @@ export class Nice {
       throw "Positions should be in range from 0 to 1.";
     }
 
-    let string = "";
+    const blockCache = this.#blockCache;
+    const blockWidthCache = this.#blockWidthCache;
 
-    const fgBlock = fg.split("\n");
-    const bgBlock = bg.split("\n");
+    const fgCachedBlock = blockCache.get(fg);
+    const fgBlock = fgCachedBlock ?? fg.split("\n");
+    if (!fgCachedBlock) blockCache.set(fg, fgBlock);
+
+    const bgCachedBlock = blockCache.get(bg);
+    const bgBlock = bgCachedBlock ?? bg.split("\n");
+    if (!bgCachedBlock) blockCache.set(bg, bgBlock);
 
     const fgHeight = fgBlock.length;
     const bgHeight = bgBlock.length;
@@ -439,13 +472,18 @@ export class Nice {
       throw "You can't overlay foreground that's higher than background";
     }
 
-    let fgWidth = 0;
-    let bgWidth = 0;
-    for (let i = 0, j = fgBlock.length; i < bgBlock.length; ++i) {
-      if (i < j) {
-        fgWidth = Math.max(fgWidth, textWidth(fgBlock[i]));
-      }
-      bgWidth = Math.max(bgWidth, textWidth(bgBlock[i]));
+    let fgWidth = blockWidthCache.get(fg) ?? 0;
+    if (!fgWidth) {
+      const line = fgBlock[0];
+      fgWidth = textWidth(line);
+      blockWidthCache.set(fg, fgWidth);
+    }
+
+    let bgWidth = blockWidthCache.get(bg) ?? 0;
+    if (!bgWidth) {
+      const line = bgBlock[0];
+      bgWidth = textWidth(line);
+      blockWidthCache.set(bg, bgWidth);
     }
 
     if (fgWidth > bgWidth) {
@@ -454,6 +492,8 @@ export class Nice {
 
     const offsetX = Math.round((bgWidth - fgWidth) * horizontalPosition);
     const offsetY = Math.round((bgHeight - fgHeight) * verticalPosition);
+
+    let string = "";
 
     for (const i in bgBlock) {
       const index = +i - offsetY;
