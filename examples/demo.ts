@@ -58,6 +58,10 @@ f.text.horizontalAlign = "right";
 const g = f.clone();
 g.text.overflow = "clip";
 
+const h = f.clone();
+h.text.overflow = "ellipsis";
+h.text.ellipsisString = "...";
+
 const popup = a.clone();
 popup.style = crayon.bgLightYellow.red.bold;
 popup.margin = {
@@ -115,6 +119,7 @@ export function render() {
     Nice.layoutVertically(
       f.render(`ISBN: 978-0-1234-5678-7\n\nCSS: הרפתקה חדשה!`),
       g.render(`ISBN: 978-0-1234-5678-7\n\nCSS: הרפתקה חדשה!`),
+      h.render(`ISBN: 978-0-1234-5678-7\n\nCSS: הרפתקה חדשה!`),
     ),
   );
 

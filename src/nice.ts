@@ -1,6 +1,5 @@
 // Copyright 2023 Im-Beast. All rights reserved. MIT license.
 import { Border, Borders, BorderType, stylePieces } from "./border.ts";
-import { stripStyles } from "./deps.ts";
 import { cropByWidth, cropToWidth, textWidth } from "./utils.ts";
 
 // TODO: Fit to console size
@@ -29,11 +28,14 @@ export interface Style {
 type Side = "top" | "bottom" | "left" | "right";
 export type MarginStyle = { [side in Side]: number };
 export type PaddingStyle = { [side in Side]: number };
-export type TextStyle = {
+
+export interface TextStyle {
   horizontalAlign: "left" | "right" | "center" | "justify";
   verticalAlign: "top" | "middle" | "bottom";
-  overflow: "ellipsis" | "clip";
-};
+  overflow: "clip" | "ellipsis";
+  ellipsisString?: string;
+}
+
 export type BorderStyle =
   & { type: BorderType; style: Style }
   & { [side in Side]: boolean };
@@ -106,7 +108,7 @@ export class Nice {
 
   borderPieces?: Border;
 
-  render(input: string) {
+  render(input: string): string {
     const { style, border, margin, padding, text } = this;
     let { width, height } = this;
 
@@ -130,25 +132,24 @@ export class Nice {
         const lineWidth = textWidth(textLine);
 
         if (lineWidth <= width) {
-          if (!autoHeight && textLines.length > (i + 1) && i >= (height - 1)) {
-            if (overflow === "ellipsis") {
-              if (lineWidth === width) {
-                textLines[i] = textLine.slice(0, -1) + "…";
-              } else if (lineWidth > 0) {
-                textLines[i] += "…";
-              } else {
-                const lastLine = textLines[i - 1];
-                const lastLineWidth = textWidth(lastLine);
+          if (!autoHeight && textLines.length > (i + 1) && i >= (height - 1) && overflow === "ellipsis") {
+            const ellipsisString = text.ellipsisString ?? "…";
+            const ellipsisWidth = textWidth(ellipsisString);
 
-                if (lastLineWidth === width) {
-                  textLines[i - 1] = lastLine.slice(0, -1) + "…";
-                } else {
-                  textLines[i - 1] += "…";
-                }
+            if (lineWidth === width) {
+              textLines[i] = cropToWidth(textLine, width - ellipsisWidth) + ellipsisString;
+            } else if (lineWidth > 0) {
+              textLines[i] += ellipsisString;
+            } else {
+              const lastLine = textLines[i - 1];
+              const lastLineWidth = textWidth(lastLine);
+
+              if (lastLineWidth === width) {
+                textLines[i - 1] = cropToWidth(lastLine, width - ellipsisWidth) + ellipsisString;
+              } else {
+                textLines[i - 1] = cropToWidth(lastLine, width - ellipsisWidth) + ellipsisString;
               }
             }
-
-            break;
           }
 
           continue;
