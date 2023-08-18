@@ -4,6 +4,7 @@ import { cropByWidth, cropToWidth, textWidth } from "./utils.ts";
 
 // TODO: Fit to console size
 // TODO: Tests, especially with weird characters
+// TODO: Add option to configure text wrapping
 
 export function isValidPosition(position: HorizontalPosition | VerticalPosition | number): boolean {
   return position >= 0 && position <= 1;
