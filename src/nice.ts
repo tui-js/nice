@@ -292,20 +292,20 @@ export class Nice {
         switch (horizontalAlign) {
           case "center":
             {
-              const lacksLeft = Math.round((width - lineWidth) / 2);
-              const lacksRight = width - lineWidth - lacksLeft;
+              const lacksLeft = Math.max(0, Math.round((width - lineWidth) / 2));
+              const lacksRight = Math.max(0, width - lineWidth - lacksLeft);
               string += leftSide + cell.repeat(lacksLeft) + style(textLine) + cell.repeat(lacksRight) + rightSide;
             }
             break;
           case "left":
             {
-              const lacksRight = width - lineWidth;
+              const lacksRight = Math.max(0, width - lineWidth);
               string += leftSide + style(textLine) + cell.repeat(lacksRight) + rightSide;
             }
             break;
           case "right":
             {
-              const lacksLeft = width - lineWidth;
+              const lacksLeft = Math.max(0, width - lineWidth);
               string += leftSide + cell.repeat(lacksLeft) + style(textLine) + rightSide;
             }
             break;
