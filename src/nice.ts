@@ -117,14 +117,14 @@ export class Nice {
 
     const textLines = input.split("\n");
 
-    let longestLine = textLines.reduce((p, c) => p.length > c.length ? p : c);
+    let longestLine = textLines.reduce((p, c) => textWidth(p) > textWidth(c) ? p : c);
 
-    width ??= longestLine.length;
+    width ??= textWidth(longestLine);
     height ??= textLines.length;
 
     const { overflow } = text;
     // Wrap sticking text
-    if (width < longestLine.length) {
+    if (width < textWidth(longestLine)) {
       const initialTextLines = [...textLines];
 
       for (let i = 0; i < textLines.length; ++i) {
