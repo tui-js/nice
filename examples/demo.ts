@@ -51,9 +51,12 @@ e.text.overflow = "ellipsis";
 
 const f = e.clone();
 f.style = crayon.bgLightGreen;
-f.width = 20;
+f.width = 22;
 f.height = 3;
 f.text.horizontalAlign = "right";
+
+const g = f.clone();
+g.text.overflow = "clip";
 
 const popup = a.clone();
 popup.style = crayon.bgLightYellow.red.bold;
@@ -86,13 +89,6 @@ popup2.padding = {
 
 console.clear();
 
-const objects: Nice[] = [];
-for (let i = 0; i < 100; ++i) {
-  const n = a.clone();
-  n.style = crayon.bgAnsi8(~~(i * 2.55));
-  objects.push(n);
-}
-
 export function render() {
   const SCREEN_BG = Nice.layoutHorizontally(
     Nice.layoutVertically(
@@ -106,7 +102,7 @@ export function render() {
       ),
     ),
     b.render(
-      "（╯°□°）╯︵┻━┻\ndevanagari आआॠऋॲपॉ\nﾊﾊﾊThis text should get wrapped because widthəəə is explicit verylongstringthaəə💩twillwrapnomatterwhat\nwowə",
+      "Nice 🔥\n（╯°□°）╯︵┻━┻\ndevanagari आआॠऋॲपॉ\nﾊﾊﾊThis text should get wrapped because widthəəə is explicit verylongstringthaəə💩twillwrapnomatterwhat\nwowə",
     ),
     Nice.layoutVertically(
       e.render(
@@ -116,7 +112,10 @@ export function render() {
         "very long text that will wrap and totally won't fit",
       ),
     ),
-    f.render(`ISBN: 978-0-1234-5678-7\n\nCSS: הרפתקה חדשה!`),
+    Nice.layoutVertically(
+      f.render(`ISBN: 978-0-1234-5678-7\n\nCSS: הרפתקה חדשה!`),
+      g.render(`ISBN: 978-0-1234-5678-7\n\nCSS: הרפתקה חדשה!`),
+    ),
   );
 
   const SCREEN_FG = popup.render("Hello");
@@ -142,7 +141,29 @@ if (import.meta.main) {
   render();
 
   console.clear();
-  const start = performance.now();
+  let start = performance.now();
   console.log(render());
-  console.log("It took", performance.now() - start, "ms to render this frame");
+  let time = performance.now() - start;
+
+  console.log(
+    "It took",
+    crayon.lightBlue(time.toFixed(2)),
+    "ms",
+    `(${(1000 / time).toFixed(2)}FPS)`,
+    "to render this frame",
+  );
+
+  start = performance.now();
+  for (let i = 0; i < 100; ++i) {
+    render();
+  }
+  time = performance.now() - start;
+
+  console.log(
+    "It took",
+    crayon.lightBlue(time.toFixed(2)),
+    "ms",
+    `(${((1000 * 100) / time).toFixed(2)}FPS/RUN)`,
+    "to run render() 100x",
+  );
 }
