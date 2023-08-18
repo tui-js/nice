@@ -63,7 +63,10 @@ export class Nice {
   constructor(options: NiceOptions) {
     this.style = options.style;
 
-    const { border, text, margin, padding } = options;
+    const { border, text, margin, padding, width, height } = options;
+
+    this.width = width;
+    this.height = height;
 
     if (border) {
       this.borderPieces = stylePieces(Borders[border.type], border.style);
