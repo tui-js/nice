@@ -4,6 +4,7 @@ import { characterWidth, stripStyles, textWidth } from "./deps.ts";
 
 export { characterWidth, stripStyles, textWidth };
 
+// FIXME: Preserve style if it has been cut
 /** Crops {text} to given {width} */
 export function cropToWidth(text: string, width: number): string {
   const stripped = stripStyles(text);
