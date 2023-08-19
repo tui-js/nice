@@ -11,61 +11,83 @@ const testFail = crayon.bgRed("This should not be visible");
 const testMaybePasses = crayon("This should ellipse");
 
 const ELLIPSIS_NEWLINE_TEXT = `${testMaybePasses}\n\n${testFail}`;
-const ELLIPSIS_INLINE_BREAK_WORD_TEXT = `${testMaybePasses} ${testFail}`;
-const ELLIPSIS_INLINE_BREAK_ALL_TEXT = `${testMaybePasses}${testFail}`;
+const ELLIPSIS_INLINE_WRAPPING_TEXT = `${testMaybePasses} ${testFail}`;
 
-const newlineElipsis = new Nice({
-  style: crayon.bgLightBlue.lightWhite.bold,
-  height: 2,
-  text: { overflow: "ellipsis" },
-  border: { type: "thick", style: crayon.white.bold },
-  padding: { bottom: 1, top: 1, right: 2, left: 2 },
-  margin: { top: 0, bottom: 0, left: 0, right: 0 },
-});
+type OverflowType = Nice["text"]["overflow"];
+const possibleOverflows: (OverflowType | "ellipsis-custom")[] = ["clip", "ellipsis", "ellipsis-custom"];
 
-const newlineCustomEllipsis = newlineElipsis.clone();
-newlineCustomEllipsis.text.ellipsisString = "...";
+type WrapType = Nice["text"]["wrap"];
+const possibleWraps: WrapType[] = ["wrap", "nowrap", "balance"];
 
-const newlineClip = newlineElipsis.clone();
-newlineClip.text.overflow = "clip";
+let hue = 0;
+const creators: ((overflow: OverflowType, wrap: WrapType, ellipsisString?: string) => string)[] = [
+  (overflow, wrap, ellipsisString) => {
+    const style = crayon.bgHsl((hue += 30) % 360, 50, 50).bold;
+    const borderStyle = crayon.hsl(((hue % 360) + 270) % 360, 100, 30);
 
-const inlineElipsis = new Nice({
-  style: crayon.bgLightBlue.lightWhite.bold,
-  width: 23,
-  height: 1,
-  text: { overflow: "ellipsis" },
-  border: { type: "thick", style: crayon.white.bold },
-  padding: { bottom: 1, top: 1, right: 2, left: 2 },
-  margin: { top: 0, bottom: 0, left: 0, right: 0 },
-});
+    return Nice.overlay(
+      0.1,
+      0,
+      borderStyle.bold(`${overflow} + ${wrap}`),
+      new Nice({
+        style,
+        border: { type: "rounded", style: borderStyle },
+        padding: { bottom: 1, top: 1, left: 1, right: 1 },
+        margin: { bottom: 0, top: 0, right: 1 },
+        width: 25,
+        height: 2,
+        text: { overflow, wrap, ellipsisString },
+      }).render(ELLIPSIS_NEWLINE_TEXT),
+    );
+  },
+  (overflow, wrap, ellipsisString) => {
+    const style = crayon.bgHsl((hue += 30) % 360, 50, 50).bold;
+    const borderStyle = crayon.hsl(((hue % 360) + 270) % 360, 100, 30);
 
-const inlineCustomEllipsis = inlineElipsis.clone();
-inlineCustomEllipsis.text.ellipsisString = "...";
+    return Nice.overlay(
+      0.1,
+      0,
+      borderStyle.bold(`${overflow} + ${wrap}`),
+      new Nice({
+        style,
+        border: { type: "rounded", style: borderStyle },
+        padding: { bottom: 1, top: 1, left: 1, right: 1 },
+        margin: { bottom: 0, top: 0, right: 1 },
+        width: 20,
+        height: 1,
+        text: { overflow, wrap, ellipsisString },
+      }).render(ELLIPSIS_INLINE_WRAPPING_TEXT),
+    );
+  },
+];
 
-const inlineClip = inlineElipsis.clone();
-inlineClip.text.overflow = "clip";
+const verticals: string[] = [];
+
+for (let overflow of possibleOverflows) {
+  let ellipsisString: string | undefined;
+  if (overflow === "ellipsis-custom") {
+    overflow = "ellipsis";
+    ellipsisString = "...";
+  }
+
+  const objects: string[] = [];
+
+  for (const wrap of possibleWraps) {
+    for (const creator of creators) {
+      objects.push(creator(overflow, wrap, ellipsisString));
+    }
+  }
+
+  verticals.push(Nice.layoutVertically(...objects));
+}
+
+const frame = Nice.layoutHorizontally(...verticals);
 
 console.log(
   Nice.layoutVertically(
     TEST_INFO.render(
       `All of these boxes should contain text "${testMaybePasses}".\nIf some of the text is missing or even a part of "${testFail}" is visible test fails.`,
     ),
-    Nice.layoutHorizontally(
-      Nice.layoutVertically(
-        newlineElipsis.render(ELLIPSIS_NEWLINE_TEXT),
-        newlineCustomEllipsis.render(ELLIPSIS_NEWLINE_TEXT),
-        newlineClip.render(ELLIPSIS_NEWLINE_TEXT),
-      ),
-      Nice.layoutVertically(
-        inlineElipsis.render(ELLIPSIS_INLINE_BREAK_WORD_TEXT),
-        inlineCustomEllipsis.render(ELLIPSIS_INLINE_BREAK_WORD_TEXT),
-        inlineClip.render(ELLIPSIS_INLINE_BREAK_WORD_TEXT),
-      ),
-      Nice.layoutVertically(
-        inlineElipsis.render(ELLIPSIS_INLINE_BREAK_ALL_TEXT),
-        inlineCustomEllipsis.render(ELLIPSIS_INLINE_BREAK_ALL_TEXT),
-        inlineClip.render(ELLIPSIS_INLINE_BREAK_ALL_TEXT),
-      ),
-    ),
+    frame,
   ),
 );
