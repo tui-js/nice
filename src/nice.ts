@@ -85,6 +85,7 @@ export class Nice {
 
     this.text = {
       overflow: "clip",
+      wrap: "wrap",
       verticalAlign: "top",
       horizontalAlign: "left",
       ...text,
@@ -158,7 +159,7 @@ export class Nice {
           continue;
         }
 
-        switch (text.wrap ?? "wrap") {
+        switch (text.wrap) {
           case "wrap":
             if (textLine.includes(" ")) {
               let lastSpace = textLine.indexOf(" ", width);
