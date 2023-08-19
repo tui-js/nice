@@ -453,8 +453,8 @@ export class Nice {
 
   // overlay one string on top of another
   static overlay(
-    horizontalPosition: HorizontalPosition,
-    verticalPosition: VerticalPosition,
+    horizontalPosition: number,
+    verticalPosition: number,
     fg: string,
     bg: string,
   ): string {
