@@ -379,8 +379,7 @@ export class Nice {
     return from.clone();
   }
 
-  // TODO: Way to determine Y position (top/middle/bottom)
-  // TODO:  cache horizontal blocks too
+  // TODO: Way to determine Y position
   static layoutHorizontally(...strings: string[]): string {
     const blocks = strings.map((x) => x.split("\n"));
     const maxWidths = blocks.map((x) =>
@@ -414,33 +413,21 @@ export class Nice {
     return string;
   }
 
-  static #blockWidthCache = new Map<string | string[], number>();
-  static #blockCache = new Map<string, string[]>();
   static #blocks: string[][] = [];
 
   // TODO: Way to determine X position (left/center/right)
   static layoutVertically(...strings: string[]): string {
-    const blockCache = this.#blockCache;
     const blocks = this.#blocks;
-    const blockWidthCache = this.#blockWidthCache;
 
     let maxWidth = 0;
 
     for (const string of strings) {
-      const cachedBlock = blockCache.get(string);
-      const block = cachedBlock ?? string.split("\n");
-      if (!cachedBlock) blockCache.set(string, block);
+      const block = string.split("\n");
 
       blocks.push(block);
 
-      const cachedWidth = blockWidthCache.get(block);
-      if (cachedWidth) {
-        maxWidth = Math.max(maxWidth, cachedWidth);
-      } else {
-        const width = textWidth(block[0]);
-        maxWidth = Math.max(maxWidth, width);
-        blockWidthCache.set(block, width);
-      }
+      const width = textWidth(block[0]);
+      maxWidth = Math.max(maxWidth, width);
     }
 
     let string = "";
@@ -475,16 +462,9 @@ export class Nice {
       throw "Positions should be in range from 0 to 1.";
     }
 
-    const blockCache = this.#blockCache;
-    const blockWidthCache = this.#blockWidthCache;
+    const fgBlock = fg.split("\n");
 
-    const fgCachedBlock = blockCache.get(fg);
-    const fgBlock = fgCachedBlock ?? fg.split("\n");
-    if (!fgCachedBlock) blockCache.set(fg, fgBlock);
-
-    const bgCachedBlock = blockCache.get(bg);
-    const bgBlock = bgCachedBlock ?? bg.split("\n");
-    if (!bgCachedBlock) blockCache.set(bg, bgBlock);
+    const bgBlock = bg.split("\n");
 
     const fgHeight = fgBlock.length;
     const bgHeight = bgBlock.length;
@@ -492,18 +472,16 @@ export class Nice {
       throw "You can't overlay foreground that's higher than background";
     }
 
-    let fgWidth = blockWidthCache.get(fg) ?? 0;
+    let fgWidth = 0;
     if (!fgWidth) {
       const line = fgBlock[0];
       fgWidth = textWidth(line);
-      blockWidthCache.set(fg, fgWidth);
     }
 
-    let bgWidth = blockWidthCache.get(bg) ?? 0;
+    let bgWidth = 0;
     if (!bgWidth) {
       const line = bgBlock[0];
       bgWidth = textWidth(line);
-      blockWidthCache.set(bg, bgWidth);
     }
 
     if (fgWidth > bgWidth) {
