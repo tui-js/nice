@@ -4,7 +4,6 @@ import { cropByWidth, cropToWidth, textWidth } from "./utils.ts";
 
 // TODO: Fit to console size
 // TODO: Tests, especially with weird characters
-// TODO: Add option to configure text wrapping
 
 export function isValidPosition(position: HorizontalPosition | VerticalPosition | number): boolean {
   return position >= 0 && position <= 1;
@@ -35,6 +34,7 @@ export interface TextStyle {
   verticalAlign: "top" | "middle" | "bottom";
   overflow: "clip" | "ellipsis";
   ellipsisString?: string;
+  wrap: "wrap" | "nowrap" | "balance";
 }
 
 export type BorderStyle =
@@ -125,7 +125,7 @@ export class Nice {
 
     const { overflow } = text;
     // Wrap sticking text
-    if (width < textWidth(longestLine)) {
+    if (!autoWidth && width < textWidth(longestLine)) {
       const initialTextLines = [...textLines];
 
       for (let i = 0; i < textLines.length; ++i) {
@@ -158,33 +158,45 @@ export class Nice {
           continue;
         }
 
-        const nextLine = textLines[i + 1];
+        switch (text.wrap ?? "wrap") {
+          case "wrap":
+            if (textLine.includes(" ")) {
+              let lastSpace = textLine.indexOf(" ", width);
+              if (lastSpace === -1) lastSpace = textLine.lastIndexOf(" ");
 
-        if (textLine.includes(" ")) {
-          let lastSpace = textLine.indexOf(" ", width);
-          if (lastSpace === -1) lastSpace = textLine.lastIndexOf(" ");
+              const nextLine = textLines[i + 1];
 
-          const start = textLine.slice(0, lastSpace);
-          const end = textLine.slice(lastSpace + 1);
+              const start = textLine.slice(0, lastSpace);
+              const end = textLine.slice(lastSpace + 1);
 
-          input = input.replace(textLine, start + "\n" + end);
-          if (nextLine && !initialTextLines.includes(nextLine)) {
-            textLines.splice(i, 2, start, end + " " + nextLine);
-          } else {
-            textLines.splice(i, 1, start, end);
-          }
-          --i;
-        } else {
-          const start = textLine.slice(0, width);
-          const end = textLine.slice(width);
-          input = input.replace(textLine, start + "\n" + end);
+              input = input.replace(textLine, start + "\n" + end);
+              if (nextLine && !initialTextLines.includes(nextLine)) {
+                textLines.splice(i, 2, start, end + " " + nextLine);
+              } else {
+                textLines.splice(i, 1, start, end);
+              }
+              --i;
+            } else {
+              const start = textLine.slice(0, width);
+              const end = textLine.slice(width);
+              input = input.replace(textLine, start + "\n" + end);
 
-          if (nextLine && !initialTextLines.includes(nextLine)) {
-            textLines.splice(i, 2, start, end + " " + nextLine);
-          } else {
-            textLines.splice(i, 1, start, end);
-          }
-          --i;
+              const nextLine = textLines[i + 1];
+
+              if (nextLine && !initialTextLines.includes(nextLine)) {
+                textLines.splice(i, 2, start, end + " " + nextLine);
+              } else {
+                textLines.splice(i, 1, start, end);
+              }
+              --i;
+            }
+            break;
+          case "nowrap":
+            textLines[i] = cropToWidth(textLine, width);
+            break;
+          case "balance":
+            // TODO: balance wrapping
+            break;
         }
       }
 
