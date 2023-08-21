@@ -315,23 +315,24 @@ export class Nice {
 
       if (lineWidth >= width) {
         string += leftSide + style(crop(textLine, width)) + rightSide;
-        if (lastLine) string += "\n";
-
+        if (lastLine) {
+          string += "\n";
+        }
         continue;
       }
+
       switch (horizontalAlign) {
+        case "left":
+          {
+            const lacksRight = width - lineWidth;
+            string += leftSide + style(textLine) + cell.repeat(lacksRight) + rightSide;
+          }
+          break;
         case "center":
           {
             const lacksLeft = Math.round((width - lineWidth) / 2);
             const lacksRight = width - lineWidth - lacksLeft;
             string += leftSide + cell.repeat(lacksLeft) + style(textLine) + cell.repeat(lacksRight) + rightSide;
-          }
-          break;
-
-        case "left":
-          {
-            const lacksRight = width - lineWidth;
-            string += leftSide + style(textLine) + cell.repeat(lacksRight) + rightSide;
           }
           break;
         case "right":
@@ -360,7 +361,9 @@ export class Nice {
           break;
       }
 
-      if (lastLine) string += "\n";
+      if (lastLine) {
+        string += "\n";
+      }
     }
 
     if (padding?.bottom) {
@@ -519,7 +522,7 @@ export class Nice {
 
       const left = crop(bgLine, offsetX);
       const center = fgLine;
-      const right = cropStart(bgLine.replace(left, ""), fgWidth);
+      const right = cropStart(bgLine, offsetX + fgWidth);
 
       string += left + "\x1b[0m" + center + "\x1b[0m" + right + "\n";
     }
