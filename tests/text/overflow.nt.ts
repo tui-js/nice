@@ -83,11 +83,17 @@ for (let overflow of possibleOverflows) {
 
 const frame = Nice.layoutHorizontally(...verticals);
 
-console.log(
-  Nice.layoutVertically(
-    TEST_INFO.render(
-      `All of these boxes should contain text "${testMaybePasses}".\nIf some of the text is missing or even a part of "${testFail}" is visible test fails.`,
+export function render() {
+  console.log(
+    Nice.layoutVertically(
+      TEST_INFO.render(
+        `All of these boxes should contain text "${testMaybePasses}".\nIf some of the text is missing or even a part of "${testFail}" is visible test fails.`,
+      ),
+      frame,
     ),
-    frame,
-  ),
-);
+  );
+}
+
+if (import.meta.main) {
+  render();
+}
