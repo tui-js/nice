@@ -4,51 +4,72 @@ import { characterWidth, stripStyles, textWidth } from "./deps.ts";
 
 export { characterWidth, stripStyles, textWidth };
 
-// FIXME: Preserve style if it has been cut
-/** Crops {text} to given {width} */
-export function cropToWidth(text: string, width: number): string {
-  const stripped = stripStyles(text);
-  const letter = stripped[width];
+/**
+ * Crops the {text} to given {width}
+ *
+ * Keep in mind that this function might return string shorter than {width} in two scenarios:
+ *  - Input text was shorter than specified width
+ *  - Input text had full-width characters which couldn't fit into {width}
+ */
+export function crop(text: string, width: number): string {
+  let cropped = "";
+  let croppedWidth = 0;
+  let ansi = false;
 
-  if (textWidth(text) <= width) return text;
+  for (let i = 0; i < text.length; ++i) {
+    const char = text[i];
 
-  text = text.slice(0, text.lastIndexOf(letter));
-  if (textWidth(text) <= width) return text;
+    if (char === "\x1b") {
+      ansi = true;
+    } else if (ansi && char === "m") {
+      ansi = false;
+    } else if (!ansi) {
+      const charWidth = characterWidth(char);
+      if (croppedWidth + charWidth > width) break;
+      else {
+        croppedWidth += charWidth;
+      }
+    }
 
-  const start = text.indexOf(letter);
-  const knownPart = text.slice(0, start);
-  const knownWidth = textWidth(knownPart);
-  if (knownWidth === width) return knownPart;
-
-  do {
-    const index = text.lastIndexOf(letter);
-    text = text.slice(0, index);
-  } while ((knownWidth + textWidth(text, start)) > width);
-  return text;
-}
-
-export function cropByWidth(text: string, width: number): string {
-  const originWidth = textWidth(text);
-
-  if (originWidth < width) {
-    return text;
+    cropped += char;
   }
 
-  let widthDiff = 0;
-  text = text.slice(width);
-  widthDiff = originWidth - textWidth(text);
+  return cropped;
+}
 
-  if (widthDiff >= width) return text;
+/**
+ * Crops the start of {text} by given {width}
+ */
+export function cropStart(text: string, width: number): string {
+  let ansi = false;
 
-  do {
-    const char = text[0];
+  let croppedWidth = 0;
+  let cropFrom = 0;
+
+  for (let i = 0; i < text.length; ++i) {
+    const char = text[i];
+
     if (char === "\x1b") {
-      const index = text.indexOf("m") + 1;
-      text = text.slice(index);
-    } else {
-      text = text.slice(1);
-      widthDiff += characterWidth(char!);
+      ansi = true;
+    } else if (ansi && char === "m") {
+      ansi = false;
+    } else if (!ansi) {
+      const charWidth = characterWidth(char);
+      if (croppedWidth + charWidth > width) {
+        cropFrom = i;
+        break;
+      } else {
+        croppedWidth += charWidth;
+      }
     }
-  } while (widthDiff < width);
-  return text;
+  }
+
+  return text.slice(cropFrom);
+}
+
+/**
+ * Crops the end of {text} by given {width}
+ */
+export function cropEnd(text: string, width: number): string {
+  return crop(text, textWidth(text) - width);
 }

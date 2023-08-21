@@ -1,9 +1,10 @@
 // Copyright 2023 Im-Beast. All rights reserved. MIT license.
 import { Border, Borders, BorderType, stylePieces } from "./border.ts";
-import { cropByWidth, cropToWidth, textWidth } from "./utils.ts";
+import { crop, cropStart, textWidth } from "./utils.ts";
 
 // TODO: Fit to console size
 // TODO: Tests, especially with weird characters
+// FIXME: Preserve styles when rendered over
 
 export function isValidPosition(position: HorizontalPosition | VerticalPosition | number): boolean {
   return position >= 0 && position <= 1;
@@ -141,17 +142,17 @@ export class Nice {
             const expectedWidth = width - ellipsisWidth;
 
             if (lineWidth === width) {
-              textLines[i] = cropToWidth(textLine, expectedWidth) + ellipsisString;
+              textLines[i] = crop(textLine, expectedWidth) + ellipsisString;
             } else if (lineWidth > 0) {
-              textLines[i] = cropToWidth(textLine, expectedWidth) + ellipsisString;
+              textLines[i] = crop(textLine, expectedWidth) + ellipsisString;
             } else {
               const lastLine = textLines[i - 1];
               const lastLineWidth = textWidth(lastLine);
 
               if (lastLineWidth === width) {
-                textLines[i - 1] = cropToWidth(lastLine, expectedWidth) + ellipsisString;
+                textLines[i - 1] = crop(lastLine, expectedWidth) + ellipsisString;
               } else {
-                textLines[i - 1] = cropToWidth(lastLine, expectedWidth) + ellipsisString;
+                textLines[i - 1] = crop(lastLine, expectedWidth) + ellipsisString;
               }
             }
           }
@@ -193,7 +194,7 @@ export class Nice {
             }
             break;
           case "nowrap":
-            textLines[i] = cropToWidth(textLine, width);
+            textLines[i] = crop(textLine, width);
             break;
           case "balance":
             // TODO: balance wrapping
@@ -301,53 +302,65 @@ export class Nice {
     // Render text
     let i = 0;
     for (let h = 0; h < height; ++h) {
-      if (h >= textStartY && h < textStartY + textLines.length) {
-        const textLine = textLines[i++];
-        const lineWidth = textWidth(textLine);
+      const lastLine = h !== height - 1;
 
-        switch (horizontalAlign) {
-          case "center":
-            {
-              const lacksLeft = Math.max(0, Math.round((width - lineWidth) / 2));
-              const lacksRight = Math.max(0, width - lineWidth - lacksLeft);
-              string += leftSide + cell.repeat(lacksLeft) + style(textLine) + cell.repeat(lacksRight) + rightSide;
-            }
-            break;
-          case "left":
-            {
-              const lacksRight = Math.max(0, width - lineWidth);
-              string += leftSide + style(textLine) + cell.repeat(lacksRight) + rightSide;
-            }
-            break;
-          case "right":
-            {
-              const lacksLeft = Math.max(0, width - lineWidth);
-              string += leftSide + cell.repeat(lacksLeft) + style(textLine) + rightSide;
-            }
-            break;
-          case "justify":
-            {
-              let justifiedLine = textLine.trim();
-
-              if (justifiedLine.indexOf(" ") === -1) {
-                justifiedLine += cell.repeat(width - justifiedLine.length);
-              } else {
-                let i = justifiedLine.indexOf(" ");
-                while (textWidth(justifiedLine) < width) {
-                  justifiedLine = justifiedLine.slice(0, i) + " " + justifiedLine.slice(i);
-                  i = justifiedLine.indexOf(" ", i + 2);
-                  if (i === -1) i = justifiedLine.indexOf(" ");
-                }
-              }
-
-              string += leftSide + style(justifiedLine) + rightSide;
-            }
-            break;
-        }
-      } else {
+      if (h < textStartY || h >= textStartY + textLines.length) {
         string += line;
+        if (lastLine) string += "\n";
+        continue;
       }
-      if (h !== height - 1) string += "\n";
+
+      const textLine = textLines[i++];
+      const lineWidth = textWidth(textLine);
+
+      if (lineWidth >= width) {
+        string += leftSide + style(crop(textLine, width)) + rightSide;
+        if (lastLine) string += "\n";
+
+        continue;
+      }
+      switch (horizontalAlign) {
+        case "center":
+          {
+            const lacksLeft = Math.round((width - lineWidth) / 2);
+            const lacksRight = width - lineWidth - lacksLeft;
+            string += leftSide + cell.repeat(lacksLeft) + style(textLine) + cell.repeat(lacksRight) + rightSide;
+          }
+          break;
+
+        case "left":
+          {
+            const lacksRight = width - lineWidth;
+            string += leftSide + style(textLine) + cell.repeat(lacksRight) + rightSide;
+          }
+          break;
+        case "right":
+          {
+            const lacksLeft = width - lineWidth;
+            string += leftSide + cell.repeat(lacksLeft) + style(textLine) + rightSide;
+          }
+          break;
+        case "justify":
+          {
+            let justifiedLine = textLine.trim();
+
+            if (justifiedLine.indexOf(" ") === -1) {
+              justifiedLine += cell.repeat(width - justifiedLine.length);
+            } else {
+              let i = justifiedLine.indexOf(" ");
+              while (textWidth(justifiedLine) < width) {
+                justifiedLine = justifiedLine.slice(0, i) + " " + justifiedLine.slice(i);
+                i = justifiedLine.indexOf(" ", i + 2);
+                if (i === -1) i = justifiedLine.indexOf(" ");
+              }
+            }
+
+            string += leftSide + style(justifiedLine) + rightSide;
+          }
+          break;
+      }
+
+      if (lastLine) string += "\n";
     }
 
     if (padding?.bottom) {
@@ -504,9 +517,9 @@ export class Nice {
 
       const fgLine = fgBlock[index];
 
-      const left = cropToWidth(bgLine, offsetX);
+      const left = crop(bgLine, offsetX);
       const center = fgLine;
-      const right = cropByWidth(bgLine.replace(left, ""), fgWidth);
+      const right = cropStart(bgLine.replace(left, ""), fgWidth);
 
       string += left + "\x1b[0m" + center + "\x1b[0m" + right + "\n";
     }
