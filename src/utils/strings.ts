@@ -1,6 +1,6 @@
 // Copyright 2023 Im-Beast. All rights reserved. MIT license.
 
-import { characterWidth, stripStyles, textWidth } from "./deps.ts";
+import { characterWidth, stripStyles, textWidth } from "../deps.ts";
 
 export { characterWidth, stripStyles, textWidth };
 

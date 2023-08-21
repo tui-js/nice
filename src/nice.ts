@@ -1,6 +1,6 @@
 // Copyright 2023 Im-Beast. All rights reserved. MIT license.
 import { Border, Borders, BorderType, stylePieces } from "./border.ts";
-import { crop, cropStart, textWidth } from "./utils.ts";
+import { crop, cropStart, textWidth } from "./utils/strings.ts";
 
 // TODO: Fit to console size
 // TODO: Tests, especially with weird characters

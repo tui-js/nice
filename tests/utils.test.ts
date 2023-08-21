@@ -1,6 +1,6 @@
 import { textWidth } from "../src/deps.ts";
 
-import { crop, cropEnd, cropStart } from "../src/utils.ts";
+import { crop, cropEnd, cropStart } from "../src/utils/strings.ts";
 
 import { assertAlmostEquals, assertEquals, crayon } from "./deps.ts";
 
