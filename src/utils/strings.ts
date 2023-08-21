@@ -73,3 +73,37 @@ export function cropStart(text: string, width: number): string {
 export function cropEnd(text: string, width: number): string {
   return crop(text, textWidth(text) - width);
 }
+
+/**
+ * `String.prototype.slice` but using widths
+ */
+export function slice(text: string, from: number, to: number): string {
+  let ansi = false;
+
+  let croppedWidth = 0;
+  let sliced = "";
+
+  for (let i = 0; i < text.length; ++i) {
+    const char = text[i];
+
+    if (char === "\x1b") {
+      ansi = true;
+    } else if (ansi && char === "m") {
+      ansi = false;
+    } else if (!ansi) {
+      const charWidth = characterWidth(char);
+
+      if (croppedWidth + charWidth > to) {
+        break;
+      } else {
+        croppedWidth += charWidth;
+      }
+    }
+
+    if (croppedWidth > from) {
+      sliced += char;
+    }
+  }
+
+  return sliced;
+}

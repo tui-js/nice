@@ -1,6 +1,6 @@
 import { textWidth } from "../src/deps.ts";
 
-import { crop, cropEnd, cropStart } from "../src/utils/strings.ts";
+import { crop, cropEnd, cropStart, slice } from "../src/utils/strings.ts";
 
 import { assertAlmostEquals, assertEquals, crayon } from "./deps.ts";
 
@@ -85,4 +85,38 @@ Deno.test("cropEnd", () => {
       assertEquals(textWidth(cropped), width - i);
     }
   }
+});
+
+Deno.test("slice", () => {
+  assertEquals(slice("Nice", 0, 4), "Nice");
+  assertEquals(slice("Nice", 1, 3), "ic");
+  assertEquals(slice("devanagari आआॠऋॲपॉ", 7, 8), "a");
+  assertEquals(
+    slice(
+      "ﾊﾊﾊThis text should get wrapped because widthəəə is explicit verylongstringthaəətwillwrapnomatterwhat",
+      7,
+      13,
+    ),
+    " text ",
+  );
+  assertEquals(slice("wowə", 1, 3), "ow");
+  assertEquals(slice(crayon.bgBlue.yellow("Nice " + crayon.red("<3")), 2, 4), "ce");
+  assertEquals(
+    slice(crayon.bold("devanagari" + crayon.green.bgLightRed("आआॠऋॲपॉ")), 8, 999),
+    "ri\x1b[32m\x1b[101mआआॠऋॲपॉ\x1b[0m\x1b[1m\x1b[0m\x1b[0m",
+  );
+  assertEquals(
+    slice(
+      crayon.bgRed.bgGreen.magenta.yellow.blue.cyan.underline.doubleUnderline(
+        "ﾊﾊﾊThis text should get wrapped because widthəəə is explicit verylongstringthaəətwillwrapnomatterwhat",
+      ),
+      20,
+      30,
+    ),
+    "get wrappe",
+  );
+  assertEquals(
+    slice(crayon.yellow("w" + crayon.green("o" + crayon.bold("w" + crayon.bgYellow("ə")))), 2, 4),
+    "w\x1b[43mə\x1b[0m\x1b[1m\x1b[0m\x1b[32m\x1b[0m\x1b[33m\x1b[0m\x1b[0m",
+  );
 });
