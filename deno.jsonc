@@ -2,5 +2,8 @@
   "fmt": {
     "lineWidth": 120
   },
+  "tasks": {
+    "demo": "deno run --allow-hrtime --watch examples/demo.ts"
+  },
   "lock": false
 }
