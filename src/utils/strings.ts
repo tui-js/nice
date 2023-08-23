@@ -10,6 +10,8 @@ export function fitIntoDimensions(text: string, width: number, height: number): 
   let currentWidth = 0;
   let currentHeight = 0;
 
+  let hasSkip = false;
+  let minimalSkip = 0;
   let waitTillNewline = false;
 
   let ansi = false;
@@ -25,14 +27,19 @@ export function fitIntoDimensions(text: string, width: number, height: number): 
         if (++currentHeight > height) break;
         currentWidth = 0;
         waitTillNewline = false;
+        hasSkip = true;
       } else if (!waitTillNewline) {
         const charWidth = characterWidth(char);
         if (currentWidth + charWidth >= width) {
           waitTillNewline = true;
+          if (hasSkip) i += minimalSkip;
         } else {
           currentWidth += charWidth;
         }
-      } else continue;
+      } else {
+        if (!hasSkip) ++minimalSkip;
+        continue;
+      }
     }
 
     fitted += char;
