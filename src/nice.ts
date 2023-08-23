@@ -1,10 +1,15 @@
 // Copyright 2023 Im-Beast. All rights reserved. MIT license.
+import { fitIntoDimensions } from "../mod.ts";
 import { Border, Borders, BorderType, stylePieces } from "./border.ts";
 import { crop, cropStart, textWidth } from "./utils/strings.ts";
 
-// TODO: Fit to console size
 // TODO: Tests, especially with weird characters
 // FIXME: Preserve styles when rendered over
+
+let { columns, rows } = Deno.consoleSize();
+Deno.addSignalListener("SIGWINCH", () => {
+  ({ columns, rows } = Deno.consoleSize());
+});
 
 export function isValidPosition(position: HorizontalPosition | VerticalPosition | number): boolean {
   return position >= 0 && position <= 1;
@@ -528,5 +533,9 @@ export class Nice {
     }
 
     return string;
+  }
+
+  static fitToScreen(string: string): string {
+    return fitIntoDimensions(string, columns, rows);
   }
 }

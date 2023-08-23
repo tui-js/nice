@@ -126,7 +126,7 @@ export function render() {
   const SCREEN_FG = popup.render("Hello");
   const SCREEN_FG2 = popup2.render("Hi");
 
-  return Nice.overlay(
+  return Nice.fitToScreen(Nice.overlay(
     HorizontalPosition.Left,
     VerticalPosition.Middle,
     SCREEN_FG2,
@@ -136,7 +136,7 @@ export function render() {
       SCREEN_FG,
       SCREEN_BG,
     ),
-  );
+  ));
 }
 
 if (import.meta.main) {
