@@ -3,6 +3,8 @@ import { fitIntoDimensions } from "../mod.ts";
 import { Border, Borders, BorderType, stylePieces } from "./border.ts";
 import { crop, cropStart, textWidth } from "./utils/strings.ts";
 
+// TODO: modularize the Nice class
+// TODO: temporarily store blocks in a map
 // TODO: Tests, especially with weird characters
 // FIXME: Preserve styles when rendered over
 
@@ -337,7 +339,8 @@ export class Nice {
           {
             const lacksLeft = Math.round((width - lineWidth) / 2);
             const lacksRight = width - lineWidth - lacksLeft;
-            string += leftSide + cell.repeat(lacksLeft) + style(textLine) + cell.repeat(lacksRight) + rightSide;
+            string += leftSide + cell.repeat(lacksLeft) + [...textLine].map((x) => style(x)).join("") +
+              cell.repeat(lacksRight) + rightSide;
           }
           break;
         case "right":
@@ -444,7 +447,6 @@ export class Nice {
 
     for (const string of strings) {
       const block = string.split("\n");
-
       blocks.push(block);
 
       const width = textWidth(block[0]);
@@ -484,7 +486,6 @@ export class Nice {
     }
 
     const fgBlock = fg.split("\n");
-
     const bgBlock = bg.split("\n");
 
     const fgHeight = fgBlock.length;
