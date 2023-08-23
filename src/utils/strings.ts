@@ -4,6 +4,70 @@ import { characterWidth, stripStyles, textWidth } from "../deps.ts";
 
 export { characterWidth, stripStyles, textWidth };
 
+export function fitIntoDimensions(text: string, width: number, height: number): string {
+  let fitted = "";
+
+  let currentWidth = 0;
+  let currentHeight = 0;
+
+  let waitTillNewline = false;
+
+  let ansi = false;
+  const len = text.length;
+  for (let i = 0; i < len; ++i) {
+    const char = text[i];
+    if (char === "\x1b") {
+      ansi = true;
+    } else if (ansi && char === "m") {
+      ansi = false;
+    } else if (!ansi) {
+      if (char === "\n") {
+        if (++currentHeight > height) break;
+        currentWidth = 0;
+        waitTillNewline = false;
+      } else if (!waitTillNewline) {
+        const charWidth = characterWidth(char);
+        if (currentWidth + charWidth >= width) {
+          waitTillNewline = true;
+        } else {
+          currentWidth += charWidth;
+        }
+      } else continue;
+    }
+
+    fitted += char;
+  }
+
+  return fitted;
+}
+
+export function dimensions(text: string): { width: number; height: number } {
+  let width = 0;
+  let height = 0;
+
+  let ansi = false;
+  let gotWidth = false;
+  const len = text.length;
+  for (let i = 0; i < len; ++i) {
+    const char = text[i];
+    if (char === "\x1b") {
+      ansi = true;
+      i += 2; // [ "\x1b" "[" "X" "m" ] <-- shortest ansi sequence
+    } else if (char === "m" && ansi) {
+      ansi = false;
+    } else if (!ansi) {
+      if (char === "\n") {
+        height++;
+        gotWidth ||= true;
+      } else if (!gotWidth) {
+        width += characterWidth(char);
+      }
+    }
+  }
+
+  return { width, height };
+}
+
 /**
  * Crops the {text} to given {width}
  *
@@ -16,7 +80,8 @@ export function crop(text: string, width: number): string {
   let croppedWidth = 0;
   let ansi = false;
 
-  for (let i = 0; i < text.length; ++i) {
+  const len = text.length;
+  for (let i = 0; i < len; ++i) {
     const char = text[i];
 
     if (char === "\x1b") {
@@ -46,7 +111,8 @@ export function cropStart(text: string, width: number): string {
   let croppedWidth = 0;
   let cropFrom = 0;
 
-  for (let i = 0; i < text.length; ++i) {
+  const len = text.length;
+  for (let i = 0; i < len; ++i) {
     const char = text[i];
 
     if (char === "\x1b") {
@@ -83,7 +149,8 @@ export function slice(text: string, from: number, to: number): string {
   let croppedWidth = 0;
   let sliced = "";
 
-  for (let i = 0; i < text.length; ++i) {
+  const len = text.length;
+  for (let i = 0; i < len; ++i) {
     const char = text[i];
 
     if (char === "\x1b") {
