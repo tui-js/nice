@@ -95,12 +95,14 @@ console.clear();
 
 export function render() {
   const SCREEN_BG = Nice.layoutHorizontally(
+    VerticalPosition.Middle,
     Nice.layoutVertically(
       HorizontalPosition.Center,
       a.render(
         "This gets justified\nAlone\none two three four five six\nlonger words come here\nbig spacing now",
       ),
       Nice.layoutHorizontally(
+        VerticalPosition.Middle,
         c.render("Hello"),
         c.render("there"),
         d.render("This should get clipped"),

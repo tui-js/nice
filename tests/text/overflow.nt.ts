@@ -1,3 +1,4 @@
+import { HorizontalPosition, VerticalPosition } from "../../mod.ts";
 import { Nice } from "../../src/nice.ts";
 import { crayon } from "https://deno.land/x/crayon@3.3.3/mod.ts";
 
@@ -78,14 +79,15 @@ for (let overflow of possibleOverflows) {
     }
   }
 
-  verticals.push(Nice.layoutVertically(...objects));
+  verticals.push(Nice.layoutVertically(HorizontalPosition.Center, ...objects));
 }
 
-const frame = Nice.layoutHorizontally(...verticals);
+const frame = Nice.layoutHorizontally(VerticalPosition.Middle, ...verticals);
 
 export function render() {
   console.log(
     Nice.layoutVertically(
+      HorizontalPosition.Center,
       TEST_INFO.render(
         `All of these boxes should contain text "${testMaybePasses}".\nIf some of the text is missing or even a part of "${testFail}" is visible test fails.`,
       ),
