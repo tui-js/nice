@@ -148,19 +148,10 @@ export class Nice {
 
             const expectedWidth = width - ellipsisWidth;
 
-            if (lineWidth === width) {
-              textLines[i] = crop(textLine, expectedWidth) + ellipsisString;
-            } else if (lineWidth > 0) {
+            if (lineWidth === width || lineWidth > 0) {
               textLines[i] = crop(textLine, expectedWidth) + ellipsisString;
             } else {
-              const lastLine = textLines[i - 1];
-              const lastLineWidth = textWidth(lastLine);
-
-              if (lastLineWidth === width) {
-                textLines[i - 1] = crop(lastLine, expectedWidth) + ellipsisString;
-              } else {
-                textLines[i - 1] = crop(lastLine, expectedWidth) + ellipsisString;
-              }
+              textLines[i - 1] = crop(textLines[i - 1], expectedWidth) + ellipsisString;
             }
           }
 
