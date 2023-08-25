@@ -294,6 +294,7 @@ export class Nice {
 
     let textStartY: number;
 
+    // TODO: replace "top" | "middle" | "bottom" with VerticalPosition
     switch (verticalAlign) {
       case "top":
         textStartY = 0;
@@ -328,6 +329,7 @@ export class Nice {
         continue;
       }
 
+      // TODO: replace "left" | "center" | "right" with HorizontalPosition
       switch (horizontalAlign) {
         case "left":
           {
@@ -439,8 +441,7 @@ export class Nice {
 
   static #blocks: string[][] = [];
 
-  // TODO: Way to determine X position (left/center/right)
-  static layoutVertically(...strings: string[]): string {
+  static layoutVertically(horizontalPosition: HorizontalPosition, ...strings: string[]): string {
     const blocks = this.#blocks;
 
     let maxWidth = 0;
@@ -459,7 +460,9 @@ export class Nice {
       for (let line of block) {
         const lineWidth = textWidth(line);
         if (lineWidth < maxWidth) {
-          line += " ".repeat(maxWidth - lineWidth);
+          const lacksLeft = Math.round((maxWidth - lineWidth) * horizontalPosition);
+          const lacksRight = maxWidth - lineWidth - lacksLeft;
+          line = " ".repeat(lacksLeft) + line + " ".repeat(lacksRight);
         }
 
         string += line + "\n";

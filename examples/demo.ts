@@ -96,6 +96,7 @@ console.clear();
 export function render() {
   const SCREEN_BG = Nice.layoutHorizontally(
     Nice.layoutVertically(
+      HorizontalPosition.Center,
       a.render(
         "This gets justified\nAlone\none two three four five six\nlonger words come here\nbig spacing now",
       ),
@@ -109,6 +110,7 @@ export function render() {
       "Nice 🔥\n（╯°□°）╯︵┻━┻\ndevanagari आआॠऋॲपॉ\nﾊﾊﾊThis text should get wrapped because widthəəə is explicit verylongstringthaəə💩twillwrapnomatterwhat\nwowə",
     ),
     Nice.layoutVertically(
+      HorizontalPosition.Center,
       e.render(
         "very long text that will wrap and will fit",
       ),
@@ -117,6 +119,7 @@ export function render() {
       ),
     ),
     Nice.layoutVertically(
+      HorizontalPosition.Center,
       f.render(`ISBN: 978-0-1234-5678-7\n\nCSS: הרפתקה חדשה!`),
       g.render(`ISBN: 978-0-1234-5678-7\n\nCSS: הרפתקה חדשה!`),
       h.render(`ISBN: 978-0-1234-5678-7\n\nCSS: הרפתקה חדשה!`),
