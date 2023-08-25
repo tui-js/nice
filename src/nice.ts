@@ -405,8 +405,7 @@ export class Nice {
     return from.clone();
   }
 
-  // TODO: Way to determine Y position
-  static layoutHorizontally(...strings: string[]): string {
+  static layoutHorizontally(verticalPosition: number, ...strings: string[]): string {
     const blocks = strings.map((x) => x.split("\n"));
     const maxWidths = blocks.map((x) =>
       x.reduce((p, n) => {
@@ -424,7 +423,9 @@ export class Nice {
         const block = blocks[i];
         const maxWidth = maxWidths[i];
 
-        let line = block[y] ?? "";
+        const yOffset = Math.round((maxHeight - block.length) * verticalPosition);
+        let line = block[y - yOffset] ?? "";
+
         const lineWidth = line ? textWidth(line) : 0;
         if (lineWidth < maxWidth) {
           line += " ".repeat(maxWidth - lineWidth);
