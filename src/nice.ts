@@ -441,7 +441,7 @@ export class Nice {
 
   static #blocks: string[][] = [];
 
-  static layoutVertically(horizontalPosition: HorizontalPosition, ...strings: string[]): string {
+  static layoutVertically(horizontalPosition: number, ...strings: string[]): string {
     const blocks = this.#blocks;
 
     let maxWidth = 0;
