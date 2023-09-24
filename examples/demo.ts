@@ -46,6 +46,7 @@ d.style = crayon.bgMagenta;
 const e = d.clone();
 e.width = 10;
 e.height = 5;
+e.text.horizontalAlign = "justify";
 e.style = crayon.bgYellow;
 e.text.overflow = "ellipsis";
 
@@ -109,7 +110,7 @@ export function render() {
       ),
     ),
     b.render(
-      "Nice 🔥\n（╯°□°）╯︵┻━┻\ndevanagari आआॠऋॲपॉ\nﾊﾊﾊThis text should get wrapped because widthəəə is explicit verylongstringthaəə💩twillwrapnomatterwhat\nwowə",
+      "Nice 🔥\n（╯°□°）╯︵┻━┻\ndevanagari आआॠऋॲपॉ\nﾊﾊﾊThis text should get wrapped because widthəəə is explicit as日本verylongstringthaəə💩twillwrapnomatterwhat\nwowə\nالعربية",
     ),
     Nice.layoutVertically(
       HorizontalPosition.Center,
@@ -117,7 +118,7 @@ export function render() {
         "very long text that will wrap and will fit",
       ),
       e.render(
-        "very long text that will wrap and totally won't fit",
+        "日本 long text that will wrap and totally won't fit",
       ),
     ),
     Nice.layoutVertically(

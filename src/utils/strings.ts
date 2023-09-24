@@ -20,7 +20,7 @@ export function fitIntoDimensions(text: string, width: number, height: number): 
     const char = text[i];
     if (char === "\x1b") {
       ansi = true;
-    } else if (ansi && char === "m") {
+    } else if (ansi && isFinalAnsiByte(char)) {
       ansi = false;
     } else if (!ansi) {
       if (char === "\n") {
@@ -60,7 +60,7 @@ export function dimensions(text: string): { width: number; height: number } {
     if (char === "\x1b") {
       ansi = true;
       i += 2; // [ "\x1b" "[" "X" "m" ] <-- shortest ansi sequence
-    } else if (char === "m" && ansi) {
+    } else if (isFinalAnsiByte(char) && ansi) {
       ansi = false;
     } else if (!ansi) {
       if (char === "\n") {
@@ -93,12 +93,16 @@ export function crop(text: string, width: number): string {
 
     if (char === "\x1b") {
       ansi = true;
-    } else if (ansi && char === "m") {
+    } else if (ansi && isFinalAnsiByte(char)) {
       ansi = false;
     } else if (!ansi) {
       const charWidth = characterWidth(char);
-      if (croppedWidth + charWidth > width) break;
-      else {
+      if (croppedWidth + charWidth > width) {
+        if (croppedWidth + 1 === width) {
+          cropped += " ";
+        }
+        break;
+      } else {
         croppedWidth += charWidth;
       }
     }
@@ -118,14 +122,28 @@ export function cropStart(text: string, width: number): string {
   let croppedWidth = 0;
   let cropFrom = 0;
 
+  let lastSingularAnsiSeq = "";
+  let preserveAnsiSeq = "";
+
   const len = text.length;
   for (let i = 0; i < len; ++i) {
     const char = text[i];
 
     if (char === "\x1b") {
       ansi = true;
-    } else if (ansi && char === "m") {
-      ansi = false;
+
+      if (lastSingularAnsiSeq === "\x1b[0m") {
+        preserveAnsiSeq = "";
+      } else {
+        preserveAnsiSeq += lastSingularAnsiSeq;
+      }
+
+      lastSingularAnsiSeq = char;
+    } else if (ansi) {
+      if (isFinalAnsiByte(char)) {
+        ansi = false;
+      }
+      lastSingularAnsiSeq += char;
     } else if (!ansi) {
       const charWidth = characterWidth(char);
       if (croppedWidth + charWidth > width) {
@@ -137,7 +155,7 @@ export function cropStart(text: string, width: number): string {
     }
   }
 
-  return text.slice(cropFrom);
+  return preserveAnsiSeq + text.slice(cropFrom);
 }
 
 /**
@@ -162,7 +180,7 @@ export function slice(text: string, from: number, to: number): string {
 
     if (char === "\x1b") {
       ansi = true;
-    } else if (ansi && char === "m") {
+    } else if (ansi && isFinalAnsiByte(char)) {
       ansi = false;
     } else if (!ansi) {
       const charWidth = characterWidth(char);
@@ -180,4 +198,86 @@ export function slice(text: string, from: number, to: number): string {
   }
 
   return sliced;
+}
+
+export function isFinalAnsiByte(character: string): boolean {
+  const codePoint = character.charCodeAt(0);
+  // don't include 0x70–0x7E range because its considered "private"
+  // FIXME: this "not 91" shouldnt be checked here, ansi logic needs to be improved around all functions
+  return codePoint !== 91 && codePoint >= 0x40 && codePoint < 0x70;
+}
+
+// TODO: tests for that
+// TOOD: this can probably be optimized further
+/** Insert {fg} on top of {bg} starting from {pos} */
+export function insert(bg: string, fg: string, pos: number): string {
+  let output = "";
+
+  let done = false;
+  let currentPos = 0;
+  let ansi = 0;
+  let lastStyle = "";
+  let flushStyle = false;
+
+  const border = pos + textWidth(fg);
+
+  for (let i = 0; i < bg.length; ++i) {
+    const char = bg[i];
+
+    if (char === "\x1b") {
+      // possible start of an ansi sequence
+      ++ansi;
+    } else if (ansi === 1) {
+      // confirm whether ansi sequence has been started
+      if (char === "[") {
+        lastStyle += "\x1b" + char;
+        ++ansi;
+      } else {
+        ansi = 0;
+      }
+    } else if (ansi > 1) {
+      const isFinalByte = isFinalAnsiByte(char);
+      lastStyle += char;
+
+      if (isFinalByte) {
+        flushStyle = true;
+
+        output += lastStyle;
+
+        // End of ansi sequence
+        if (ansi === 3 && lastStyle[lastStyle.length - 2] === "0") {
+          // Style is "\x1b[0m" – no need to store the last style when all of them got cleared
+          lastStyle = "";
+          flushStyle = false;
+        }
+
+        ansi = 0;
+      } else {
+        // Part of an ansi sequence
+        ++ansi;
+      }
+    } else {
+      const width = textWidth(char);
+      currentPos += width;
+
+      if (currentPos === pos + 1 && width > 1) {
+        // if full width character in bg gets cut off at the start by fg replace it with space
+        output += "…";
+      } else if (currentPos <= pos || currentPos > border) {
+        if (currentPos === border + 1 && width > 1) {
+          // if full width character in bg gets cut off at the end by fg replace it with space
+          output += "…";
+        } else {
+          output += char;
+        }
+      }
+    }
+
+    if (!done && !flushStyle && currentPos >= pos) {
+      output += fg;
+      done = true;
+    }
+  }
+
+  return output;
 }

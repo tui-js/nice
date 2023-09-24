@@ -1,12 +1,12 @@
 // Copyright 2023 Im-Beast. All rights reserved. MIT license.
 import { fitIntoDimensions } from "../mod.ts";
 import { Border, Borders, BorderType, stylePieces } from "./border.ts";
-import { crop, cropStart, textWidth } from "./utils/strings.ts";
+import { crop, insert, textWidth } from "./utils/strings.ts";
 
 // TODO: modularize the Nice class
 // TODO: temporarily store blocks in a map
 // TODO: Tests, especially with weird characters
-// FIXME: Preserve styles when rendered over
+// TODO: Store metadata about generated definitions
 
 let { columns, rows } = Deno.consoleSize();
 Deno.addSignalListener("SIGWINCH", () => {
@@ -120,6 +120,7 @@ export class Nice {
 
   render(input: string): string {
     const { style, border, margin, padding, text } = this;
+
     let { width, height } = this;
 
     const autoWidth = !width;
@@ -177,12 +178,12 @@ export class Nice {
               }
               --i;
             } else {
-              const start = textLine.slice(0, width);
-              const end = textLine.slice(width);
-              input = input.replace(textLine, start + "\n" + end);
+              const start = crop(textLine, width);
+              const end = textLine.slice(start.length);
 
               const nextLine = textLines[i + 1];
 
+              input = input.replace(textLine, start + "\n" + end);
               if (nextLine && !initialTextLines.includes(nextLine)) {
                 textLines.splice(i, 2, start, end + " " + nextLine);
               } else {
@@ -207,6 +208,17 @@ export class Nice {
 
     let string = "";
 
+    /** TODO(Im-Beast): hi */
+
+    // TODO: hello
+
+    /*TODO: awooga*/
+
+    /* TODO: Instead of having style applied to all singular cells
+    /        consider applying style just once at the start
+    /        This is not that neccessary, as it doesn't change how things look
+    /        However working with strings could become simpler and more efficient
+    */
     const cell = style(" ");
 
     const borderPieces: Border = this.borderPieces!;
@@ -347,7 +359,7 @@ export class Nice {
             let justifiedLine = textLine.trim();
 
             if (justifiedLine.indexOf(" ") === -1) {
-              justifiedLine += cell.repeat(width - justifiedLine.length);
+              justifiedLine += " ".repeat(width - justifiedLine.length);
             } else {
               let i = justifiedLine.indexOf(" ");
               while (textWidth(justifiedLine) < width) {
@@ -520,12 +532,7 @@ export class Nice {
       }
 
       const fgLine = fgBlock[index];
-
-      const left = crop(bgLine, offsetX);
-      const center = fgLine;
-      const right = cropStart(bgLine, offsetX + fgWidth);
-
-      string += left + "\x1b[0m" + center + "\x1b[0m" + right + "\n";
+      string += insert(bgLine, fgLine, offsetX) + "\n";
     }
 
     return string;
