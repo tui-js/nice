@@ -123,19 +123,11 @@ export class Nice {
 
     let { width, height } = this;
 
-    const autoWidth = !width;
-    const autoHeight = !height;
-
     const textLines = input.split("\n");
-
-    let longestLine = textLines.reduce((p, c) => textWidth(p) > textWidth(c) ? p : c);
-
-    width ??= textWidth(longestLine);
-    height ??= textLines.length;
 
     const { overflow } = text;
     // Wrap sticking text
-    if (!autoWidth && width < textWidth(longestLine)) {
+    if (width && height) {
       const initialTextLines = [...textLines];
 
       for (let i = 0; i < textLines.length; ++i) {
@@ -143,7 +135,7 @@ export class Nice {
         const lineWidth = textWidth(textLine);
 
         if (lineWidth <= width) {
-          if (!autoHeight && textLines.length > (i + 1) && i >= (height - 1) && overflow === "ellipsis") {
+          if (overflow === "ellipsis" && textLines.length - 1 > i && i + 1 >= height) {
             const ellipsisString = text.ellipsisString ?? "…";
             const ellipsisWidth = textWidth(ellipsisString);
 
@@ -160,38 +152,37 @@ export class Nice {
         }
 
         switch (text.wrap) {
-          case "wrap":
-            if (textLine.includes(" ")) {
-              let lastSpace = textLine.indexOf(" ", width);
-              if (lastSpace === -1) lastSpace = textLine.lastIndexOf(" ");
+          case "wrap": {
+            let spaceIndex = textLine.lastIndexOf(" ");
+            const nextLine = textLines[i + 1];
+            let start: string;
+            let end: string;
 
-              const nextLine = textLines[i + 1];
-
-              const start = textLine.slice(0, lastSpace);
-              const end = textLine.slice(lastSpace + 1);
-
-              input = input.replace(textLine, start + "\n" + end);
-              if (nextLine && !initialTextLines.includes(nextLine)) {
-                textLines.splice(i, 2, start, end + " " + nextLine);
-              } else {
-                textLines.splice(i, 1, start, end);
+            // If there's a space in the line, try to use it as breakpoint
+            if (spaceIndex !== -1) {
+              // Try finding a space closest to width, if space exists before width, use it
+              if (spaceIndex > width) {
+                const closestSpaceAfterWidth = textLine.indexOf(" ", width);
+                if (closestSpaceAfterWidth !== -1) spaceIndex = closestSpaceAfterWidth;
               }
-              --i;
+
+              start = textLine.slice(0, spaceIndex);
+              end = textLine.slice(spaceIndex + 1);
             } else {
-              const start = crop(textLine, width);
-              const end = textLine.slice(start.length);
-
-              const nextLine = textLines[i + 1];
-
-              input = input.replace(textLine, start + "\n" + end);
-              if (nextLine && !initialTextLines.includes(nextLine)) {
-                textLines.splice(i, 2, start, end + " " + nextLine);
-              } else {
-                textLines.splice(i, 1, start, end);
-              }
-              --i;
+              start = crop(textLine, width);
+              end = textLine.slice(start.length);
             }
+
+            input = input.replace(textLine, start + "\n" + end);
+            if (nextLine && !initialTextLines.includes(nextLine)) {
+              textLines.splice(i, 2, start, end + " " + nextLine);
+            } else {
+              textLines.splice(i, 1, start, end);
+            }
+            --i;
+
             break;
+          }
           case "nowrap":
             textLines[i] = crop(textLine, width);
             break;
@@ -200,26 +191,15 @@ export class Nice {
             break;
         }
       }
-
-      longestLine = textLines.reduce((p, c) => p.length > c.length ? p : c);
-      if (autoWidth) width = longestLine.length;
-      if (autoHeight) height = textLines.length;
+    } else {
+      height ??= textLines.length;
+      width = 0;
+      for (const textLine of textLines) {
+        width = Math.max(width, textWidth(textLine));
+      }
     }
 
     let string = "";
-
-    /** TODO(Im-Beast): hi */
-
-    // TODO: hello
-
-    /*TODO: awooga*/
-
-    /* TODO: Instead of having style applied to all singular cells
-    /        consider applying style just once at the start
-    /        This is not that neccessary, as it doesn't change how things look
-    /        However working with strings could become simpler and more efficient
-    */
-    const cell = style(" ");
 
     const borderPieces: Border = this.borderPieces!;
 
@@ -260,15 +240,15 @@ export class Nice {
     }
 
     if (padding?.left) {
-      const padLeft = cell.repeat(padding.left);
+      const padLeft = style(" ".repeat(padding.left));
       line += padLeft;
       leftSide += padLeft;
     }
 
-    line += cell.repeat(width);
+    line += style(" ".repeat(width));
 
     if (padding?.right) {
-      const padRight = cell.repeat(padding.right);
+      const padRight = style(" ".repeat(padding.right));
       line += padRight;
       rightSide += padRight;
     }
@@ -337,21 +317,23 @@ export class Nice {
         case "left":
           {
             const lacksRight = width - lineWidth;
-            string += leftSide + style(textLine) + cell.repeat(lacksRight) + rightSide;
+            string += leftSide + style(textLine) + " ".repeat(lacksRight) + rightSide;
           }
           break;
         case "center":
           {
             const lacksLeft = Math.round((width - lineWidth) / 2);
             const lacksRight = width - lineWidth - lacksLeft;
-            string += leftSide + cell.repeat(lacksLeft) + [...textLine].map((x) => style(x)).join("") +
-              cell.repeat(lacksRight) + rightSide;
+
+            string += leftSide + style(
+              " ".repeat(lacksLeft) + textLine + " ".repeat(lacksRight),
+            ) + rightSide;
           }
           break;
         case "right":
           {
             const lacksLeft = width - lineWidth;
-            string += leftSide + cell.repeat(lacksLeft) + style(textLine) + rightSide;
+            string += leftSide + style(" ".repeat(lacksLeft) + textLine) + rightSide;
           }
           break;
         case "justify":
