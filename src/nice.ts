@@ -115,8 +115,6 @@ export class Nice {
     const { overflow } = text;
     // Wrap sticking text
     if (width && height) {
-      const initialTextLines = [...textLines];
-
       for (let i = 0; i < textLines.length; ++i) {
         const textLine = textLines[i];
         const lineWidth = textWidth(textLine);
@@ -160,8 +158,7 @@ export class Nice {
               end = textLine.slice(start.length);
             }
 
-            input = input.replace(textLine, start + "\n" + end);
-            if (nextLine && !initialTextLines.includes(nextLine)) {
+            if (nextLine) {
               textLines.splice(i, 2, start, end + " " + nextLine);
             } else {
               textLines.splice(i, 1, start, end);
