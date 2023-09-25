@@ -174,7 +174,7 @@ if (import.meta.main) {
     "It took",
     crayon.lightBlue(time.toFixed(2)),
     "ms",
-    `(${((1000 * 100) / time).toFixed(2)}FPS/RUN)`,
+    `(${((1000 * 100) / time).toFixed(2)}FPS/RUN, ${(time / 100).toFixed(2)}ms on average)`,
     "to run render() 100x",
   );
 }
