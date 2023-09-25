@@ -263,6 +263,7 @@ export class Nice {
       line = marLeft + line;
       leftSide = marLeft + leftSide;
     }
+
     if (margin?.right) {
       const marRight = " ".repeat(margin.right);
       line += marRight;
@@ -317,7 +318,7 @@ export class Nice {
         case "left":
           {
             const lacksRight = width - lineWidth;
-            string += leftSide + style(textLine) + " ".repeat(lacksRight) + rightSide;
+            string += leftSide + style(textLine + " ".repeat(lacksRight)) + rightSide;
           }
           break;
         case "center":
