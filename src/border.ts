@@ -1,7 +1,17 @@
 // Copyright 2023 Im-Beast. All rights reserved. MIT license.
 import { Style } from "./nice.ts";
 
-export interface Border {
+export interface BorderStyle {
+  type: BorderType;
+  style: Style;
+
+  top: boolean;
+  bottom: boolean;
+  left: boolean;
+  right: boolean;
+}
+
+export interface BorderDefinition<_Styled extends boolean> {
   top: string;
   bottom: string;
   left: string;
@@ -13,7 +23,7 @@ export interface Border {
 }
 
 export type BorderType = "sharp" | "rounded" | "thick" | "double" | "block";
-export const Borders: Record<BorderType, Border> = {
+export const Borders: Record<BorderType, BorderDefinition<false>> = {
   sharp: {
     top: "─",
     bottom: "─",
@@ -66,15 +76,109 @@ export const Borders: Record<BorderType, Border> = {
   },
 };
 
-export function stylePieces(pieces: Border, style: Style): Border {
-  return {
-    top: style(pieces.top),
-    bottom: style(pieces.bottom),
-    left: style(pieces.left),
-    right: style(pieces.right),
-    topLeft: style(pieces.topLeft),
-    topRight: style(pieces.topRight),
-    bottomLeft: style(pieces.bottomLeft),
-    bottomRight: style(pieces.bottomRight),
-  };
+export class Border {
+  borderStyle: BorderStyle;
+  definition: BorderDefinition<true>;
+
+  constructor(borderStyle: BorderStyle) {
+    this.borderStyle = borderStyle;
+    this.definition = Border.styleDefinition(borderStyle);
+  }
+
+  getTop(width: number) {
+    const { topLeft, top, topRight } = this.definition;
+    return topLeft + top.repeat(width) + topRight;
+  }
+
+  getBottom(width: number) {
+    const { bottomLeft, bottom, bottomRight } = this.definition;
+    return bottomLeft + bottom.repeat(width) + bottomRight;
+  }
+
+  getLeft() {
+    return this.definition.left;
+  }
+
+  getRight() {
+    return this.definition.right;
+  }
+
+  restyleDefinition(): void {
+    const { top, left, bottom, right, type, style } = this.borderStyle;
+
+    const styledDefinition = this.definition;
+    const definition = Borders[type];
+
+    if (top) {
+      styledDefinition.top = style(definition.top);
+      styledDefinition.topLeft = left ? style(definition.topLeft) : " ";
+      styledDefinition.topRight = right ? style(definition.topRight) : " ";
+    } else {
+      styledDefinition.top = " ";
+      styledDefinition.topLeft = " ";
+      styledDefinition.topRight = " ";
+    }
+
+    if (bottom) {
+      styledDefinition.bottom = style(definition.bottom);
+
+      styledDefinition.bottomLeft = left ? style(definition.bottomLeft) : " ";
+      styledDefinition.bottomRight = right ? style(definition.bottomRight) : " ";
+    } else {
+      styledDefinition.bottom = " ";
+      styledDefinition.bottomLeft = " ";
+      styledDefinition.bottomRight = " ";
+    }
+
+    styledDefinition.left = left ? style(definition.left) : " ";
+    styledDefinition.right = right ? style(definition.right) : " ";
+  }
+
+  static styleDefinition(borderStyle: BorderStyle): BorderDefinition<true> {
+    const definition = Borders[borderStyle.type];
+    const style = borderStyle.style;
+
+    const styledDefinition: BorderDefinition<true> = {
+      top: "",
+      topLeft: "",
+      topRight: "",
+      bottom: "",
+      bottomLeft: "",
+      bottomRight: "",
+      left: "",
+      right: "",
+    };
+
+    const { top, left, bottom, right } = borderStyle;
+
+    if (top) {
+      console.log(borderStyle, definition);
+      styledDefinition.top = style(definition.top);
+
+      if (left) {
+        styledDefinition.topLeft = style(definition.topLeft);
+      }
+
+      if (right) {
+        styledDefinition.topRight = style(definition.topRight);
+      }
+    }
+
+    if (bottom) {
+      styledDefinition.bottom = style(definition.bottom);
+
+      if (left) {
+        styledDefinition.bottomLeft = style(definition.bottomLeft);
+      }
+
+      if (right) {
+        styledDefinition.bottomRight = style(definition.bottomRight);
+      }
+    }
+
+    if (left) styledDefinition.left = style(definition.left);
+    if (right) styledDefinition.right = style(definition.right);
+
+    return styledDefinition;
+  }
 }

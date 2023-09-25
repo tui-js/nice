@@ -1,6 +1,6 @@
 // Copyright 2023 Im-Beast. All rights reserved. MIT license.
 import { fitIntoDimensions } from "../mod.ts";
-import { Border, Borders, BorderType, stylePieces } from "./border.ts";
+import { Border, type BorderStyle } from "./border.ts";
 import { crop, insert, textWidth } from "./utils/strings.ts";
 
 // TODO: modularize the Nice class
@@ -40,10 +40,6 @@ export interface TextStyle {
   wrap: "wrap" | "nowrap" | "balance";
 }
 
-export type BorderStyle =
-  & { type: BorderType; style: Style }
-  & { [side in Side]: boolean };
-
 export interface NiceOptions {
   style: Style;
   width?: number;
@@ -51,7 +47,7 @@ export interface NiceOptions {
   text?: Partial<TextStyle>;
   margin?: Partial<MarginStyle>;
   padding?: Partial<PaddingStyle>;
-  border?: Partial<Omit<BorderStyle, "type" | "style">> & Pick<BorderStyle, "type" | "style">;
+  border?: Border | (Partial<Omit<BorderStyle, "type" | "style">> & Pick<BorderStyle, "type" | "style">);
 }
 
 export class Nice {
@@ -64,7 +60,7 @@ export class Nice {
   padding: PaddingStyle;
 
   text: TextStyle;
-  border?: BorderStyle;
+  border?: Border;
 
   constructor(options: NiceOptions) {
     this.style = options.style;
@@ -75,15 +71,13 @@ export class Nice {
     this.height = height;
 
     if (border) {
-      this.borderPieces = stylePieces(Borders[border.type], border.style);
-
-      this.border = {
+      this.border = border instanceof Border ? border : new Border({
         top: true,
         bottom: true,
         left: true,
         right: true,
         ...border,
-      };
+      });
     }
 
     this.text = {
@@ -110,8 +104,6 @@ export class Nice {
       ...padding,
     };
   }
-
-  borderPieces?: Border;
 
   render(input: string): string {
     const { style, border, margin, padding, text } = this;
@@ -196,16 +188,9 @@ export class Nice {
 
     let string = "";
 
-    const borderPieces: Border = this.borderPieces!;
-
-    const marginX = (margin?.left ?? 0) + (margin?.right ?? 0);
-    const _marginY = (margin?.top ?? 0) + (margin?.bottom ?? 0);
-
-    const paddingX = (padding?.left ?? 0) + (padding?.right ?? 0);
-    const _paddingY = (padding?.top ?? 0) + (padding?.bottom ?? 0);
-
-    const borderX = (border?.left ? 1 : 0) + (border?.right ? 1 : 0);
-    const _borderY = (border?.top ? 1 : 0) + (border?.bottom ? 1 : 0);
+    const marginX = margin.left + margin.right;
+    const paddingX = padding.left + padding.right;
+    const borderX = border ? Number(border.borderStyle.left) + Number(border.borderStyle.right) : 0;
 
     const marginLine = " ".repeat(width + marginX + paddingX + borderX);
 
@@ -213,25 +198,21 @@ export class Nice {
       string += (marginLine + "\n").repeat(margin.top);
     }
 
-    if (border?.top) {
-      if (margin?.left) string += " ".repeat(margin.left);
+    const leftMargin = " ".repeat(margin.left);
+    const rightMargin = " ".repeat(margin.right);
 
-      if (border.left) string += borderPieces.topLeft;
-      string += borderPieces.top.repeat(width + paddingX);
-      if (border.right) string += borderPieces.topRight;
-
-      if (margin?.right) string += " ".repeat(margin.right);
-
-      string += "\n";
+    if (border) {
+      string += leftMargin + border.getTop(width + paddingX) + rightMargin + "\n";
     }
 
+    // TODO: Try to create line only when there's no text on current line
     let line = "";
     let leftSide = "";
     let rightSide = "";
 
-    if (border?.left) {
-      line += borderPieces.left;
-      leftSide += borderPieces.left;
+    if (border) {
+      line += border.getLeft();
+      leftSide += border.getLeft();
     }
 
     if (padding?.left) {
@@ -248,9 +229,10 @@ export class Nice {
       rightSide += padRight;
     }
 
-    if (border?.right) {
-      line += borderPieces.right;
-      rightSide = rightSide + borderPieces.right;
+    if (border) {
+      const right = border.getRight();
+      line += right;
+      rightSide += right;
     }
 
     if (margin?.left) {
@@ -361,14 +343,8 @@ export class Nice {
       string += "\n" + (line + "\n").repeat(padding.bottom - 1) + line;
     }
 
-    if (border?.bottom) {
-      string += "\n";
-
-      if (margin?.left) string += " ".repeat(margin.left);
-      if (border.left) string += borderPieces.bottomLeft;
-      string += borderPieces.bottom.repeat(width + paddingX);
-      if (border.right) string += borderPieces.bottomRight;
-      if (margin?.right) string += " ".repeat(margin.right);
+    if (border) {
+      string += "\n" + leftMargin + border.getBottom(width + paddingX) + rightMargin;
     }
 
     if (margin?.bottom) {
