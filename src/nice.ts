@@ -8,11 +8,6 @@ import { crop, insert, textWidth } from "./utils/strings.ts";
 // TODO: Tests, especially with weird characters
 // TODO: Store metadata about generated definitions
 
-let { columns, rows } = Deno.consoleSize();
-Deno.addSignalListener("SIGWINCH", () => {
-  ({ columns, rows } = Deno.consoleSize());
-});
-
 export function isValidPosition(position: HorizontalPosition | VerticalPosition | number): boolean {
   return position >= 0 && position <= 1;
 }
@@ -522,6 +517,7 @@ export class Nice {
   }
 
   static fitToScreen(string: string): string {
+    const { columns, rows } = Deno.consoleSize();
     return fitIntoDimensions(string, columns, rows);
   }
 }
