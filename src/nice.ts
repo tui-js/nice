@@ -192,7 +192,10 @@ export class Nice {
     const marginLine = " ".repeat(width + marginX + paddingX + borderX);
 
     if (margin?.top) {
-      string += (marginLine + "\n").repeat(margin.top);
+      const topMarginLine = marginLine + "\n";
+      for (let i = 0; i < margin.top; ++i) {
+        string += topMarginLine;
+      }
     }
 
     const leftMargin = " ".repeat(margin.left);
@@ -202,50 +205,26 @@ export class Nice {
       string += leftMargin + border.getTop(width + paddingX) + rightMargin + "\n";
     }
 
-    // TODO: Try to create line only when there's no text on current line
-    let line = "";
     let leftSide = "";
     let rightSide = "";
 
-    if (border) {
-      line += border.getLeft();
-      leftSide += border.getLeft();
-    }
+    if (margin?.left) leftSide += leftMargin;
 
-    if (padding?.left) {
-      const padLeft = style(" ".repeat(padding.left));
-      line += padLeft;
-      leftSide += padLeft;
-    }
+    if (border) leftSide += border.getLeft();
 
-    line += style(" ".repeat(width));
+    if (padding?.left) leftSide += style(" ".repeat(padding.left));
+    if (padding?.right) rightSide += style(" ".repeat(padding.right));
 
-    if (padding?.right) {
-      const padRight = style(" ".repeat(padding.right));
-      line += padRight;
-      rightSide += padRight;
-    }
+    if (border) rightSide += border.getRight();
 
-    if (border) {
-      const right = border.getRight();
-      line += right;
-      rightSide += right;
-    }
+    if (margin?.right) rightSide += rightMargin;
 
-    if (margin?.left) {
-      const marLeft = " ".repeat(margin.left);
-      line = marLeft + line;
-      leftSide = marLeft + leftSide;
-    }
-
-    if (margin?.right) {
-      const marRight = " ".repeat(margin.right);
-      line += marRight;
-      rightSide += marRight;
-    }
-
+    const line = leftSide + style(" ".repeat(width)) + rightSide;
     if (padding?.top) {
-      string += (line + "\n").repeat(padding.top);
+      const padTop = line + "\n";
+      for (let i = 0; i < padding.top; ++i) {
+        string += padTop;
+      }
     }
 
     const { verticalAlign, horizontalAlign } = text;
@@ -337,7 +316,10 @@ export class Nice {
     }
 
     if (padding?.bottom) {
-      string += "\n" + (line + "\n").repeat(padding.bottom - 1) + line;
+      const padLine = "\n" + line;
+      for (let i = 0; i < padding.bottom; ++i) {
+        string += padLine;
+      }
     }
 
     if (border) {
@@ -345,7 +327,10 @@ export class Nice {
     }
 
     if (margin?.bottom) {
-      string += "\n" + (marginLine + "\n").repeat(margin.bottom - 1) + marginLine;
+      const bottomMarginLine = "\n" + marginLine;
+      for (let i = 0; i < margin.bottom; ++i) {
+        string += bottomMarginLine;
+      }
     }
 
     return string;
