@@ -152,7 +152,6 @@ export class Border {
     const { top, left, bottom, right } = borderStyle;
 
     if (top) {
-      console.log(borderStyle, definition);
       styledDefinition.top = style(definition.top);
 
       if (left) {
