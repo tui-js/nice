@@ -114,12 +114,8 @@ export function render() {
     ),
     Nice.layoutVertically(
       HorizontalPosition.Center,
-      e.render(
-        "very long text that will wrap and will fit",
-      ),
-      e.render(
-        "日本 long text that will wrap and totally won't fit",
-      ),
+      e.render("very long text that will wrap and will fit"),
+      e.render("日本 long text that will wrap and totally won't fit"),
     ),
     Nice.layoutVertically(
       HorizontalPosition.Center,
@@ -132,17 +128,19 @@ export function render() {
   const SCREEN_FG = popup.render("Hello");
   const SCREEN_FG2 = popup2.render("Hi");
 
-  return Nice.fitToScreen(Nice.overlay(
-    HorizontalPosition.Left,
-    VerticalPosition.Middle,
-    SCREEN_FG2,
+  return Nice.fitToScreen(
     Nice.overlay(
-      HorizontalPosition.Center,
+      HorizontalPosition.Left,
       VerticalPosition.Middle,
-      SCREEN_FG,
-      SCREEN_BG,
+      SCREEN_FG2,
+      Nice.overlay(
+        HorizontalPosition.Center,
+        VerticalPosition.Middle,
+        SCREEN_FG,
+        SCREEN_BG,
+      ),
     ),
-  ));
+  );
 }
 
 if (import.meta.main) {

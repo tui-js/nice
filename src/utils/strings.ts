@@ -7,7 +7,7 @@ export { characterWidth, stripStyles, textWidth };
 export function fitIntoDimensions(
   text: string,
   width: number,
-  height: number
+  height: number,
 ): string {
   let fit = "";
 
