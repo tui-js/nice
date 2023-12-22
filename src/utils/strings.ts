@@ -4,48 +4,59 @@ import { characterWidth, stripStyles, textWidth } from "../deps.ts";
 
 export { characterWidth, stripStyles, textWidth };
 
-export function fitIntoDimensions(text: string, width: number, height: number): string {
-  let fitted = "";
+export function fitIntoDimensions(
+  text: string,
+  width: number,
+  height: number
+): string {
+  let fit = "";
 
   let currentWidth = 0;
   let currentHeight = 0;
 
-  let hasSkip = false;
-  let minimalSkip = 0;
+  let ansi = false;
   let waitTillNewline = false;
 
-  let ansi = false;
-  const len = text.length;
-  for (let i = 0; i < len; ++i) {
+  for (let i = 0; i < text.length; ++i) {
     const char = text[i];
-    if (char === "\x1b") {
-      ansi = true;
-    } else if (ansi && isFinalAnsiByte(char)) {
-      ansi = false;
-    } else if (!ansi) {
+
+    // Skip to the next newline (we reached width)
+    if (waitTillNewline) {
       if (char === "\n") {
-        if (++currentHeight > height) break;
-        currentWidth = 0;
         waitTillNewline = false;
-        hasSkip = true;
-      } else if (!waitTillNewline) {
-        const charWidth = characterWidth(char);
-        if (currentWidth + charWidth >= width) {
-          waitTillNewline = true;
-          if (hasSkip) i += minimalSkip;
-        } else {
-          currentWidth += charWidth;
+        currentWidth = 0;
+        currentHeight += 1;
+        if (currentHeight == height) {
+          break;
         }
-      } else {
-        if (!hasSkip) ++minimalSkip;
-        continue;
       }
+      fit += char;
+      continue;
     }
 
-    fitted += char;
+    if (char === "\x1b") {
+      ansi = true;
+      // ["\x1b", "[", "X", "m"] <-- shortest ansi sequence
+      // skip these 3 characters
+      fit += char;
+      fit += text[++i];
+      fit += text[++i];
+      continue;
+    } else if (!ansi) {
+      const charWidth = characterWidth(char);
+      if (currentWidth + charWidth >= width) {
+        waitTillNewline = true;
+      } else {
+        currentWidth += charWidth;
+      }
+    } else if (isFinalAnsiByte(char)) {
+      ansi = false;
+    }
+
+    fit += char;
   }
 
-  return fitted;
+  return fit;
 }
 
 export function dimensions(text: string): { width: number; height: number } {
@@ -55,17 +66,19 @@ export function dimensions(text: string): { width: number; height: number } {
   let ansi = false;
   let gotWidth = false;
   const len = text.length;
+
   for (let i = 0; i < len; ++i) {
     const char = text[i];
+
     if (char === "\x1b") {
       ansi = true;
-      i += 2; // [ "\x1b" "[" "X" "m" ] <-- shortest ansi sequence
+      i += 2; // ["\x1b", "[", "X", "m"] <-- shortest ansi sequence
     } else if (isFinalAnsiByte(char) && ansi) {
       ansi = false;
     } else if (!ansi) {
       if (char === "\n") {
         height++;
-        gotWidth ||= true;
+        gotWidth = true;
       } else if (!gotWidth) {
         width += characterWidth(char);
       }
@@ -203,8 +216,7 @@ export function slice(text: string, from: number, to: number): string {
 export function isFinalAnsiByte(character: string): boolean {
   const codePoint = character.charCodeAt(0);
   // don't include 0x70–0x7E range because its considered "private"
-  // FIXME: this "not 91" shouldnt be checked here, ansi logic needs to be improved around all functions
-  return codePoint !== 91 && codePoint >= 0x40 && codePoint < 0x70;
+  return codePoint >= 0x40 && codePoint < 0x70;
 }
 
 // TODO: tests for that
