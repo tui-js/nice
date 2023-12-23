@@ -4,7 +4,6 @@ import { Border, type BorderStyle } from "./border.ts";
 import { crop, insert, textWidth } from "./utils/strings.ts";
 
 // TODO: modularize the Nice class
-// TODO: temporarily store blocks in a map
 // TODO: Tests, especially with weird characters
 // TODO: Store metadata about generated definitions
 
@@ -139,7 +138,6 @@ export class Nice {
         switch (text.wrap) {
           case "wrap": {
             let spaceIndex = textLine.lastIndexOf(" ");
-            const nextLine = textLines[i + 1];
             let start: string;
             let end: string;
 
@@ -158,6 +156,7 @@ export class Nice {
               end = textLine.slice(start.length);
             }
 
+            const nextLine = textLines[i + 1];
             if (nextLine) {
               textLines.splice(i, 2, start, end + " " + nextLine);
             } else {
@@ -346,21 +345,20 @@ export class Nice {
 
   static layoutHorizontally(verticalPosition: number, ...strings: string[]): string {
     const blocks = strings.map((x) => x.split("\n"));
-    const maxWidths = blocks.map((x) =>
-      x.reduce((p, n) => {
-        const nextWidth = textWidth(n);
-        return p > nextWidth ? p : nextWidth;
-      }, 0)
-    );
-    const maxHeight = blocks.reduce((p, n) => p > n.length ? p : n.length, 0);
 
-    let string = "";
+    const widths = strings.map((x) => textWidth(x));
+    const maxHeight = blocks.reduce(
+      (maxHeight, block) => Math.max(maxHeight, block.length),
+      0,
+    );
+
+    let output = "";
     for (let y = 0; y < maxHeight; ++y) {
       let row = "";
 
       for (const i in blocks) {
         const block = blocks[i];
-        const maxWidth = maxWidths[i];
+        const maxWidth = widths[i];
 
         const yOffset = Math.round((maxHeight - block.length) * verticalPosition);
         let line = block[y - yOffset] ?? "";
@@ -373,48 +371,51 @@ export class Nice {
         row += line;
       }
 
-      string += row + "\n";
+      output += row + "\n";
     }
 
-    return string;
+    while (output.endsWith("\n")) {
+      output = output.slice(0, -1);
+    }
+
+    return output;
   }
 
-  static #blocks: string[][] = [];
-
   static layoutVertically(horizontalPosition: number, ...strings: string[]): string {
-    const blocks = this.#blocks;
+    let output = "";
 
-    let maxWidth = 0;
+    const widths = strings.map((x) => textWidth(x));
+    const maxWidth = widths.reduce((maxWidth, x) => {
+      return Math.max(maxWidth, x);
+    }, 0);
 
-    for (const string of strings) {
-      const block = string.split("\n");
-      blocks.push(block);
+    for (const i in strings) {
+      const string = strings[i];
+      const width = widths[i];
 
-      const width = textWidth(block[0]);
-      maxWidth = Math.max(maxWidth, width);
-    }
+      if (width === maxWidth) {
+        output += string + "\n";
+        continue;
+      }
 
-    let string = "";
-
-    for (const block of blocks) {
-      for (let line of block) {
+      for (let line of string.split("\n")) {
         const lineWidth = textWidth(line);
+
         if (lineWidth < maxWidth) {
           const lacksLeft = Math.round((maxWidth - lineWidth) * horizontalPosition);
           const lacksRight = maxWidth - lineWidth - lacksLeft;
           line = " ".repeat(lacksLeft) + line + " ".repeat(lacksRight);
         }
 
-        string += line + "\n";
+        output += line + "\n";
       }
     }
 
-    // Clean blocks
-    while (blocks.length) {
-      blocks.pop();
+    while (output.endsWith("\n")) {
+      output = output.slice(0, -1);
     }
 
-    return string;
+    return output;
   }
 
   // overlay one string on top of another
@@ -425,7 +426,7 @@ export class Nice {
     bg: string,
   ): string {
     if (!isValidPosition(horizontalPosition) || !isValidPosition(verticalPosition)) {
-      throw "Positions should be in range from 0 to 1.";
+      throw new Error("Positions should be in range from 0 to 1.");
     }
 
     const fgBlock = fg.split("\n");
@@ -434,7 +435,7 @@ export class Nice {
     const fgHeight = fgBlock.length;
     const bgHeight = bgBlock.length;
     if (fgHeight > bgHeight) {
-      throw "You can't overlay foreground that's higher than background";
+      throw new Error("You can't overlay foreground that's higher than background");
     }
 
     let fgWidth = 0;
@@ -450,28 +451,32 @@ export class Nice {
     }
 
     if (fgWidth > bgWidth) {
-      throw "You can't overlay foreground that's wider than background";
+      throw new Error("You can't overlay foreground that's wider than background");
     }
 
     const offsetX = Math.round((bgWidth - fgWidth) * horizontalPosition);
     const offsetY = Math.round((bgHeight - fgHeight) * verticalPosition);
 
-    let string = "";
+    let output = "";
 
-    for (const i in bgBlock) {
-      const index = +i - offsetY;
-      const bgLine = bgBlock[i];
+    for (const bgIndex in bgBlock) {
+      const index = +bgIndex - offsetY;
+      const bgLine = bgBlock[bgIndex];
 
       if (index < 0 || index >= fgHeight) {
-        string += bgLine + "\n";
+        output += bgLine + "\n";
         continue;
       }
 
       const fgLine = fgBlock[index];
-      string += insert(bgLine, fgLine, offsetX) + "\n";
+      output += insert(bgLine, fgLine, offsetX) + "\n";
     }
 
-    return string;
+    while (output.endsWith("\n")) {
+      output = output.slice(0, -1);
+    }
+
+    return output;
   }
 
   static fitToScreen(string: string): string {
