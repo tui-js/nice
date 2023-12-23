@@ -1,8 +1,6 @@
 // Copyright 2023 Im-Beast. All rights reserved. MIT license.
-
-import { characterWidth, stripStyles, textWidth } from "../deps.ts";
-
-export { characterWidth, stripStyles, textWidth };
+import { characterWidth, stripStyles } from "../deps.ts";
+export { characterWidth, stripStyles };
 
 export function fitIntoDimensions(
   text: string,
@@ -14,7 +12,7 @@ export function fitIntoDimensions(
   let currentWidth = 0;
   let currentHeight = 0;
 
-  let ansi = false;
+  let ansi = 0;
   let waitTillNewline = false;
 
   for (let i = 0; i < text.length; ++i) {
@@ -35,22 +33,24 @@ export function fitIntoDimensions(
     }
 
     if (char === "\x1b") {
-      ansi = true;
+      ansi = 1;
       // ["\x1b", "[", "X", "m"] <-- shortest ansi sequence
       // skip these 3 characters
       fit += char;
       fit += text[++i];
       fit += text[++i];
       continue;
-    } else if (!ansi) {
+    } else if (ansi >= 3 && isFinalAnsiByte(char)) {
+      ansi = 0;
+    } else if (ansi > 0) {
+      ansi += 1;
+    } else {
       const charWidth = characterWidth(char);
       if (currentWidth + charWidth >= width) {
         waitTillNewline = true;
       } else {
         currentWidth += charWidth;
       }
-    } else if (isFinalAnsiByte(char)) {
-      ansi = false;
     }
 
     fit += char;
@@ -95,24 +95,27 @@ export function dimensions(text: string): { width: number; height: number } {
  *  - Input text was shorter than specified width
  *  - Input text had full-width characters which couldn't fit into {width}
  */
-export function crop(text: string, width: number): string {
+export function crop(text: string, width: number, ellipsis = "…"): string {
   let cropped = "";
   let croppedWidth = 0;
-  let ansi = false;
+  let ansi = 0;
 
   const len = text.length;
   for (let i = 0; i < len; ++i) {
     const char = text[i];
 
     if (char === "\x1b") {
-      ansi = true;
-    } else if (ansi && isFinalAnsiByte(char)) {
-      ansi = false;
-    } else if (!ansi) {
+      ansi = 1;
+    } else if (ansi >= 3 && isFinalAnsiByte(char)) {
+      ansi = 0;
+    } else if (ansi > 0) {
+      ansi += 1;
+    } else {
       const charWidth = characterWidth(char);
+
       if (croppedWidth + charWidth > width) {
         if (croppedWidth + 1 === width) {
-          cropped += " ";
+          cropped += ellipsis;
         }
         break;
       } else {
@@ -129,46 +132,45 @@ export function crop(text: string, width: number): string {
 /**
  * Crops the start of {text} by given {width}
  */
-export function cropStart(text: string, width: number): string {
-  let ansi = false;
+export function cropStart(text: string, width: number, ellipsis = "…"): string {
+  let ansi = 0;
 
   let croppedWidth = 0;
-  let cropFrom = 0;
-
-  let lastSingularAnsiSeq = "";
+  let lastAnsiKind = "";
   let preserveAnsiSeq = "";
 
-  const len = text.length;
-  for (let i = 0; i < len; ++i) {
+  for (let i = 0; i < text.length; ++i) {
     const char = text[i];
 
     if (char === "\x1b") {
-      ansi = true;
-
-      if (lastSingularAnsiSeq === "\x1b[0m") {
+      ansi = 1;
+      preserveAnsiSeq += char;
+    } else if (ansi >= 3 && isFinalAnsiByte(char)) {
+      if (lastAnsiKind === "0") {
         preserveAnsiSeq = "";
-      } else {
-        preserveAnsiSeq += lastSingularAnsiSeq;
+      }
+      preserveAnsiSeq += char;
+      ansi = 0;
+    } else if (ansi > 0) {
+      if (ansi === 2) {
+        lastAnsiKind += char;
       }
 
-      lastSingularAnsiSeq = char;
-    } else if (ansi) {
-      if (isFinalAnsiByte(char)) {
-        ansi = false;
-      }
-      lastSingularAnsiSeq += char;
-    } else if (!ansi) {
+      ansi += 1;
+      preserveAnsiSeq += char;
+    } else {
       const charWidth = characterWidth(char);
-      if (croppedWidth + charWidth > width) {
-        cropFrom = i;
-        break;
+      if (croppedWidth === width) {
+        return preserveAnsiSeq + text.slice(i);
+      } else if (croppedWidth === width + 1) {
+        return preserveAnsiSeq + ellipsis + text.slice(i);
       } else {
         croppedWidth += charWidth;
       }
     }
   }
 
-  return preserveAnsiSeq + text.slice(cropFrom);
+  return "";
 }
 
 /**
@@ -182,8 +184,7 @@ export function cropEnd(text: string, width: number): string {
  * `String.prototype.slice` but using widths
  */
 export function slice(text: string, from: number, to: number): string {
-  let ansi = false;
-
+  let ansi = 0;
   let croppedWidth = 0;
   let sliced = "";
 
@@ -192,10 +193,12 @@ export function slice(text: string, from: number, to: number): string {
     const char = text[i];
 
     if (char === "\x1b") {
-      ansi = true;
-    } else if (ansi && isFinalAnsiByte(char)) {
-      ansi = false;
-    } else if (!ansi) {
+      ansi = 1;
+    } else if (ansi >= 3 && isFinalAnsiByte(char)) {
+      ansi = 0;
+    } else if (ansi > 0) {
+      ansi += 1;
+    } else {
       const charWidth = characterWidth(char);
 
       if (croppedWidth + charWidth > to) {
@@ -214,82 +217,58 @@ export function slice(text: string, from: number, to: number): string {
 }
 
 export function isFinalAnsiByte(character: string): boolean {
+  // TODO: Remove this check later on, for now its used as a safeguard
+  if (character === "[") {
+    throw new Error("Bad ANSI handling logic");
+  }
+
   const codePoint = character.charCodeAt(0);
   // don't include 0x70–0x7E range because its considered "private"
   return codePoint >= 0x40 && codePoint < 0x70;
 }
 
-// TODO: tests for that
-// TOOD: this can probably be optimized further
+// TODO: tests
 /** Insert {fg} on top of {bg} starting from {pos} */
-export function insert(bg: string, fg: string, pos: number): string {
-  let output = "";
+export function insert(bg: string, fg: string, pos: number, ellipsis = "…"): string {
+  const fgWidth = textWidth(fg);
+  const border = pos + fgWidth;
 
-  let done = false;
-  let currentPos = 0;
-  let ansi = 0;
-  let lastStyle = "";
-  let flushStyle = false;
+  const start = crop(bg, pos, ellipsis);
+  const end = cropStart(bg, border, ellipsis);
 
-  const border = pos + textWidth(fg);
+  const output = start + "\x1b[0m" + fg + end;
+  return output;
+}
 
-  for (let i = 0; i < bg.length; ++i) {
-    const char = bg[i];
+/**
+ * Returns real {text} width
+ * Returns width of the first line if {text} contains newlines
+ */
+export function textWidth(text: string, start = 0): number {
+  if (!text) return 0;
 
-    if (char === "\x1b") {
-      // possible start of an ansi sequence
-      ++ansi;
-    } else if (ansi === 1) {
-      // confirm whether ansi sequence has been started
-      if (char === "[") {
-        lastStyle += "\x1b" + char;
-        ++ansi;
-      } else {
-        ansi = 0;
-      }
-    } else if (ansi > 1) {
-      const isFinalByte = isFinalAnsiByte(char);
-      lastStyle += char;
+  let width = 0;
+  let ansi = false;
+  const len = text.length;
+  loop: for (let i = start; i < len; ++i) {
+    const char = text[i];
 
-      if (isFinalByte) {
-        flushStyle = true;
-
-        output += lastStyle;
-
-        // End of ansi sequence
-        if (ansi === 3 && lastStyle[lastStyle.length - 2] === "0") {
-          // Style is "\x1b[0m" – no need to store the last style when all of them got cleared
-          lastStyle = "";
-          flushStyle = false;
+    switch (char) {
+      case "\x1b":
+        ansi = true;
+        i += 2;
+        break;
+      case "\n":
+        break loop;
+      default:
+        if (!ansi) {
+          width += characterWidth(char);
+        } else if (isFinalAnsiByte(char)) {
+          ansi = false;
         }
-
-        ansi = 0;
-      } else {
-        // Part of an ansi sequence
-        ++ansi;
-      }
-    } else {
-      const width = textWidth(char);
-      currentPos += width;
-
-      if (currentPos === pos + 1 && width > 1) {
-        // if full width character in bg gets cut off at the start by fg replace it with space
-        output += "…";
-      } else if (currentPos <= pos || currentPos > border) {
-        if (currentPos === border + 1 && width > 1) {
-          // if full width character in bg gets cut off at the end by fg replace it with space
-          output += "…";
-        } else {
-          output += char;
-        }
-      }
-    }
-
-    if (!done && !flushStyle && currentPos >= pos) {
-      output += fg;
-      done = true;
+        break;
     }
   }
 
-  return output;
+  return width;
 }
