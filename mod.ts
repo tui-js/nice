@@ -2,3 +2,4 @@
 export * from "./src/border.ts";
 export * from "./src/nice.ts";
 export * from "./src/utils/mod.ts";
+export * from "./src/units.ts";

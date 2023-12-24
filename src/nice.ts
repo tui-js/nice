@@ -3,24 +3,17 @@ import { fitIntoDimensions } from "../mod.ts";
 import { Border, type BorderStyle } from "./border.ts";
 import { crop, insert, textWidth } from "./utils/strings.ts";
 
+// FIXME: Negative positions
 // TODO: modularize the Nice class
 // TODO: Tests, especially with weird characters
 // TODO: Store metadata about generated definitions
 
-export function isValidPosition(position: HorizontalPosition | VerticalPosition | number): boolean {
-  return position >= 0 && position <= 1;
-}
+export function normalizePosition(position: number, relative: number): number {
+  if (Number.isInteger(position)) {
+    return position;
+  }
 
-export enum VerticalPosition {
-  Top = 0,
-  Middle = 0.5,
-  Bottom = 1,
-}
-
-export enum HorizontalPosition {
-  Left = 0,
-  Center = 0.5,
-  Right = 1,
+  return Math.round(relative * position);
 }
 
 export interface Style {
@@ -425,10 +418,6 @@ export class Nice {
     fg: string,
     bg: string,
   ): string {
-    if (!isValidPosition(horizontalPosition) || !isValidPosition(verticalPosition)) {
-      throw new Error("Positions should be in range from 0 to 1.");
-    }
-
     const fgBlock = fg.split("\n");
     const bgBlock = bg.split("\n");
 
@@ -454,8 +443,8 @@ export class Nice {
       throw new Error("You can't overlay foreground that's wider than background");
     }
 
-    const offsetX = Math.round((bgWidth - fgWidth) * horizontalPosition);
-    const offsetY = Math.round((bgHeight - fgHeight) * verticalPosition);
+    const offsetX = normalizePosition(horizontalPosition, bgWidth - fgWidth);
+    const offsetY = normalizePosition(verticalPosition, bgHeight - fgHeight);
 
     let output = "";
 
