@@ -12,6 +12,8 @@ const a = new Nice({
   border: {
     type: "thick",
     style: crayon.white.bold,
+    x: true,
+    y: true,
   },
   padding: {
     bottom: 1,
