@@ -93,7 +93,21 @@ export class Nice {
   }
 
   clone(): Nice {
-    return new Nice(this);
+    return new Nice({
+      style: this.style,
+      width: this.width,
+      height: this.height,
+      text: this.text,
+      margin: this.margin,
+      padding: this.padding,
+      border: {
+        top: this.border.top || undefined,
+        bottom: this.border.bottom || undefined,
+        left: this.border.left || undefined,
+        right: this.border.right || undefined,
+        type: this.border.type,
+      },
+    });
   }
 
   static clone(from: Nice): Nice {
