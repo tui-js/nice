@@ -37,7 +37,7 @@ const creators: ((overflow: OverflowType, wrap: WrapType, ellipsisString?: strin
         width: 25,
         height: 2,
         text: { overflow, wrap, ellipsisString },
-      }).render(ELLIPSIS_NEWLINE_TEXT),
+      }).draw(ELLIPSIS_NEWLINE_TEXT),
     );
   },
   (overflow, wrap, ellipsisString) => {
@@ -56,7 +56,7 @@ const creators: ((overflow: OverflowType, wrap: WrapType, ellipsisString?: strin
         width: 20,
         height: 1,
         text: { overflow, wrap, ellipsisString },
-      }).render(ELLIPSIS_INLINE_WRAPPING_TEXT),
+      }).draw(ELLIPSIS_INLINE_WRAPPING_TEXT),
     );
   },
 ];
@@ -78,16 +78,16 @@ for (let overflow of possibleOverflows) {
     }
   }
 
-  verticals.push(Nice.layoutVertically(unit("center"), ...objects));
+  verticals.push(Nice.vertical(unit("center"), ...objects));
 }
 
-const frame = Nice.layoutHorizontally(unit("middle"), ...verticals);
+const frame = Nice.horizontal(unit("middle"), ...verticals);
 
 export function render() {
   console.log(
-    Nice.layoutVertically(
+    Nice.vertical(
       unit("center"),
-      TEST_INFO.render(
+      TEST_INFO.draw(
         `All of these boxes should contain text "${testMaybePasses}".\nIf some of the text is missing or even a part of "${testFail}" is visible test fails.`,
       ),
       frame,
