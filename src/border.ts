@@ -1,29 +1,7 @@
 // Copyright 2023 Im-Beast. All rights reserved. MIT license.
-import { Style } from "./nice.ts";
+import { Style, TypeAorB } from "./types.ts";
 
-export interface BorderStyle {
-  type: BorderType;
-  style: Style;
-
-  top: boolean;
-  bottom: boolean;
-  left: boolean;
-  right: boolean;
-}
-
-export interface BorderDefinition<_Styled extends boolean> {
-  top: string;
-  bottom: string;
-  left: string;
-  right: string;
-  topLeft: string;
-  topRight: string;
-  bottomLeft: string;
-  bottomRight: string;
-}
-
-export type BorderType = "sharp" | "rounded" | "thick" | "double" | "block";
-export const Borders: Record<BorderType, BorderDefinition<false>> = {
+export const Borders = {
   sharp: {
     top: "─",
     bottom: "─",
@@ -74,110 +52,81 @@ export const Borders: Record<BorderType, BorderDefinition<false>> = {
     bottomLeft: "█",
     bottomRight: "█",
   },
-};
+} as const;
 
-export class Border {
-  borderStyle: BorderStyle;
-  definition: BorderDefinition<true>;
+export type BorderType = keyof typeof Borders;
 
-  constructor(borderStyle: BorderStyle) {
-    this.borderStyle = borderStyle;
-    this.definition = Border.styleDefinition(borderStyle);
-  }
+export type BorderX<T> = TypeAorB<{ left: T; right: T }, { x: T }>;
+export type BorderY<T> = TypeAorB<{ top: T; bottom: T }, { y: T }>;
 
-  getTop(width: number) {
-    const { topLeft, top, topRight } = this.definition;
-    return topLeft + top.repeat(width) + topRight;
-  }
+export type UniqueStyleBorder = BorderX<Style> & BorderY<Style> & { type: BorderType };
+export type SharedStyleBorder = BorderX<boolean> & BorderY<boolean> & { type: BorderType; style: Style };
 
-  getBottom(width: number) {
-    const { bottomLeft, bottom, bottomRight } = this.definition;
-    return bottomLeft + bottom.repeat(width) + bottomRight;
-  }
+export type BorderDefinition = TypeAorB<UniqueStyleBorder, SharedStyleBorder>;
 
-  getLeft() {
-    return this.definition.left;
-  }
+export interface NormalizedBorder {
+  type: BorderType;
+  top: Style | false;
+  bottom: Style | false;
+  left: Style | false;
+  right: Style | false;
+}
 
-  getRight() {
-    return this.definition.right;
-  }
-
-  restyleDefinition(): void {
-    const { top, left, bottom, right, type, style } = this.borderStyle;
-
-    const styledDefinition = this.definition;
-    const definition = Borders[type];
-
-    if (top) {
-      styledDefinition.top = style(definition.top);
-      styledDefinition.topLeft = left ? style(definition.topLeft) : " ";
-      styledDefinition.topRight = right ? style(definition.topRight) : " ";
-    } else {
-      styledDefinition.top = " ";
-      styledDefinition.topLeft = " ";
-      styledDefinition.topRight = " ";
-    }
-
-    if (bottom) {
-      styledDefinition.bottom = style(definition.bottom);
-
-      styledDefinition.bottomLeft = left ? style(definition.bottomLeft) : " ";
-      styledDefinition.bottomRight = right ? style(definition.bottomRight) : " ";
-    } else {
-      styledDefinition.bottom = " ";
-      styledDefinition.bottomLeft = " ";
-      styledDefinition.bottomRight = " ";
-    }
-
-    styledDefinition.left = left ? style(definition.left) : " ";
-    styledDefinition.right = right ? style(definition.right) : " ";
-  }
-
-  static styleDefinition(borderStyle: BorderStyle): BorderDefinition<true> {
-    const definition = Borders[borderStyle.type];
-    const style = borderStyle.style;
-
-    const styledDefinition: BorderDefinition<true> = {
-      top: "",
-      topLeft: "",
-      topRight: "",
-      bottom: "",
-      bottomLeft: "",
-      bottomRight: "",
-      left: "",
-      right: "",
+export function normalizeBorder($border?: Partial<BorderDefinition>): NormalizedBorder {
+  if ($border && "style" in $border) {
+    const border = $border as SharedStyleBorder;
+    const style = border.style;
+    return {
+      type: border.type,
+      top: (border.top || border.y) ? style : false,
+      bottom: (border.bottom || border.y) ? style : false,
+      left: (border.left || border.x) ? style : false,
+      right: (border.right || border.x) ? style : false,
     };
+  }
 
-    const { top, left, bottom, right } = borderStyle;
+  const border = $border as UniqueStyleBorder | undefined;
+  return {
+    type: border?.type || "sharp",
+    top: border?.top || border?.y || false,
+    bottom: border?.bottom || border?.y || false,
+    left: border?.left || border?.x || false,
+    right: border?.right || border?.x || false,
+  };
+}
 
-    if (top) {
-      styledDefinition.top = style(definition.top);
+export function applyBorder(lines: string[], width: number, border: NormalizedBorder): void {
+  const top = border.top;
+  const bottom = border.bottom;
+  const left = border.left;
+  const right = border.right;
 
-      if (left) {
-        styledDefinition.topLeft = style(definition.topLeft);
-      }
+  const charMap = Borders[border.type];
 
-      if (right) {
-        styledDefinition.topRight = style(definition.topRight);
-      }
+  if (left || right) {
+    const leftChar = left ? left(charMap.left) : "";
+    const rightChar = right ? right(charMap.right) : "";
+
+    for (const i in lines) {
+      lines[i] = leftChar + lines[i] + rightChar;
     }
+  }
 
-    if (bottom) {
-      styledDefinition.bottom = style(definition.bottom);
+  if (top) {
+    let topLine = "";
+    if (left) topLine += charMap.topLeft;
+    topLine += charMap.top.repeat(width);
+    if (right) topLine += charMap.topRight;
 
-      if (left) {
-        styledDefinition.bottomLeft = style(definition.bottomLeft);
-      }
+    lines.unshift(top(topLine));
+  }
 
-      if (right) {
-        styledDefinition.bottomRight = style(definition.bottomRight);
-      }
-    }
+  if (bottom) {
+    let bottomLine = "";
+    if (left) bottomLine += charMap.bottomLeft;
+    bottomLine += charMap.bottom.repeat(width);
+    if (right) bottomLine += charMap.bottomRight;
 
-    if (left) styledDefinition.left = style(definition.left);
-    if (right) styledDefinition.right = style(definition.right);
-
-    return styledDefinition;
+    lines.push(bottom(bottomLine));
   }
 }
