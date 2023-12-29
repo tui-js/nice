@@ -1,10 +1,20 @@
 // Copyright 2023 Im-Beast. All rights reserved. MIT license.
 import { fitIntoDimensions } from "../mod.ts";
-import { applyBorder, BorderDefinition, normalizeBorder, NormalizedBorder } from "./border.ts";
-import { applyMargin, MarginDefinition, NormalizedMargin, normalizeMargin } from "./margin.ts";
-import { applyStyle, resizeAndAlignHorizontally, resizeAndAlignVertically, wrapLines } from "./text.ts";
-import { Style } from "./types.ts";
 import { insert, textWidth } from "./utils/strings.ts";
+
+import { applyBorder, type BorderDefinition, normalizeBorder, type NormalizedBorderDefinition } from "./border.ts";
+import { applyMargin, type MarginDefinition, type NormalizedMarginDefinition, normalizeMargin } from "./margin.ts";
+import {
+  applyStyle,
+  type NormalizedTextDefinition,
+  normalizeTextDefinition,
+  resizeAndAlignHorizontally,
+  resizeAndAlignVertically,
+  type TextDefinition,
+  wrapLines,
+} from "./text.ts";
+
+import type { Style } from "./types.ts";
 
 // FIXME: Negative positions
 // TODO: Tests, especially with weird characters
@@ -17,26 +27,11 @@ export function normalizePosition(position: number, relative: number): number {
   return Math.round(relative * position);
 }
 
-export interface Left {
-  top: boolean;
-  bottom: boolean;
-  left: boolean;
-  right: boolean;
-}
-
-export interface TextStyle {
-  horizontalAlign: "left" | "right" | "center" | "justify";
-  verticalAlign: "top" | "middle" | "bottom";
-  overflow: "clip" | "ellipsis";
-  ellipsisString?: string;
-  wrap: "wrap" | "nowrap" | "balance";
-}
-
 export interface NiceOptions {
   style: Style;
   width?: number;
   height?: number;
-  text?: Partial<TextStyle>;
+  text?: Partial<TextDefinition>;
   margin?: Partial<MarginDefinition>;
   padding?: Partial<MarginDefinition>;
   border?: Partial<BorderDefinition>;
@@ -48,11 +43,10 @@ export class Nice {
   width?: number;
   height?: number;
 
-  margin: NormalizedMargin;
-  padding: NormalizedMargin;
-  border: NormalizedBorder;
-
-  text: TextStyle;
+  margin: NormalizedMarginDefinition;
+  padding: NormalizedMarginDefinition;
+  border: NormalizedBorderDefinition;
+  text: NormalizedTextDefinition;
 
   constructor(options: NiceOptions) {
     this.style = options.style;
@@ -62,14 +56,7 @@ export class Nice {
     this.width = width;
     this.height = height;
 
-    this.text = {
-      overflow: "clip",
-      wrap: "wrap",
-      verticalAlign: "top",
-      horizontalAlign: "left",
-      ...text,
-    };
-
+    this.text = normalizeTextDefinition(text);
     this.border = normalizeBorder(border);
     this.margin = normalizeMargin(margin);
     this.padding = normalizeMargin(padding);

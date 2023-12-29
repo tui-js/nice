@@ -5,14 +5,14 @@ export type MarginX = TypeAorB<{ left: number; right: number }, { x: number }>;
 export type MarginY = TypeAorB<{ top: number; bottom: number }, { y: number }>;
 export type MarginDefinition = MarginX & MarginY;
 
-export interface NormalizedMargin {
+export interface NormalizedMarginDefinition {
   top: number;
   bottom: number;
   left: number;
   right: number;
 }
 
-export function normalizeMargin(margin?: Partial<MarginDefinition>): NormalizedMargin {
+export function normalizeMargin(margin?: Partial<MarginDefinition>): NormalizedMarginDefinition {
   return {
     top: margin?.top ?? margin?.y ?? 0,
     bottom: margin?.bottom ?? margin?.y ?? 0,
@@ -21,7 +21,7 @@ export function normalizeMargin(margin?: Partial<MarginDefinition>): NormalizedM
   };
 }
 
-export function applyMargin(lines: string[], width: number, margin: NormalizedMargin, char = " "): void {
+export function applyMargin(lines: string[], width: number, margin: NormalizedMarginDefinition, char = " "): void {
   const charWidth = characterWidth(char);
   const leftSide = char.repeat(margin.left / charWidth);
   const rightSide = margin.left === margin.right ? leftSide : char.repeat(margin.right / charWidth);

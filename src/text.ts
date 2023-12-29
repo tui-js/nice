@@ -17,6 +17,25 @@ export interface TextDefinition {
   verticalAlign: TextVerticalAlign;
 }
 
+export interface NormalizedTextDefinition {
+  wrap: TextWrapType;
+  overflow: TextOverflowType;
+  ellipsisString: string;
+
+  horizontalAlign: TextHorizontalAlign;
+  verticalAlign: TextVerticalAlign;
+}
+
+export function normalizeTextDefinition(text?: Partial<TextDefinition>): NormalizedTextDefinition {
+  return {
+    wrap: text?.wrap ?? "wrap",
+    overflow: text?.overflow ?? "clip",
+    ellipsisString: text?.ellipsisString ?? "…",
+    horizontalAlign: text?.horizontalAlign ?? "left",
+    verticalAlign: text?.verticalAlign ?? "top",
+  };
+}
+
 export function applyStyle(lines: string[], style: Style): void {
   for (let i = 0; i < lines.length; i++) {
     lines[i] = style(lines[i]);

@@ -64,7 +64,7 @@ export type SharedStyleBorder = BorderX<boolean> & BorderY<boolean> & { type: Bo
 
 export type BorderDefinition = TypeAorB<UniqueStyleBorder, SharedStyleBorder>;
 
-export interface NormalizedBorder {
+export interface NormalizedBorderDefinition {
   type: BorderType;
   top: Style | false;
   bottom: Style | false;
@@ -72,7 +72,7 @@ export interface NormalizedBorder {
   right: Style | false;
 }
 
-export function normalizeBorder($border?: Partial<BorderDefinition>): NormalizedBorder {
+export function normalizeBorder($border?: Partial<BorderDefinition>): NormalizedBorderDefinition {
   if ($border && "style" in $border) {
     const border = $border as SharedStyleBorder;
     const style = border.style;
@@ -95,7 +95,7 @@ export function normalizeBorder($border?: Partial<BorderDefinition>): Normalized
   };
 }
 
-export function applyBorder(lines: string[], width: number, border: NormalizedBorder): void {
+export function applyBorder(lines: string[], width: number, border: NormalizedBorderDefinition): void {
   const top = border.top;
   const bottom = border.bottom;
   const left = border.left;
