@@ -62,7 +62,12 @@ export class Nice {
     this.padding = normalizeMargin(padding);
   }
 
-  render(input: string): string {
+  static render(input: string[]): string {
+    fitIntoDimensions(input, Deno.consoleSize());
+    return input.join("\n");
+  }
+
+  draw(input: string): string[] {
     const { style, border, margin, padding, text } = this;
 
     const output = input.split("\n");
@@ -89,7 +94,7 @@ export class Nice {
 
     applyMargin(output, width, margin);
 
-    return output.join("\n");
+    return output;
   }
 
   clone(): Nice {
@@ -114,16 +119,16 @@ export class Nice {
     return from.clone();
   }
 
-  static layoutHorizontally(verticalPosition: number, ...strings: string[]): string {
-    const blocks = strings.map((x) => x.split("\n"));
+  static horizontal(verticalPosition: number, ...blocks: string[][]): string[] {
+    const widths = blocks.map((x) => textWidth(x[0]));
 
-    const widths = strings.map((x) => textWidth(x));
     const maxHeight = blocks.reduce(
       (maxHeight, block) => Math.max(maxHeight, block.length),
       0,
     );
 
-    let output = "";
+    const output = [];
+
     for (let y = 0; y < maxHeight; ++y) {
       let row = "";
 
@@ -142,34 +147,30 @@ export class Nice {
         row += line;
       }
 
-      output += row + "\n";
-    }
-
-    while (output.endsWith("\n")) {
-      output = output.slice(0, -1);
+      output.push(row);
     }
 
     return output;
   }
 
-  static layoutVertically(horizontalPosition: number, ...strings: string[]): string {
-    let output = "";
+  static vertical(horizontalPosition: number, ...strings: string[][]): string[] {
+    const output = [];
 
-    const widths = strings.map((x) => textWidth(x));
+    const widths = strings.map((x) => textWidth(x[0]));
     const maxWidth = widths.reduce((maxWidth, x) => {
       return Math.max(maxWidth, x);
     }, 0);
 
-    for (const i in strings) {
+    for (let i = 0; i < strings.length; ++i) {
       const string = strings[i];
       const width = widths[i];
 
       if (width === maxWidth) {
-        output += string + "\n";
+        output.push(...string);
         continue;
       }
 
-      for (let line of string.split("\n")) {
+      for (let line of string) {
         const lineWidth = textWidth(line);
 
         if (lineWidth < maxWidth) {
@@ -178,27 +179,23 @@ export class Nice {
           line = " ".repeat(lacksLeft) + line + " ".repeat(lacksRight);
         }
 
-        output += line + "\n";
+        output.push(line);
       }
-    }
-
-    while (output.endsWith("\n")) {
-      output = output.slice(0, -1);
     }
 
     return output;
   }
 
   // overlay one string on top of another
-  static overlay(horizontalPosition: number, verticalPosition: number, fg: string, bg: string): string {
-    const fgWidth = textWidth(fg);
-    const bgWidth = textWidth(bg);
+  static overlay(horizontalPosition: number, verticalPosition: number, fg: string[], bg: string[]): string[] {
+    const fgWidth = textWidth(fg[0]);
+    const bgWidth = textWidth(bg[0]);
     if (fgWidth > bgWidth) {
       throw new Error("You can't overlay foreground that's wider than background");
     }
 
-    const fgBlock = fg.split("\n");
-    const bgBlock = bg.split("\n");
+    const fgBlock = fg;
+    const bgBlock = bg;
 
     const fgHeight = fgBlock.length;
     const bgHeight = bgBlock.length;
@@ -209,30 +206,21 @@ export class Nice {
     const offsetX = normalizePosition(horizontalPosition, bgWidth - fgWidth);
     const offsetY = normalizePosition(verticalPosition, bgHeight - fgHeight);
 
-    let output = "";
+    const output = [];
 
     for (let i = 0; i < bgHeight; ++i) {
       const j = i - offsetY;
       const bgLine = bgBlock[i];
 
       if (j < 0 || j >= fgHeight) {
-        output += bgLine + "\n";
+        output.push(bgLine);
         continue;
       }
 
       const fgLine = fgBlock[j];
-      output += insert(bgLine, fgLine, offsetX) + "\n";
-    }
-
-    while (output.endsWith("\n")) {
-      output = output.slice(0, -1);
+      output.push(insert(bgLine, fgLine, offsetX));
     }
 
     return output;
-  }
-
-  static fitToScreen(string: string): string {
-    const { columns, rows } = Deno.consoleSize();
-    return fitIntoDimensions(string, columns, rows);
   }
 }
