@@ -1,62 +1,18 @@
 // Copyright 2023 Im-Beast. All rights reserved. MIT license.
 import { characterWidth, stripStyles } from "../deps.ts";
+import { ConsoleDimensions } from "../types.ts";
 export { characterWidth, stripStyles };
 
-export function fitIntoDimensions(
-  text: string,
-  width: number,
-  height: number,
-): string {
-  let fit = "";
-
-  let currentWidth = 0;
-  let currentHeight = 0;
-
-  let ansi = 0;
-  let waitTillNewline = false;
-
-  for (let i = 0; i < text.length; ++i) {
-    const char = text[i];
-
-    // Skip to the next newline (we reached width)
-    if (waitTillNewline) {
-      if (char === "\n") {
-        waitTillNewline = false;
-        currentWidth = 0;
-        currentHeight += 1;
-        if (currentHeight == height) {
-          break;
-        }
-      }
-      fit += char;
-      continue;
-    }
-
-    if (char === "\x1b") {
-      ansi = 1;
-      // ["\x1b", "[", "X", "m"] <-- shortest ansi sequence
-      // skip these 3 characters
-      fit += char;
-      fit += text[++i];
-      fit += text[++i];
-      continue;
-    } else if (ansi >= 3 && isFinalAnsiByte(char)) {
-      ansi = 0;
-    } else if (ansi > 0) {
-      ansi += 1;
-    } else {
-      const charWidth = characterWidth(char);
-      if (currentWidth + charWidth >= width) {
-        waitTillNewline = true;
-      } else {
-        currentWidth += charWidth;
-      }
-    }
-
-    fit += char;
+export function fitIntoDimensions(text: string[], { columns, rows }: ConsoleDimensions): void {
+  while (text.length > rows) {
+    text.pop();
   }
 
-  return fit;
+  for (const i in text) {
+    const line = text[i];
+    if (textWidth(line) <= columns) continue;
+    text[i] = crop(line, columns);
+  }
 }
 
 export function dimensions(text: string): { width: number; height: number } {

@@ -7,3 +7,5 @@ export type TypeAorB<A, B> =
 export interface Style {
   (char: string): string;
 }
+
+export type ConsoleDimensions = ReturnType<typeof Deno.consoleSize>;
