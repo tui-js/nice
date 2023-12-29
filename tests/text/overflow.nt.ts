@@ -3,7 +3,7 @@ import { crayon } from "https://deno.land/x/crayon@3.3.3/mod.ts";
 
 const TEST_INFO = new Nice({
   style: crayon.bgGreen.bold.yellow,
-  border: { type: "double", style: crayon.yellow },
+  border: { type: "double", x: true, y: true, style: crayon.yellow },
   padding: { bottom: 1, top: 1, left: 1, right: 1 },
 });
 
@@ -31,7 +31,7 @@ const creators: ((overflow: OverflowType, wrap: WrapType, ellipsisString?: strin
       borderStyle.bold(`${overflow} + ${wrap}`),
       new Nice({
         style,
-        border: { type: "rounded", style: borderStyle },
+        border: { type: "rounded", x: true, y: true, style: borderStyle },
         padding: { bottom: 1, top: 1, left: 1, right: 1 },
         margin: { bottom: 0, top: 0, right: 1 },
         width: 25,
@@ -50,7 +50,7 @@ const creators: ((overflow: OverflowType, wrap: WrapType, ellipsisString?: strin
       borderStyle.bold(`${overflow} + ${wrap}`),
       new Nice({
         style,
-        border: { type: "rounded", style: borderStyle },
+        border: { type: "rounded", x: true, y: true, style: borderStyle },
         padding: { bottom: 1, top: 1, left: 1, right: 1 },
         margin: { bottom: 0, top: 0, right: 1 },
         width: 20,
