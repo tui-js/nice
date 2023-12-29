@@ -1,12 +1,13 @@
 // Copyright 2023 Im-Beast. All rights reserved. MIT license.
 import { fitIntoDimensions } from "../mod.ts";
-import { Border, type BorderStyle } from "./border.ts";
-import { crop, insert, textWidth } from "./utils/strings.ts";
+import { applyBorder, BorderDefinition, normalizeBorder, NormalizedBorder } from "./border.ts";
+import { applyMargin, MarginDefinition, NormalizedMargin, normalizeMargin } from "./margin.ts";
+import { applyStyle, resizeAndAlignHorizontally, resizeAndAlignVertically, wrapLines } from "./text.ts";
+import { Style } from "./types.ts";
+import { insert, textWidth } from "./utils/strings.ts";
 
 // FIXME: Negative positions
-// TODO: modularize the Nice class
 // TODO: Tests, especially with weird characters
-// TODO: Store metadata about generated definitions
 
 export function normalizePosition(position: number, relative: number): number {
   if (Number.isInteger(position)) {
@@ -16,13 +17,12 @@ export function normalizePosition(position: number, relative: number): number {
   return Math.round(relative * position);
 }
 
-export interface Style {
-  (text: string): string;
+export interface Left {
+  top: boolean;
+  bottom: boolean;
+  left: boolean;
+  right: boolean;
 }
-
-type Side = "top" | "bottom" | "left" | "right";
-export type MarginStyle = { [side in Side]: number };
-export type PaddingStyle = { [side in Side]: number };
 
 export interface TextStyle {
   horizontalAlign: "left" | "right" | "center" | "justify";
@@ -37,9 +37,9 @@ export interface NiceOptions {
   width?: number;
   height?: number;
   text?: Partial<TextStyle>;
-  margin?: Partial<MarginStyle>;
-  padding?: Partial<PaddingStyle>;
-  border?: Border | (Partial<Omit<BorderStyle, "type" | "style">> & Pick<BorderStyle, "type" | "style">);
+  margin?: Partial<MarginDefinition>;
+  padding?: Partial<MarginDefinition>;
+  border?: Partial<BorderDefinition>;
 }
 
 export class Nice {
@@ -48,11 +48,11 @@ export class Nice {
   width?: number;
   height?: number;
 
-  margin: MarginStyle;
-  padding: PaddingStyle;
+  margin: NormalizedMargin;
+  padding: NormalizedMargin;
+  border: NormalizedBorder;
 
   text: TextStyle;
-  border?: Border;
 
   constructor(options: NiceOptions) {
     this.style = options.style;
@@ -62,16 +62,6 @@ export class Nice {
     this.width = width;
     this.height = height;
 
-    if (border) {
-      this.border = border instanceof Border ? border : new Border({
-        top: true,
-        bottom: true,
-        left: true,
-        right: true,
-        ...border,
-      });
-    }
-
     this.text = {
       overflow: "clip",
       wrap: "wrap",
@@ -80,252 +70,39 @@ export class Nice {
       ...text,
     };
 
-    this.margin = {
-      top: 0,
-      bottom: 0,
-      left: 0,
-      right: 0,
-      ...margin,
-    };
-
-    this.padding = {
-      top: 0,
-      bottom: 0,
-      left: 0,
-      right: 0,
-      ...padding,
-    };
+    this.border = normalizeBorder(border);
+    this.margin = normalizeMargin(margin);
+    this.padding = normalizeMargin(padding);
   }
 
   render(input: string): string {
     const { style, border, margin, padding, text } = this;
 
-    let { width, height } = this;
+    const output = input.split("\n");
 
-    const textLines = input.split("\n");
+    let width = this.width ??
+      output.reduce((maxWidth, line) => (
+        Math.max(maxWidth, textWidth(line))
+      ), 0);
 
-    const { overflow } = text;
-    // Wrap sticking text
-    if (width && height) {
-      for (let i = 0; i < textLines.length; ++i) {
-        const textLine = textLines[i];
-        const lineWidth = textWidth(textLine);
+    wrapLines(output, width, text.wrap);
+    resizeAndAlignHorizontally(output, width, text);
 
-        if (lineWidth <= width) {
-          if (overflow === "ellipsis" && textLines.length - 1 > i && i + 1 >= height) {
-            const ellipsisString = text.ellipsisString ?? "…";
-            const ellipsisWidth = textWidth(ellipsisString);
+    let height = this.height ?? output.length;
+    resizeAndAlignVertically(output, height, text);
+    height = output.length;
 
-            const expectedWidth = width - ellipsisWidth;
+    applyStyle(output, style);
 
-            if (lineWidth === width || lineWidth > 0) {
-              textLines[i] = crop(textLine, expectedWidth) + ellipsisString;
-            } else {
-              textLines[i - 1] = crop(textLines[i - 1], expectedWidth) + ellipsisString;
-            }
-          }
+    applyMargin(output, width, padding, style(" "));
+    width += padding.left + padding.right;
 
-          continue;
-        }
+    applyBorder(output, width, border);
+    width += (border.left ? 1 : 0) + (border.right ? 1 : 0);
 
-        switch (text.wrap) {
-          case "wrap": {
-            let spaceIndex = textLine.lastIndexOf(" ");
-            let start: string;
-            let end: string;
+    applyMargin(output, width, margin);
 
-            // If there's a space in the line, try to use it as breakpoint
-            if (spaceIndex !== -1) {
-              // Try finding a space closest to width, if space exists before width, use it
-              if (spaceIndex > width) {
-                const closestSpaceAfterWidth = textLine.indexOf(" ", width);
-                if (closestSpaceAfterWidth !== -1) spaceIndex = closestSpaceAfterWidth;
-              }
-
-              start = textLine.slice(0, spaceIndex);
-              end = textLine.slice(spaceIndex + 1);
-            } else {
-              start = crop(textLine, width);
-              end = textLine.slice(start.length);
-            }
-
-            const nextLine = textLines[i + 1];
-            if (nextLine) {
-              textLines.splice(i, 2, start, end + " " + nextLine);
-            } else {
-              textLines.splice(i, 1, start, end);
-            }
-            --i;
-
-            break;
-          }
-          case "nowrap":
-            textLines[i] = crop(textLine, width);
-            break;
-          case "balance":
-            // TODO: balance wrapping
-            break;
-        }
-      }
-    } else {
-      height ??= textLines.length;
-      width = 0;
-      for (const textLine of textLines) {
-        width = Math.max(width, textWidth(textLine));
-      }
-    }
-
-    let string = "";
-
-    const marginX = margin.left + margin.right;
-    const paddingX = padding.left + padding.right;
-    const borderX = border ? Number(border.borderStyle.left) + Number(border.borderStyle.right) : 0;
-
-    const marginLine = " ".repeat(width + marginX + paddingX + borderX);
-
-    if (margin?.top) {
-      const topMarginLine = marginLine + "\n";
-      for (let i = 0; i < margin.top; ++i) {
-        string += topMarginLine;
-      }
-    }
-
-    const leftMargin = " ".repeat(margin.left);
-    const rightMargin = " ".repeat(margin.right);
-
-    if (border) {
-      string += leftMargin + border.getTop(width + paddingX) + rightMargin + "\n";
-    }
-
-    let leftSide = "";
-    let rightSide = "";
-
-    if (margin?.left) leftSide += leftMargin;
-
-    if (border) leftSide += border.getLeft();
-
-    if (padding?.left) leftSide += style(" ".repeat(padding.left));
-    if (padding?.right) rightSide += style(" ".repeat(padding.right));
-
-    if (border) rightSide += border.getRight();
-
-    if (margin?.right) rightSide += rightMargin;
-
-    const line = leftSide + style(" ".repeat(width)) + rightSide;
-    if (padding?.top) {
-      const padTop = line + "\n";
-      for (let i = 0; i < padding.top; ++i) {
-        string += padTop;
-      }
-    }
-
-    const { verticalAlign, horizontalAlign } = text;
-
-    let textStartY: number;
-
-    // TODO: replace "top" | "middle" | "bottom" with VerticalPosition
-    switch (verticalAlign) {
-      case "top":
-        textStartY = 0;
-        break;
-      case "bottom":
-        textStartY = height - textLines.length;
-        break;
-      case "middle":
-        textStartY = Math.round((height - textLines.length) / 2);
-        break;
-    }
-
-    // Render text
-    let i = 0;
-    for (let h = 0; h < height; ++h) {
-      const lastLine = h !== height - 1;
-
-      if (h < textStartY || h >= textStartY + textLines.length) {
-        string += line;
-        if (lastLine) string += "\n";
-        continue;
-      }
-
-      const textLine = textLines[i++];
-      const lineWidth = textWidth(textLine);
-
-      if (lineWidth >= width) {
-        string += leftSide + style(crop(textLine, width)) + rightSide;
-        if (lastLine) {
-          string += "\n";
-        }
-        continue;
-      }
-
-      // TODO: replace "left" | "center" | "right" with HorizontalPosition
-      switch (horizontalAlign) {
-        case "left":
-          {
-            const lacksRight = width - lineWidth;
-            string += leftSide + style(textLine + " ".repeat(lacksRight)) + rightSide;
-          }
-          break;
-        case "center":
-          {
-            const lacksLeft = Math.round((width - lineWidth) / 2);
-            const lacksRight = width - lineWidth - lacksLeft;
-
-            string += leftSide + style(
-              " ".repeat(lacksLeft) + textLine + " ".repeat(lacksRight),
-            ) + rightSide;
-          }
-          break;
-        case "right":
-          {
-            const lacksLeft = width - lineWidth;
-            string += leftSide + style(" ".repeat(lacksLeft) + textLine) + rightSide;
-          }
-          break;
-        case "justify":
-          {
-            let justifiedLine = textLine.trim();
-
-            if (justifiedLine.indexOf(" ") === -1) {
-              justifiedLine += " ".repeat(width - justifiedLine.length);
-            } else {
-              let i = justifiedLine.indexOf(" ");
-              while (textWidth(justifiedLine) < width) {
-                justifiedLine = justifiedLine.slice(0, i) + " " + justifiedLine.slice(i);
-                i = justifiedLine.indexOf(" ", i + 2);
-                if (i === -1) i = justifiedLine.indexOf(" ");
-              }
-            }
-
-            string += leftSide + style(justifiedLine) + rightSide;
-          }
-          break;
-      }
-
-      if (lastLine) {
-        string += "\n";
-      }
-    }
-
-    if (padding?.bottom) {
-      const padLine = "\n" + line;
-      for (let i = 0; i < padding.bottom; ++i) {
-        string += padLine;
-      }
-    }
-
-    if (border) {
-      string += "\n" + leftMargin + border.getBottom(width + paddingX) + rightMargin;
-    }
-
-    if (margin?.bottom) {
-      const bottomMarginLine = "\n" + marginLine;
-      for (let i = 0; i < margin.bottom; ++i) {
-        string += bottomMarginLine;
-      }
-    }
-
-    return string;
+    return output.join("\n");
   }
 
   clone(): Nice {
@@ -412,12 +189,13 @@ export class Nice {
   }
 
   // overlay one string on top of another
-  static overlay(
-    horizontalPosition: number,
-    verticalPosition: number,
-    fg: string,
-    bg: string,
-  ): string {
+  static overlay(horizontalPosition: number, verticalPosition: number, fg: string, bg: string): string {
+    const fgWidth = textWidth(fg);
+    const bgWidth = textWidth(bg);
+    if (fgWidth > bgWidth) {
+      throw new Error("You can't overlay foreground that's wider than background");
+    }
+
     const fgBlock = fg.split("\n");
     const bgBlock = bg.split("\n");
 
@@ -427,37 +205,21 @@ export class Nice {
       throw new Error("You can't overlay foreground that's higher than background");
     }
 
-    let fgWidth = 0;
-    if (!fgWidth) {
-      const line = fgBlock[0];
-      fgWidth = textWidth(line);
-    }
-
-    let bgWidth = 0;
-    if (!bgWidth) {
-      const line = bgBlock[0];
-      bgWidth = textWidth(line);
-    }
-
-    if (fgWidth > bgWidth) {
-      throw new Error("You can't overlay foreground that's wider than background");
-    }
-
     const offsetX = normalizePosition(horizontalPosition, bgWidth - fgWidth);
     const offsetY = normalizePosition(verticalPosition, bgHeight - fgHeight);
 
     let output = "";
 
-    for (const bgIndex in bgBlock) {
-      const index = +bgIndex - offsetY;
-      const bgLine = bgBlock[bgIndex];
+    for (let i = 0; i < bgHeight; ++i) {
+      const j = i - offsetY;
+      const bgLine = bgBlock[i];
 
-      if (index < 0 || index >= fgHeight) {
+      if (j < 0 || j >= fgHeight) {
         output += bgLine + "\n";
         continue;
       }
 
-      const fgLine = fgBlock[index];
+      const fgLine = fgBlock[j];
       output += insert(bgLine, fgLine, offsetX) + "\n";
     }
 
