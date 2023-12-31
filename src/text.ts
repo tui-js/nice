@@ -187,7 +187,7 @@ export function resizeAndAlignVertically(
   while (lines.length < desiredHeight) {
     switch (verticalAlign) {
       case "top":
-        lines.unshift(verticalLine);
+        lines.push(verticalLine);
         break;
       case "middle":
         if (lines.unshift(verticalLine) < desiredHeight) {
@@ -195,7 +195,7 @@ export function resizeAndAlignVertically(
         }
         break;
       case "bottom":
-        lines.push(verticalLine);
+        lines.unshift(verticalLine);
         break;
     }
   }
