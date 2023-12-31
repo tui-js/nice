@@ -69,14 +69,22 @@ export function wrapLinesNormal(lines: string[], desiredWidth: number): void {
       const wordWidth = textWidth(word);
       currentWidth += wordWidth;
 
-      if (wordWidth >= desiredWidth || currentWidth >= desiredWidth) {
+      const hasCurrentSplit = currentSplit[offset];
+      let overflows = false;
+      if (hasCurrentSplit) {
+        overflows = (wordWidth + 1) >= desiredWidth || (currentWidth + 1) >= desiredWidth;
+      } else {
+        overflows = wordWidth >= desiredWidth || currentWidth >= desiredWidth;
+      }
+
+      if (overflows) {
         currentSplit.push(word);
         offset += 1;
         currentWidth = 0;
         continue;
       }
 
-      if (currentSplit[offset]) {
+      if (hasCurrentSplit) {
         currentSplit[offset] += " " + word;
       } else {
         currentSplit[offset] = word;
