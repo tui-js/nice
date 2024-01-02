@@ -1,5 +1,5 @@
 // Copyright 2023 Im-Beast. All rights reserved. MIT license.
-import { Style, TypeAorB } from "./types.ts";
+import { EitherType, Style } from "./types.ts";
 
 export const Borders = {
   sharp: {
@@ -56,13 +56,13 @@ export const Borders = {
 
 export type BorderType = keyof typeof Borders;
 
-export type BorderX<T> = TypeAorB<{ left: T; right: T }, { x: T }>;
-export type BorderY<T> = TypeAorB<{ top: T; bottom: T }, { y: T }>;
+export type BorderX<T> = EitherType<[{ left: T; right: T }, { x: T }]>;
+export type BorderY<T> = EitherType<[{ top: T; bottom: T }, { y: T }]>;
 
 export type UniqueStyleBorder = BorderX<Style> & BorderY<Style> & { type: BorderType };
 export type SharedStyleBorder = BorderX<boolean> & BorderY<boolean> & { type: BorderType; style: Style };
 
-export type BorderDefinition = TypeAorB<UniqueStyleBorder, SharedStyleBorder>;
+export type BorderDefinition = EitherType<[UniqueStyleBorder, SharedStyleBorder]>;
 
 export interface NormalizedBorderDefinition {
   type: BorderType;

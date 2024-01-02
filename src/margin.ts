@@ -1,8 +1,8 @@
 import { characterWidth } from "../mod.ts";
-import type { TypeAorB } from "./types.ts";
+import type { EitherType } from "./types.ts";
 
-export type MarginX = TypeAorB<{ left: number; right: number }, { x: number }>;
-export type MarginY = TypeAorB<{ top: number; bottom: number }, { y: number }>;
+export type MarginX = EitherType<[{ left: number; right: number }, { x: number }]>;
+export type MarginY = EitherType<[{ top: number; bottom: number }, { y: number }]>;
 export type MarginDefinition = MarginX & MarginY;
 
 export interface NormalizedMarginDefinition {
