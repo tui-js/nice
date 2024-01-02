@@ -1,6 +1,17 @@
 // Copyright 2023 Im-Beast. All rights reserved. MIT license.
 import { EitherType, Style } from "./types.ts";
 
+interface BorderCharset {
+  top: string;
+  bottom: string;
+  left: string;
+  right: string;
+  topLeft: string;
+  topRight: string;
+  bottomLeft: string;
+  bottomRight: string;
+}
+
 export const Borders = {
   sharp: {
     top: "─",
@@ -52,20 +63,22 @@ export const Borders = {
     bottomLeft: "█",
     bottomRight: "█",
   },
-} as const;
+};
 
 export type BorderType = keyof typeof Borders;
 
 export type BorderX<T> = EitherType<[{ left: T; right: T }, { x: T }, { all: T }]>;
 export type BorderY<T> = EitherType<[{ top: T; bottom: T }, { y: T }, { all: T }]>;
 
-export type UniqueStyleBorder = BorderX<Style> & BorderY<Style> & { type: BorderType };
-export type SharedStyleBorder = BorderX<boolean> & BorderY<boolean> & { type: BorderType; style: Style };
+export type BorderTypeDefinition = EitherType<[{ type: BorderType }, { type: "custom"; charset: BorderCharset }]>;
+
+export type UniqueStyleBorder = BorderX<Style> & BorderY<Style> & BorderTypeDefinition;
+export type SharedStyleBorder = BorderX<boolean> & BorderY<boolean> & BorderTypeDefinition & { style: Style };
 
 export type BorderDefinition = EitherType<[UniqueStyleBorder, SharedStyleBorder]>;
 
 export interface NormalizedBorderDefinition {
-  type: BorderType;
+  charset: BorderCharset;
   top: Style | false;
   bottom: Style | false;
   left: Style | false;
@@ -77,7 +90,7 @@ export function normalizeBorder($border?: Partial<BorderDefinition>): Normalized
     const border = $border as SharedStyleBorder;
     const style = border.style;
     return {
-      type: border.type,
+      charset: (border.type === "custom" || border.charset) ? border.charset : Borders[border.type],
       top: (border.all || border.top || border.y) ? style : false,
       bottom: (border.all || border.bottom || border.y) ? style : false,
       left: (border.all || border.left || border.x) ? style : false,
@@ -85,9 +98,9 @@ export function normalizeBorder($border?: Partial<BorderDefinition>): Normalized
     };
   }
 
-  const border = $border as UniqueStyleBorder | undefined;
+  const border = $border as Partial<UniqueStyleBorder>;
   return {
-    type: border?.type || "sharp",
+    charset: (border.type === "custom" || border.charset) ? border.charset! : Borders[border.type!],
     top: border?.all || border?.top || border?.y || false,
     bottom: border?.all || border?.bottom || border?.y || false,
     left: border?.all || border?.left || border?.x || false,
@@ -96,16 +109,17 @@ export function normalizeBorder($border?: Partial<BorderDefinition>): Normalized
 }
 
 export function applyBorder(lines: string[], width: number, border: NormalizedBorderDefinition): void {
-  const top = border.top;
-  const bottom = border.bottom;
-  const left = border.left;
-  const right = border.right;
-
-  const charMap = Borders[border.type];
+  const {
+    top,
+    bottom,
+    left,
+    right,
+    charset,
+  } = border;
 
   if (left || right) {
-    const leftChar = left ? left(charMap.left) : "";
-    const rightChar = right ? right(charMap.right) : "";
+    const leftChar = left ? left(charset.left) : "";
+    const rightChar = right ? right(charset.right) : "";
 
     for (const i in lines) {
       lines[i] = leftChar + lines[i] + rightChar;
@@ -114,18 +128,18 @@ export function applyBorder(lines: string[], width: number, border: NormalizedBo
 
   if (top) {
     let topLine = "";
-    if (left) topLine += charMap.topLeft;
-    topLine += charMap.top.repeat(width);
-    if (right) topLine += charMap.topRight;
+    if (left) topLine += charset.topLeft;
+    topLine += charset.top.repeat(width);
+    if (right) topLine += charset.topRight;
 
     lines.unshift(top(topLine));
   }
 
   if (bottom) {
     let bottomLine = "";
-    if (left) bottomLine += charMap.bottomLeft;
-    bottomLine += charMap.bottom.repeat(width);
-    if (right) bottomLine += charMap.bottomRight;
+    if (left) bottomLine += charset.bottomLeft;
+    bottomLine += charset.bottom.repeat(width);
+    if (right) bottomLine += charset.bottomRight;
 
     lines.push(bottom(bottomLine));
   }

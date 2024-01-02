@@ -106,11 +106,11 @@ export class Nice {
       margin: this.margin,
       padding: this.padding,
       border: {
+        charset: this.border.charset,
         top: this.border.top || undefined,
         bottom: this.border.bottom || undefined,
         left: this.border.left || undefined,
         right: this.border.right || undefined,
-        type: this.border.type,
       },
     });
   }
