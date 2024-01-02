@@ -3,7 +3,7 @@ import { textWidth } from "./deps.ts";
 
 import type { Style } from "./types.ts";
 
-export type TextWrapType = "wrap" | "nowrap" | "balance";
+export type TextWrapType = "wrap" | "nowrap";
 export type TextOverflowType = "clip" | "ellipsis";
 export type TextHorizontalAlign = "left" | "center" | "right" | "justify";
 export type TextVerticalAlign = "top" | "middle" | "bottom";
@@ -65,25 +65,22 @@ export function wrapLinesNormal(lines: string[], desiredWidth: number): void {
     const currentSplit: string[] = [];
 
     for (const word of words) {
-      const wordWidth = textWidth(word);
+      let wordWidth = textWidth(word);
       currentWidth += wordWidth;
 
-      const hasCurrentSplit = currentSplit[offset];
-      let overflows = false;
-      if (hasCurrentSplit) {
-        overflows = (wordWidth + 1) >= desiredWidth || (currentWidth + 1) >= desiredWidth;
-      } else {
-        overflows = wordWidth >= desiredWidth || currentWidth >= desiredWidth;
+      if (offset > 0 && currentSplit[offset]) {
+        wordWidth += 1;
+        currentWidth += 1;
       }
 
-      if (overflows) {
+      if (wordWidth >= desiredWidth || currentWidth >= desiredWidth) {
         currentSplit.push(word);
         offset += 1;
         currentWidth = 0;
         continue;
       }
 
-      if (hasCurrentSplit) {
+      if (currentSplit[offset]) {
         currentSplit[offset] += " " + word;
       } else {
         currentSplit[offset] = word;
@@ -94,33 +91,10 @@ export function wrapLinesNormal(lines: string[], desiredWidth: number): void {
   }
 }
 
-// This doesn't use any fancy algorithms, it just tries to balance the lines
-// by moving words from the next line to the current line if it fits.
-//
-// FIXME: Respect original line breaks
-export function wrapLinesBalance(lines: string[], desiredWidth: number): void {
-  wrapLinesNormal(lines, desiredWidth);
-
-  for (const [i, line] of lines.entries()) {
-    const nextWords = lines[i + 1]?.split(" ");
-    if (nextWords && textWidth(line + nextWords[0]) < desiredWidth) {
-      lines[i] += " " + nextWords.shift();
-      nextWords.shift();
-      if (nextWords.length === 0) {
-        lines.splice(i + 1, 1);
-      }
-    }
-  }
-}
-
-// TODO: Handle whitespace characters other than just space
 export function wrapLines(lines: string[], desiredWidth: number, type: TextWrapType): void {
   switch (type) {
     case "wrap":
       wrapLinesNormal(lines, desiredWidth);
-      break;
-    case "balance":
-      wrapLinesBalance(lines, desiredWidth);
       break;
   }
 }
