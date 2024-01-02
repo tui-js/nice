@@ -56,8 +56,8 @@ export const Borders = {
 
 export type BorderType = keyof typeof Borders;
 
-export type BorderX<T> = EitherType<[{ left: T; right: T }, { x: T }]>;
-export type BorderY<T> = EitherType<[{ top: T; bottom: T }, { y: T }]>;
+export type BorderX<T> = EitherType<[{ left: T; right: T }, { x: T }, { all: T }]>;
+export type BorderY<T> = EitherType<[{ top: T; bottom: T }, { y: T }, { all: T }]>;
 
 export type UniqueStyleBorder = BorderX<Style> & BorderY<Style> & { type: BorderType };
 export type SharedStyleBorder = BorderX<boolean> & BorderY<boolean> & { type: BorderType; style: Style };
@@ -78,20 +78,20 @@ export function normalizeBorder($border?: Partial<BorderDefinition>): Normalized
     const style = border.style;
     return {
       type: border.type,
-      top: (border.top || border.y) ? style : false,
-      bottom: (border.bottom || border.y) ? style : false,
-      left: (border.left || border.x) ? style : false,
-      right: (border.right || border.x) ? style : false,
+      top: (border.all || border.top || border.y) ? style : false,
+      bottom: (border.all || border.bottom || border.y) ? style : false,
+      left: (border.all || border.left || border.x) ? style : false,
+      right: (border.all || border.right || border.x) ? style : false,
     };
   }
 
   const border = $border as UniqueStyleBorder | undefined;
   return {
     type: border?.type || "sharp",
-    top: border?.top || border?.y || false,
-    bottom: border?.bottom || border?.y || false,
-    left: border?.left || border?.x || false,
-    right: border?.right || border?.x || false,
+    top: border?.all || border?.top || border?.y || false,
+    bottom: border?.all || border?.bottom || border?.y || false,
+    left: border?.all || border?.left || border?.x || false,
+    right: border?.all || border?.right || border?.x || false,
   };
 }
 

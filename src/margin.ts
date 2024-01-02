@@ -1,8 +1,8 @@
 import { characterWidth } from "../mod.ts";
 import type { EitherType } from "./types.ts";
 
-export type MarginX = EitherType<[{ left: number; right: number }, { x: number }]>;
-export type MarginY = EitherType<[{ top: number; bottom: number }, { y: number }]>;
+export type MarginX = EitherType<[{ left: number; right: number }, { x: number }, { all: number }]>;
+export type MarginY = EitherType<[{ top: number; bottom: number }, { y: number }, { all: number }]>;
 export type MarginDefinition = MarginX & MarginY;
 
 export interface NormalizedMarginDefinition {
@@ -14,10 +14,10 @@ export interface NormalizedMarginDefinition {
 
 export function normalizeMargin(margin?: Partial<MarginDefinition>): NormalizedMarginDefinition {
   return {
-    top: margin?.top ?? margin?.y ?? 0,
-    bottom: margin?.bottom ?? margin?.y ?? 0,
-    left: margin?.left ?? margin?.x ?? 0,
-    right: margin?.right ?? margin?.x ?? 0,
+    top: margin?.all ?? margin?.top ?? margin?.y ?? 0,
+    bottom: margin?.all ?? margin?.bottom ?? margin?.y ?? 0,
+    left: margin?.all ?? margin?.left ?? margin?.x ?? 0,
+    right: margin?.all ?? margin?.right ?? margin?.x ?? 0,
   };
 }
 
