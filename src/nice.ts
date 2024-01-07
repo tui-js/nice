@@ -28,17 +28,18 @@ export function normalizePosition(position: number, relative: number): number {
 }
 
 export interface NiceOptions {
-  style: Style;
+  style?: Style;
   width?: number;
   height?: number;
   text?: Partial<TextDefinition>;
   margin?: Partial<MarginDefinition>;
   padding?: Partial<MarginDefinition>;
+  // FIXME: style may be undefined, which messes with the normalization
   border?: Partial<BorderDefinition>;
 }
 
 export class Nice {
-  style: Style;
+  style?: Style;
 
   width?: number;
   height?: number;
@@ -84,9 +85,13 @@ export class Nice {
     resizeAndAlignVertically(output, height, text);
     height = output.length;
 
-    applyStyle(output, style);
+    if (style) {
+      applyStyle(output, style);
+      applyMargin(output, width, padding, style(" "));
+    } else {
+      applyMargin(output, width, padding);
+    }
 
-    applyMargin(output, width, padding, style(" "));
     width += padding.left + padding.right;
 
     applyBorder(output, width, border);
