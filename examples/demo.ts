@@ -1,6 +1,7 @@
 // Copyright 2023 Im-Beast. All rights reserved. MIT license.
 import { crayon } from "https://deno.land/x/crayon@3.3.3/mod.ts";
 import { Nice } from "../mod.ts";
+import { horizontal, overlay, vertical } from "../src/layout/mod.ts";
 
 const a = new Nice({
   style: crayon.bgLightBlue.lightWhite.bold,
@@ -29,84 +30,88 @@ const a = new Nice({
   },
 });
 
-const b = a.clone();
-b.style = crayon.bgRed;
-b.width = 25;
-b.height = 13;
-b.text.horizontalAlign = "center";
+const b = a.derive({
+  style: crayon.bgRed,
+  width: 25,
+  height: 13,
+  text: {
+    horizontalAlign: "center",
+  },
+});
 
-const c = a.clone();
+const c = a.derive({
+  style: crayon.bgGreen,
+});
 
-c.style = crayon.bgGreen;
+const d = c.derive({
+  width: 5,
+  height: 2,
+  style: crayon.bgMagenta,
+});
 
-const d = c.clone();
-d.width = 5;
-d.height = 2;
-d.style = crayon.bgMagenta;
+const e = d.derive({
+  style: crayon.bgYellow,
+  width: 10,
+  height: 5,
+  text: {
+    horizontalAlign: "justify",
+    overflow: "ellipsis",
+  },
+});
 
-const e = d.clone();
-e.width = 10;
-e.height = 5;
-e.text.horizontalAlign = "justify";
-e.style = crayon.bgYellow;
-e.text.overflow = "ellipsis";
+const f = e.derive({
+  style: crayon.bgLightGreen,
+  width: 22,
+  height: 3,
+  text: {
+    horizontalAlign: "right",
+  },
+});
 
-const f = e.clone();
-f.style = crayon.bgLightGreen;
-f.width = 22;
-f.height = 3;
-f.text.horizontalAlign = "right";
+const g = f.derive({
+  text: {
+    overflow: "clip",
+  },
+});
 
-const g = f.clone();
-g.text.overflow = "clip";
+const h = f.derive({
+  text: {
+    overflow: "ellipsis",
+    ellipsisString: "...",
+  },
+});
 
-const h = f.clone();
-h.text.overflow = "ellipsis";
-h.text.ellipsisString = "...";
+const popup = a.derive({
+  style: crayon.bgLightYellow.red.bold,
+  margin: { top: 1, bottom: 1, left: 2, right: 2 },
+  width: 17,
+  height: 1,
+  text: { horizontalAlign: "center" },
+});
 
-const popup = a.clone();
-popup.style = crayon.bgLightYellow.red.bold;
-popup.margin = {
-  top: 1,
-  bottom: 1,
-  left: 2,
-  right: 2,
-};
-popup.width = 17;
-popup.height = 1;
-popup.text.horizontalAlign = "center";
+const popup2 = popup.derive({
+  style: crayon.bgBlue.lightWhite,
+  height: 1,
+  width: 4,
+  margin: { top: 0, bottom: 0, left: 0, right: 0 },
+  padding: { top: 0, bottom: 0, left: 0, right: 0 },
+});
 
-const popup2 = popup.clone();
-popup2.style = crayon.bgBlue.lightWhite;
-popup2.height = 1;
-popup2.width = 4;
-popup2.margin = {
-  top: 0,
-  bottom: 0,
-  left: 0,
-  right: 0,
-};
-popup2.padding = {
-  top: 0,
-  bottom: 0,
-  left: 0,
-  right: 0,
-};
-
-const popup3 = popup2.clone();
-popup3.style = crayon.bgMagenta.lightWhite;
-popup3.width = undefined;
-popup3.height = undefined;
+const popup3 = popup2.derive({
+  style: crayon.bgMagenta.lightWhite,
+  width: undefined,
+  height: undefined,
+});
 
 export function render() {
-  const SCREEN_BG = Nice.horizontal(
+  const SCREEN_BG = horizontal(
     0.5,
-    Nice.vertical(
+    vertical(
       0.5,
       a.draw(
         "This gets justified\nAlone\none two three four five six\nlonger words come here\nbig spacing now",
       ),
-      Nice.horizontal(
+      horizontal(
         0.5,
         c.draw("Hello"),
         c.draw("there"),
@@ -116,12 +121,12 @@ export function render() {
     b.draw(
       "Nice 🔥\n（╯°□°）╯︵┻━┻\ndevanagari आआॠऋॲपॉ\nﾊﾊﾊThis text should get wrapped because widthəəə is explicit as日本verylongstringthaəə💩twillwrapnomatterwhat\nwowə\nالعربية",
     ),
-    Nice.vertical(
+    vertical(
       0.5,
       e.draw("very long text that will wrap and will fit"),
       e.draw("日本 long text that will wrap and totally won't fit"),
     ),
-    Nice.vertical(
+    vertical(
       0.5,
       f.draw(`ISBN: 978-0-1234-5678-7\n\nCSS: הרפתקה חדשה!`),
       g.draw(`ISBN: 978-0-1234-5678-7\n\nCSS: הרפתקה חדשה!`),
@@ -134,15 +139,15 @@ export function render() {
   const SCREEN_FG3 = popup3.draw("Im on 13th column\nand fourth row");
 
   const rendered = Nice.render(
-    Nice.overlay(
+    overlay(
       13,
       4,
       SCREEN_FG3,
-      Nice.overlay(
+      overlay(
         0.2,
         0.2,
         SCREEN_FG2,
-        Nice.overlay(
+        overlay(
           0.5,
           0.5,
           SCREEN_FG,

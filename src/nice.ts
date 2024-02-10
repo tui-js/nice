@@ -1,41 +1,45 @@
 // Copyright 2023 Im-Beast. All rights reserved. MIT license.
 import { fitIntoDimensions } from "../mod.ts";
-import { insert, textWidth } from "./utils/strings.ts";
+import { textWidth } from "./utils/strings.ts";
 
-import { applyBorder, type BorderDefinition, normalizeBorder, type NormalizedBorderDefinition } from "./border.ts";
-import { applyMargin, type MarginDefinition, type NormalizedMarginDefinition, normalizeMargin } from "./margin.ts";
+import { applyBorder } from "./border/mod.ts";
+import { applyMargin } from "./margin/margin.ts";
 import {
+  alignHorizontally,
+  alignVertically,
   applyStyle,
-  type NormalizedTextDefinition,
-  normalizeTextDefinition,
-  resizeAndAlignHorizontally,
-  resizeAndAlignVertically,
-  type TextDefinition,
+  resizeHorizontally,
+  resizeVertically,
   wrapLines,
-} from "./text.ts";
+} from "./text/mod.ts";
 
 import type { Style } from "./types.ts";
+import {
+  NormalizedTextDefinition,
+  normalizeTextDefinition,
+  TextDefinition,
+} from "./text/normalization.ts";
+import {
+  BorderDefinition,
+  normalizeBorder,
+  NormalizedBorderDefinition,
+} from "./border/normalization.ts";
+import { MarginDefinition, NormalizedMarginDefinition, normalizeMargin } from "./margin/mod.ts";
+import { overlay } from "./layout/mod.ts";
+import { horizontal } from "./layout/horizontal.ts";
+import { vertical } from "./layout/vertical.ts";
 
 // FIXME: Negative positions
 // TODO: Tests, especially with weird characters
-
-export function normalizePosition(position: number, relative: number): number {
-  if (Number.isInteger(position)) {
-    return position;
-  }
-
-  return Math.round(relative * position);
-}
 
 export interface NiceOptions {
   style?: Style;
   width?: number;
   height?: number;
-  text?: Partial<TextDefinition>;
-  margin?: Partial<MarginDefinition>;
-  padding?: Partial<MarginDefinition>;
-  // FIXME: style may be undefined, which messes with the normalization
-  border?: Partial<BorderDefinition>;
+  text?: Partial<TextDefinition> | NormalizedTextDefinition;
+  margin?: Partial<MarginDefinition> | NormalizedMarginDefinition;
+  padding?: Partial<MarginDefinition> | NormalizedMarginDefinition;
+  border?: Partial<BorderDefinition> | NormalizedBorderDefinition;
 }
 
 export class Nice {
@@ -68,6 +72,23 @@ export class Nice {
     return input.join("\n");
   }
 
+  static overlay(
+    x: number,
+    y: number,
+    fg: string[],
+    bg: string[],
+  ): string[] {
+    return overlay(x, y, fg, bg);
+  }
+
+  static horizontal(y: number, ...blocks: string[][]): string[] {
+    return horizontal(y, ...blocks);
+  }
+
+  static vertical(x: number, ...blocks: string[][]): string[] {
+    return vertical(x, ...blocks);
+  }
+
   draw(input: string): string[] {
     const { style, border, margin, padding, text } = this;
 
@@ -79,10 +100,12 @@ export class Nice {
       ), 0);
 
     wrapLines(output, width, text.wrap);
-    resizeAndAlignHorizontally(output, width, text);
+    resizeHorizontally(output, width, text);
+    alignHorizontally(output, width, text.horizontalAlign);
 
     let height = this.height ?? output.length;
-    resizeAndAlignVertically(output, height, text);
+    resizeVertically(output, height, text);
+    alignVertically(output, height, text.verticalAlign);
     height = output.length;
 
     if (style) {
@@ -107,125 +130,22 @@ export class Nice {
       style: this.style,
       width: this.width,
       height: this.height,
-      text: this.text,
-      margin: this.margin,
-      padding: this.padding,
-      border: {
-        charset: this.border.charset,
-        top: this.border.top || undefined,
-        bottom: this.border.bottom || undefined,
-        left: this.border.left || undefined,
-        right: this.border.right || undefined,
-      },
+      text: structuredClone(this.text),
+      margin: structuredClone(this.margin),
+      padding: structuredClone(this.padding),
+      border: structuredClone(this.border),
     });
   }
 
-  static clone(from: Nice): Nice {
-    return from.clone();
-  }
-
-  static horizontal(verticalPosition: number, ...blocks: string[][]): string[] {
-    const widths = blocks.map((x) => textWidth(x[0]));
-
-    const maxHeight = blocks.reduce(
-      (maxHeight, block) => Math.max(maxHeight, block.length),
-      0,
-    );
-
-    const output = [];
-
-    for (let y = 0; y < maxHeight; ++y) {
-      let row = "";
-
-      for (const i in blocks) {
-        const block = blocks[i];
-        const maxWidth = widths[i];
-
-        const yOffset = Math.round((maxHeight - block.length) * verticalPosition);
-        let line = block[y - yOffset] ?? "";
-
-        const lineWidth = line ? textWidth(line) : 0;
-        if (lineWidth < maxWidth) {
-          line += " ".repeat(maxWidth - lineWidth);
-        }
-
-        row += line;
-      }
-
-      output.push(row);
-    }
-
-    return output;
-  }
-
-  static vertical(horizontalPosition: number, ...strings: string[][]): string[] {
-    const output = [];
-
-    const widths = strings.map((x) => textWidth(x[0]));
-    const maxWidth = widths.reduce((maxWidth, x) => {
-      return Math.max(maxWidth, x);
-    }, 0);
-
-    for (let i = 0; i < strings.length; ++i) {
-      const string = strings[i];
-      const width = widths[i];
-
-      if (width === maxWidth) {
-        output.push(...string);
-        continue;
-      }
-
-      for (let line of string) {
-        const lineWidth = textWidth(line);
-
-        if (lineWidth < maxWidth) {
-          const lacksLeft = Math.round((maxWidth - lineWidth) * horizontalPosition);
-          const lacksRight = maxWidth - lineWidth - lacksLeft;
-          line = " ".repeat(lacksLeft) + line + " ".repeat(lacksRight);
-        }
-
-        output.push(line);
-      }
-    }
-
-    return output;
-  }
-
-  // overlay one string on top of another
-  static overlay(horizontalPosition: number, verticalPosition: number, fg: string[], bg: string[]): string[] {
-    const fgWidth = textWidth(fg[0]);
-    const bgWidth = textWidth(bg[0]);
-    if (fgWidth > bgWidth) {
-      throw new Error("You can't overlay foreground that's wider than background");
-    }
-
-    const fgBlock = fg;
-    const bgBlock = bg;
-
-    const fgHeight = fgBlock.length;
-    const bgHeight = bgBlock.length;
-    if (fgHeight > bgHeight) {
-      throw new Error("You can't overlay foreground that's higher than background");
-    }
-
-    const offsetX = normalizePosition(horizontalPosition, bgWidth - fgWidth);
-    const offsetY = normalizePosition(verticalPosition, bgHeight - fgHeight);
-
-    const output = [];
-
-    for (let i = 0; i < bgHeight; ++i) {
-      const j = i - offsetY;
-      const bgLine = bgBlock[i];
-
-      if (j < 0 || j >= fgHeight) {
-        output.push(bgLine);
-        continue;
-      }
-
-      const fgLine = fgBlock[j];
-      output.push(insert(bgLine, fgLine, offsetX));
-    }
-
-    return output;
+  derive(options: Partial<NiceOptions>): Nice {
+    return new Nice({
+      style: "style" in options ? options.style : this.style,
+      width: "width" in options ? options.width : this.width,
+      height: "height" in options ? options.height : this.height,
+      text: { ...this.text, ...options.text },
+      margin: { ...this.margin, ...options.margin },
+      padding: { ...this.padding, ...options.padding },
+      border: { ...this.border, ...options.border } as NiceOptions["border"],
+    });
   }
 }

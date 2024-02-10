@@ -1,4 +1,4 @@
-import { Nice, unit } from "../../mod.ts";
+import { Nice } from "../../mod.ts";
 import { crayon } from "https://deno.land/x/crayon@3.3.3/mod.ts";
 
 const TEST_INFO = new Nice({
@@ -14,54 +14,59 @@ const ELLIPSIS_NEWLINE_TEXT = `${testMaybePasses}\n\n${testFail}`;
 const ELLIPSIS_INLINE_WRAPPING_TEXT = `${testMaybePasses} ${testFail}`;
 
 type OverflowType = Nice["text"]["overflow"];
-const possibleOverflows: (OverflowType | "ellipsis-custom")[] = ["clip", "ellipsis", "ellipsis-custom"];
-
-type WrapType = Nice["text"]["wrap"];
-const possibleWraps: WrapType[] = ["wrap", "nowrap", "balance"];
-
-let hue = 0;
-const creators: ((overflow: OverflowType, wrap: WrapType, ellipsisString?: string) => string)[] = [
-  (overflow, wrap, ellipsisString) => {
-    const style = crayon.bgHsl((hue += 30) % 360, 50, 50).bold;
-    const borderStyle = crayon.hsl(((hue % 360) + 270) % 360, 100, 30);
-
-    return Nice.overlay(
-      0.1,
-      0,
-      borderStyle.bold(`${overflow} + ${wrap}`),
-      new Nice({
-        style,
-        border: { type: "rounded", x: true, y: true, style: borderStyle },
-        padding: { bottom: 1, top: 1, left: 1, right: 1 },
-        margin: { bottom: 0, top: 0, right: 1 },
-        width: 25,
-        height: 2,
-        text: { overflow, wrap, ellipsisString },
-      }).draw(ELLIPSIS_NEWLINE_TEXT),
-    );
-  },
-  (overflow, wrap, ellipsisString) => {
-    const style = crayon.bgHsl((hue += 30) % 360, 50, 50).bold;
-    const borderStyle = crayon.hsl(((hue % 360) + 270) % 360, 100, 30);
-
-    return Nice.overlay(
-      0.1,
-      0,
-      borderStyle.bold(`${overflow} + ${wrap}`),
-      new Nice({
-        style,
-        border: { type: "rounded", x: true, y: true, style: borderStyle },
-        padding: { bottom: 1, top: 1, left: 1, right: 1 },
-        margin: { bottom: 0, top: 0, right: 1 },
-        width: 20,
-        height: 1,
-        text: { overflow, wrap, ellipsisString },
-      }).draw(ELLIPSIS_INLINE_WRAPPING_TEXT),
-    );
-  },
+const possibleOverflows: (OverflowType | "ellipsis-custom")[] = [
+  "clip",
+  "ellipsis",
+  "ellipsis-custom",
 ];
 
-const verticals: string[] = [];
+type WrapType = Nice["text"]["wrap"];
+const possibleWraps: WrapType[] = ["wrap", "nowrap"];
+
+let hue = 0;
+const creators: ((overflow: OverflowType, wrap: WrapType, ellipsisString?: string) => string[])[] =
+  [
+    (overflow, wrap, ellipsisString) => {
+      const style = crayon.bgHsl((hue += 30) % 360, 50, 50).bold;
+      const borderStyle = crayon.hsl(((hue % 360) + 270) % 360, 100, 30);
+
+      return Nice.overlay(
+        0.1,
+        0,
+        [borderStyle.bold(`${overflow} + ${wrap}`)],
+        new Nice({
+          style,
+          border: { type: "rounded", x: true, y: true, style: borderStyle },
+          padding: { bottom: 1, top: 1, left: 1, right: 1 },
+          margin: { bottom: 0, top: 0, right: 1 },
+          width: 25,
+          height: 2,
+          text: { overflow, wrap, ellipsisString },
+        }).draw(ELLIPSIS_NEWLINE_TEXT),
+      );
+    },
+    (overflow, wrap, ellipsisString) => {
+      const style = crayon.bgHsl((hue += 30) % 360, 50, 50).bold;
+      const borderStyle = crayon.hsl(((hue % 360) + 270) % 360, 100, 30);
+
+      return Nice.overlay(
+        0.1,
+        0,
+        [borderStyle.bold(`${overflow} + ${wrap}`)],
+        new Nice({
+          style,
+          border: { type: "rounded", x: true, y: true, style: borderStyle },
+          padding: { bottom: 1, top: 1, left: 1, right: 1 },
+          margin: { bottom: 0, top: 0, right: 1 },
+          width: 20,
+          height: 1,
+          text: { overflow, wrap, ellipsisString },
+        }).draw(ELLIPSIS_INLINE_WRAPPING_TEXT),
+      );
+    },
+  ];
+
+const verticals: string[][] = [];
 
 for (let overflow of possibleOverflows) {
   let ellipsisString: string | undefined;
@@ -70,7 +75,7 @@ for (let overflow of possibleOverflows) {
     ellipsisString = "...";
   }
 
-  const objects: string[] = [];
+  const objects: string[][] = [];
 
   for (const wrap of possibleWraps) {
     for (const creator of creators) {
@@ -78,19 +83,21 @@ for (let overflow of possibleOverflows) {
     }
   }
 
-  verticals.push(Nice.vertical(unit("center"), ...objects));
+  verticals.push(Nice.vertical(0.5, ...objects));
 }
 
-const frame = Nice.horizontal(unit("middle"), ...verticals);
+const frame = Nice.horizontal(0.5, ...verticals);
 
 export function render() {
   console.log(
-    Nice.vertical(
-      unit("center"),
-      TEST_INFO.draw(
-        `All of these boxes should contain text "${testMaybePasses}".\nIf some of the text is missing or even a part of "${testFail}" is visible test fails.`,
+    Nice.render(
+      Nice.vertical(
+        0.5,
+        TEST_INFO.draw(
+          `All of these boxes should contain text "${testMaybePasses}".\nIf some of the text is missing or even a part of "${testFail}" is visible test fails.`,
+        ),
+        frame,
       ),
-      frame,
     ),
   );
 }

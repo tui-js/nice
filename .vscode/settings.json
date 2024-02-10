@@ -7,5 +7,6 @@
   },
   "[javascript]": {
     "editor.defaultFormatter": "denoland.vscode-deno"
-  }
+  },
+  "github.copilot.inlineSuggest.enable": true
 }
