@@ -1,11 +1,12 @@
 # 🪁 Nice
 
-Module for creating style definitions for terminal, similiar to [lipgloss](https://github.com/charmbracelet/lipgloss).
+Module for creating style definitions for terminal, similiar to
+[lipgloss](https://github.com/charmbracelet/lipgloss).
 
 # 🚧 WIP
 
-This project is currently under WIP and isn't at all ready for usage in production API and other changes are guaranteed
-to happen.
+This project is currently under WIP and isn't at all ready for usage in production API and other
+changes are guaranteed to happen.
 
 ## 🤝 Contributing
 
