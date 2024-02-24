@@ -1,4 +1,4 @@
-import { textWidth } from "../../mod.ts";
+import { textWidth } from "@tui/strings";
 
 export function vertical(horizontalPosition: number, ...blocks: string[][]): string[] {
   const output = [];

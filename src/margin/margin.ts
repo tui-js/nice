@@ -1,4 +1,4 @@
-import { characterWidth } from "../../mod.ts";
+import { charWidth } from "@tui/strings";
 import type { NormalizedMarginDefinition } from "./normalization.ts";
 
 export function applyMargin(
@@ -7,10 +7,10 @@ export function applyMargin(
   margin: NormalizedMarginDefinition,
   char = " ",
 ): void {
-  const charWidth = characterWidth(char);
-  const leftSide = char.repeat(margin.left / charWidth);
-  const rightSide = margin.left === margin.right ? leftSide : char.repeat(margin.right / charWidth);
-  const verticalSide = char.repeat((width + margin.left + margin.right) / charWidth);
+  const chWidth = charWidth(char);
+  const leftSide = char.repeat(margin.left / chWidth);
+  const rightSide = margin.left === margin.right ? leftSide : char.repeat(margin.right / chWidth);
+  const verticalSide = char.repeat((width + margin.left + margin.right) / chWidth);
 
   for (const i in lines) {
     lines[i] = `${leftSide}${lines[i]}${rightSide}`;

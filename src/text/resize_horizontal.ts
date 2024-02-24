@@ -1,4 +1,4 @@
-import { cropEnd, textWidth } from "../../mod.ts";
+import { cropEnd, textWidth } from "@tui/strings";
 import type { NormalizedTextDefinition } from "./normalization.ts";
 
 export function resizeHorizontally(
@@ -23,8 +23,8 @@ export function resizeLineHorizontally(
 
   switch (overflow) {
     case "clip":
-      return cropEnd(line, lineWidth - desiredWidth);
+      return cropEnd(line, desiredWidth, "");
     case "ellipsis":
-      return cropEnd(line, lineWidth - desiredWidth + textWidth(ellipsisString)) + ellipsisString;
+      return cropEnd(line, desiredWidth, ellipsisString);
   }
 }

@@ -1,4 +1,5 @@
-import { cropEnd, textWidth } from "../utils/strings.ts";
+import { cropEnd, textWidth } from "@tui/strings";
+
 import type { NormalizedTextDefinition } from "./normalization	.ts";
 
 export function resizeVertically(
@@ -13,7 +14,10 @@ export function resizeVertically(
     }
 
     if (overflow === "ellipsis") {
-      lines[lines.length - 1] = cropEnd(lines[lines.length - 1], textWidth(ellipsisString)) +
+      const lastLine = lines[lines.length - 1];
+      const lineWidth = textWidth(lastLine);
+
+      lines[lines.length - 1] = cropEnd(lastLine, lineWidth - textWidth(ellipsisString)) +
         ellipsisString;
     }
   }

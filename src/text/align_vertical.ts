@@ -1,4 +1,4 @@
-import { textWidth } from "../utils/strings.ts";
+import { textWidth } from "@tui/strings";
 
 export type TextVerticalAlign = "top" | "middle" | "bottom";
 

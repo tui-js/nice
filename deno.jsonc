@@ -1,4 +1,11 @@
 {
+  "name": "@tui/nice",
+  "version": "0.1.1",
+
+  "imports": {
+    "@tui/strings": "jsr:@tui/strings@^0.0.5"
+  },
+
   "fmt": {
     "lineWidth": 100
   },

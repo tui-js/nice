@@ -1,6 +1,6 @@
 // Copyright 2023 Im-Beast. All rights reserved. MIT license.
 import { fitIntoDimensions } from "../mod.ts";
-import { textWidth } from "./utils/strings.ts";
+import { textWidth } from "@tui/strings";
 
 import { applyBorder } from "./border/mod.ts";
 import { applyMargin } from "./margin/margin.ts";

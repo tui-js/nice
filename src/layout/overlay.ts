@@ -1,5 +1,5 @@
 import { normalizePosition } from "../utils/normalization.ts";
-import { insert, textWidth } from "../utils/strings.ts";
+import { insert, textWidth } from "@tui/strings";
 
 export function overlay(
   horizontalPosition: number,
@@ -37,7 +37,7 @@ export function overlay(
     }
 
     const fgLine = fgBlock[j];
-    output.push(insert(bgLine, fgLine, offsetX));
+    output.push(insert(bgLine, fgLine, offsetX, true));
   }
 
   return output;
