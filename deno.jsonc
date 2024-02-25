@@ -17,6 +17,5 @@
     "demo-watch": "deno run --watch --allow-hrtime examples/demo.ts",
     "test": "deno run --allow-hrtime --allow-read --allow-net tests/nice-test-runner.ts",
     "test-watch": "deno run --watch --allow-hrtime --allow-read --allow-net tests/nice-test-runner.ts"
-  },
-  "lock": false
+  }
 }
