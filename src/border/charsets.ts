@@ -9,7 +9,9 @@ export interface BorderCharset {
   bottomRight: string;
 }
 
-export const BorderCharsets = {
+export type BorderCharsetType = "sharp" | "rounded" | "thick" | "double" | "block";
+
+export const BorderCharsets: Record<BorderCharsetType, BorderCharset> = {
   sharp: {
     top: "─",
     bottom: "─",
@@ -60,6 +62,4 @@ export const BorderCharsets = {
     bottomLeft: "█",
     bottomRight: "█",
   },
-} satisfies Record<string, BorderCharset>;
-
-export type BorderCharsetType = keyof typeof BorderCharsets;
+};
