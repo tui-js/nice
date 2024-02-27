@@ -1,4 +1,5 @@
-import { cropEnd, textWidth } from "@tui/strings";
+import { cropEnd } from "@tui/strings/crop_end";
+import { textWidth } from "@tui/strings/text_width";
 import type { NormalizedTextDefinition } from "./normalization.ts";
 
 export function resizeHorizontally(

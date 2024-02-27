@@ -1,5 +1,6 @@
 import { normalizePosition } from "../utils/normalization.ts";
-import { insert, textWidth } from "@tui/strings";
+import { textWidth } from "@tui/strings/text_width";
+import { insert } from "@tui/strings/insert";
 
 export function overlay(
   horizontalPosition: number,

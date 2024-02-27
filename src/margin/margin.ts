@@ -1,4 +1,4 @@
-import { charWidth } from "@tui/strings";
+import { charWidth } from "@tui/strings/char_width";
 import type { NormalizedMarginDefinition } from "./normalization.ts";
 
 export function applyMargin(

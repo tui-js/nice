@@ -1,5 +1,7 @@
 // Copyright 2023 Im-Beast. All rights reserved. MIT license.
-import { cropEnd, type Dimensions, textWidth } from "@tui/strings";
+import { cropEnd } from "@tui/strings/crop_end";
+import { textWidth } from "@tui/strings/text_width";
+import type { Dimensions } from "@tui/strings/dimensions";
 
 export function fitIntoDimensions(text: string[], { columns, rows }: Dimensions): void {
   while (text.length > rows) {

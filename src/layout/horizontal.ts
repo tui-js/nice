@@ -1,4 +1,4 @@
-import { textWidth } from "@tui/strings";
+import { textWidth } from "@tui/strings/text_width";
 
 export function horizontal(verticalPosition: number, ...blocks: string[][]): string[] {
   const widths = blocks.map((x) => textWidth(x[0]));

@@ -1,4 +1,4 @@
-import { textWidth } from "@tui/strings";
+import { textWidth } from "@tui/strings/text_width";
 
 export type TextHorizontalAlign = "left" | "center" | "right" | "justify";
 
