@@ -103,6 +103,10 @@ const popup3 = popup2.derive({
   height: undefined,
 });
 
+const popup4 = popup3.derive({
+  style: crayon.bgYellow.blue,
+});
+
 export function render() {
   const SCREEN_BG = horizontal(
     0.5,
@@ -137,21 +141,27 @@ export function render() {
   const SCREEN_FG = popup.draw(`;)`);
   const SCREEN_FG2 = popup2.draw("hi");
   const SCREEN_FG3 = popup3.draw("Im on 13th column\nand fourth row");
+  const SCREEN_FG4 = popup4.draw("Im gone\nIm on negative coords\npart of me will get cut off");
 
   const rendered = Nice.render(
     overlay(
-      13,
-      4,
-      SCREEN_FG3,
+      -4,
+      -2,
+      SCREEN_FG4,
       overlay(
-        0.2,
-        0.2,
-        SCREEN_FG2,
+        13,
+        4,
+        SCREEN_FG3,
         overlay(
-          0.5,
-          0.5,
-          SCREEN_FG,
-          SCREEN_BG,
+          0.2,
+          0.2,
+          SCREEN_FG2,
+          overlay(
+            0.5,
+            0.5,
+            SCREEN_FG,
+            SCREEN_BG,
+          ),
         ),
       ),
     ),

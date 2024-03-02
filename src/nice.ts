@@ -29,7 +29,6 @@ import { overlay } from "./layout/mod.ts";
 import { horizontal } from "./layout/horizontal.ts";
 import { vertical } from "./layout/vertical.ts";
 
-// FIXME: Negative positions
 // TODO: Tests, especially with weird characters
 
 export interface NiceOptions {

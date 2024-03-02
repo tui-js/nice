@@ -1,6 +1,8 @@
-import { normalizePosition } from "../utils/normalization.ts";
 import { textWidth } from "@tui/strings/text_width";
 import { insert } from "@tui/strings/insert";
+import { cropStart } from "@tui/strings/crop_start";
+
+import { normalizePosition } from "../utils/normalization.ts";
 
 export function overlay(
   horizontalPosition: number,
@@ -8,7 +10,7 @@ export function overlay(
   fg: string[],
   bg: string[],
 ): string[] {
-  const fgWidth = textWidth(fg[0]);
+  let fgWidth = textWidth(fg[0]);
   const bgWidth = textWidth(bg[0]);
   if (fgWidth > bgWidth) {
     throw new Error("You can't overlay foreground that's wider than background");
@@ -21,6 +23,15 @@ export function overlay(
   const bgHeight = bgBlock.length;
   if (fgHeight > bgHeight) {
     throw new Error("You can't overlay foreground that's higher than background");
+  }
+
+  if (horizontalPosition < 0) {
+    fgWidth += horizontalPosition;
+    horizontalPosition = 0;
+
+    for (let i = 0; i < fg.length; ++i) {
+      fg[i] = cropStart(fg[i], fgWidth);
+    }
   }
 
   const offsetX = normalizePosition(horizontalPosition, bgWidth - fgWidth);
