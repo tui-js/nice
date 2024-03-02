@@ -6,21 +6,14 @@ import type { TextVerticalAlign } from "./align_vertical.ts";
 export interface TextDefinition {
   wrap: TextWrapType;
   overflow: TextOverflowType;
-  ellipsisString?: string;
+  ellipsisString: string;
 
   horizontalAlign: TextHorizontalAlign;
   verticalAlign: TextVerticalAlign;
 }
 
 const NORMALIZED_TEXT_DEFINITION = Symbol("Nice.NormalizedTextDefinition");
-export interface NormalizedTextDefinition {
-  wrap: TextWrapType;
-  overflow: TextOverflowType;
-  ellipsisString: string;
-
-  horizontalAlign: TextHorizontalAlign;
-  verticalAlign: TextVerticalAlign;
-
+export interface NormalizedTextDefinition extends TextDefinition {
   [NORMALIZED_TEXT_DEFINITION]: true;
 }
 
@@ -29,7 +22,7 @@ export function isNormalizedTextDefinition(object?: object): object is Normalize
 }
 
 export function normalizeTextDefinition(
-  text?: Partial<TextDefinition> | NormalizedTextDefinition,
+  text?: Partial<TextDefinition>,
 ): NormalizedTextDefinition {
   if (isNormalizedTextDefinition(text)) {
     return text;
