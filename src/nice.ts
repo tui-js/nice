@@ -91,12 +91,13 @@ export class Nice {
     ), 0);
 
     wrapLines(output, width, text.wrap);
-    resizeHorizontally(output, width, text);
-    alignHorizontally(output, width, text.horizontalAlign);
 
     let height = this.height ?? output.length;
     resizeVertically(output, height, text);
     alignVertically(output, height, text.verticalAlign);
+
+    resizeHorizontally(output, width, text);
+    alignHorizontally(output, width, text.horizontalAlign);
 
     if (style) {
       applyStyle(output, style);
