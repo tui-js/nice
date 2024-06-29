@@ -1,5 +1,9 @@
-import { Nice } from "../mod.ts";
-import { crayon, walk } from "./deps.ts";
+import crayon from "@crayon/crayon";
+import "@crayon/literal";
+
+import { walk } from "@std/fs";
+
+import { Nice, overlay } from "../mod.ts";
 
 const Title = new Nice({
   style: crayon.bold,
@@ -21,7 +25,7 @@ export class TestCase {
 
   run() {
     console.log(Nice.render(
-      Nice.overlay(
+      overlay(
         0.5,
         0,
         Title.draw(this.title),

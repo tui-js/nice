@@ -1,107 +1,85 @@
-import { Nice } from "../../mod.ts";
-import { crayon } from "https://deno.land/x/crayon@3.3.3/mod.ts";
+import crayon from "@crayon/crayon";
 
-const TEST_INFO = new Nice({
-  style: crayon.bgGreen.bold.yellow,
-  border: { type: "double", x: true, y: true, style: crayon.yellow },
-  padding: { bottom: 1, top: 1, left: 1, right: 1 },
-});
+import { TestCase } from "../nice-test-runner.ts";
+import { horizontal, Nice, type NiceOptions, vertical } from "../../mod.ts";
+import type { NiceBlock } from "../../src/metadata.ts";
 
-const testFail = crayon.bgRed("This should not be visible");
-const testMaybePasses = crayon("This should ellipse");
+const VERY_LONG_TEXT = `Ladies and gentlemen,
+Today, we gather to celebrate the freedom and collaboration that the GNU Project and the Linux kernel have brought to the world of software. Together, they form what we like to call GNU/Linux. It's a powerful, free operating system that respects users' freedom and community spirit.
+Imagine, if you will, a world where stoats and sables join forces. The stoat, nimble and clever, represents the adaptability and efficiency of the Linux kernel. The sable, with its rich and luxurious fur, embodies the robustness and versatility of the GNU utilities and applications. Together, these two creatures form a harmonious, unstoppable duo.
+Now, just as the stoat and sable complement each other in the wild, GNU and Linux work together to create an ecosystem that is more than the sum of its parts. The stoat may dart through the underbrush, catching bugs and optimizing performance, while the sable ensures that the system remains stable and user-friendly, providing the tools and utilities we all rely on.
+In this metaphorical forest, every user is like a fellow stoat or sable, contributing to the richness and diversity of the ecosystem. We share our improvements, help each other, and defend our freedom to explore and innovate.
+So, next time you boot up your GNU/Linux system, think of the stoat and the sable, working together in perfect harmony. It's a testament to what we can achieve when we embrace the principles of free software and open collaboration.
+Thank you, and may the spirit of stoats and sables guide your path to freedom!`;
 
-const ELLIPSIS_NEWLINE_TEXT = `${testMaybePasses}\n\n${testFail}`;
-const ELLIPSIS_INLINE_WRAPPING_TEXT = `${testMaybePasses} ${testFail}`;
+const wrapLabel = crayon.magenta.bold("wrap");
+const nowrapLabel = crayon.cyan.bold("nowrap");
 
-type OverflowType = Nice["text"]["overflow"];
-const possibleOverflows: (OverflowType | "ellipsis-custom")[] = [
-  "clip",
-  "ellipsis",
-  "ellipsis-custom",
+const STYLES: [string, NiceOptions["text"]][] = [
+  [`ellipsis\n${nowrapLabel}`, { overflow: "ellipsis", wrap: "nowrap" }],
+  [`custom ellipsis\n${nowrapLabel}`, {
+    overflow: "ellipsis",
+    wrap: "nowrap",
+    ellipsisString: "...",
+  }],
+  [`clip\n${nowrapLabel}`, { overflow: "clip", wrap: "nowrap" }],
+
+  [`ellipsis\n${wrapLabel}`, { overflow: "ellipsis", wrap: "wrap" }],
+  [`custom ellipsis\n${wrapLabel}`, { overflow: "ellipsis", wrap: "wrap", ellipsisString: "..." }],
+  [`clip\n${wrapLabel}`, { overflow: "clip", wrap: "wrap" }],
 ];
 
-type WrapType = Nice["text"]["wrap"];
-const possibleWraps: WrapType[] = ["wrap", "nowrap"];
+const titleStyle = new Nice({
+  style: crayon.bold,
+  text: {
+    horizontalAlign: "center",
+  },
+});
 
-let hue = 0;
-const creators: ((overflow: OverflowType, wrap: WrapType, ellipsisString?: string) => string[])[] =
-  [
-    (overflow, wrap, ellipsisString) => {
-      const style = crayon.bgHsl((hue += 30) % 360, 50, 50).bold;
-      const borderStyle = crayon.hsl(((hue % 360) + 270) % 360, 100, 30);
+const style = new Nice({
+  style: crayon.bgYellow,
 
-      return Nice.overlay(
-        0.1,
-        0,
-        [borderStyle.bold(`${overflow} + ${wrap}`)],
-        new Nice({
-          style,
-          border: { type: "rounded", x: true, y: true, style: borderStyle },
-          padding: { bottom: 1, top: 1, left: 1, right: 1 },
-          margin: { bottom: 0, top: 0, right: 1 },
-          width: 25,
-          height: 2,
-          text: { overflow, wrap, ellipsisString },
-        }).draw(ELLIPSIS_NEWLINE_TEXT),
-      );
-    },
-    (overflow, wrap, ellipsisString) => {
-      const style = crayon.bgHsl((hue += 30) % 360, 50, 50).bold;
-      const borderStyle = crayon.hsl(((hue % 360) + 270) % 360, 100, 30);
+  width: 13,
+  height: 12,
 
-      return Nice.overlay(
-        0.1,
-        0,
-        [borderStyle.bold(`${overflow} + ${wrap}`)],
-        new Nice({
-          style,
-          border: { type: "rounded", x: true, y: true, style: borderStyle },
-          padding: { bottom: 1, top: 1, left: 1, right: 1 },
-          margin: { bottom: 0, top: 0, right: 1 },
-          width: 20,
-          height: 1,
-          text: { overflow, wrap, ellipsisString },
-        }).draw(ELLIPSIS_INLINE_WRAPPING_TEXT),
-      );
-    },
-  ];
+  border: { type: "sharp", all: true, style: crayon.white },
+});
 
-const verticals: string[][] = [];
+function render() {
+  const blocks: NiceBlock[] = [];
+  for (const [title, textStyle] of STYLES) {
+    const elementStyle = style.derive({
+      text: textStyle,
+    });
 
-for (let overflow of possibleOverflows) {
-  let ellipsisString: string | undefined;
-  if (overflow === "ellipsis-custom") {
-    overflow = "ellipsis";
-    ellipsisString = "...";
+    blocks.push(vertical(
+      0.5,
+      titleStyle.draw(title),
+      elementStyle.draw(VERY_LONG_TEXT),
+    ));
   }
 
-  const objects: string[][] = [];
-
-  for (const wrap of possibleWraps) {
-    for (const creator of creators) {
-      objects.push(creator(overflow, wrap, ellipsisString));
-    }
-  }
-
-  verticals.push(Nice.vertical(0.5, ...objects));
-}
-
-const frame = Nice.horizontal(0.5, ...verticals);
-
-export function render() {
-  console.log(
-    Nice.render(
-      Nice.vertical(
-        0.5,
-        TEST_INFO.draw(
-          `All of these boxes should contain text "${testMaybePasses}".\nIf some of the text is missing or even a part of "${testFail}" is visible test fails.`,
-        ),
-        frame,
-      ),
-    ),
+  const SCREEN_FG = Nice.render(
+    horizontal(0.5, ...blocks),
   );
+
+  console.log(SCREEN_FG);
 }
+
+export const testCase = new TestCase(
+  "Overflow support",
+  crayon`\
+{bold This test showcases ways to manage text that's too large to fit in a block.}
+
+Each ${wrapLabel} block should only ellipse or clip* at the last row of the block.
+${wrapLabel} blocks should not contain any cut words – every word should be whole.
+
+Each ${nowrapLabel} block should ellipse or clip* at every line of the block.
+
+* – Should elipse or clip – ellipse if overflow is set to "ellipsis", clip otherwise.`,
+  render,
+);
 
 if (import.meta.main) {
-  render();
+  testCase.run();
 }

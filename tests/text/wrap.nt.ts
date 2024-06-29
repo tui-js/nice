@@ -1,10 +1,25 @@
-import { crayon } from "../deps.ts";
+import crayon from "@crayon/crayon";
 import { TestCase } from "../nice-test-runner.ts";
 
 import { Nice } from "../../mod.ts";
 import { horizontal, vertical } from "../../src/layout/mod.ts";
 
-const wrap = new Nice({
+const TEXT = `\
+Sneaky
+
+Tippity tick tapity typing test theoritically taking time to test the tight text
+
+snack
+smack`;
+
+const wrapLabel = crayon.bold.green("wrap");
+const nowrapLabel = crayon.bold.magenta("nowrap");
+
+const titleStyle = new Nice({
+  text: { horizontalAlign: "center" },
+});
+
+const wrapStyle = new Nice({
   style: crayon.bgRed.bold.white,
 
   width: 13,
@@ -20,25 +35,17 @@ const wrap = new Nice({
   },
 });
 
-const nowrap = wrap.derive({
+const nowrapStyle = wrapStyle.derive({
   style: crayon.bgBlue.bold.white,
   text: { wrap: "nowrap" },
 });
 
 function render() {
-  const TEXT = `\
-Sneaky
-
-Tippity tick tapity typing test theoritically taking time to test the tight text
-
-snack
-smack`;
-
   const SCREEN_FG = Nice.render(
     horizontal(
       0.5,
-      vertical(0.5, ["wrap"], wrap.draw(TEXT)),
-      vertical(0.5, ["nowrap"], nowrap.draw(TEXT)),
+      vertical(0.5, titleStyle.draw(wrapLabel), wrapStyle.draw(TEXT)),
+      vertical(0.5, titleStyle.draw(nowrapLabel), nowrapStyle.draw(TEXT)),
     ),
   );
 
@@ -51,7 +58,10 @@ export const testCase = new TestCase(
 {bold This test showcases the different text wrapping modes.}
 Words starting with an "S" should be alone on their line.
 There should be 1 line of space between words starting with an "S" and words starting with "T".
-Test should contain exactly 3 words starting with an "S" and 13 words starting with "T".`,
+
+${wrapLabel} should contain 3 words starting with an "S" and 13 words starting with "T".
+
+${nowrapLabel} should contain 3 words starting with an "S" and 2 words starting with "T".`,
   render,
 );
 
