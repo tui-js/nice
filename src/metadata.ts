@@ -39,7 +39,14 @@ export function applyMetadata(
   return element;
 }
 
-export function getBoundingRect(element: NiceBlock) {
+export interface BoundingRect {
+  top: number;
+  left: number;
+  width: number;
+  height: number;
+}
+
+export function getBoundingRect(element: NiceBlock): BoundingRect {
   let top = element[NICE_TOP];
   let left = element[NICE_LEFT];
 
