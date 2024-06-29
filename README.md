@@ -1,6 +1,6 @@
 # 🪁 Nice
 
-Module for creating style definitions for terminal, similiar to
+Module for creating style definitions for terminal, similar to
 [lipgloss](https://github.com/charmbracelet/lipgloss).
 
 # 🚧 WIP
