@@ -8,8 +8,6 @@
       "jsr:@std/assert@^0.218": "jsr:@std/assert@0.218.2",
       "jsr:@std/assert@^0.218.2": "jsr:@std/assert@0.218.2",
       "jsr:@std/fmt@^0.218.2": "jsr:@std/fmt@0.218.2",
-      "jsr:@std/fs@^0.218": "jsr:@std/fs@0.218.2",
-      "jsr:@std/path@^0.218.2": "jsr:@std/path@0.218.2",
       "jsr:@tui/strings@^0.0.5": "jsr:@tui/strings@0.0.5"
     },
     "jsr": {
@@ -33,16 +31,6 @@
       },
       "@std/fmt@0.218.2": {
         "integrity": "99526449d2505aa758b6cbef81e7dd471d8b28ec0dcb1491d122b284c548788a"
-      },
-      "@std/fs@0.218.2": {
-        "integrity": "dd9431453f7282e8c577cc22c9e6d036055a9a980b5549f887d6012969fabcca",
-        "dependencies": [
-          "jsr:@std/assert@^0.218.2",
-          "jsr:@std/path@^0.218.2"
-        ]
-      },
-      "@std/path@0.218.2": {
-        "integrity": "b568fd923d9e53ad76d17c513e7310bda8e755a3e825e6289a0ce536404e2662"
       },
       "@tui/strings@0.0.5": {
         "integrity": "064e0deae56c2857e4fd5eec385007a5342d60825c115b92ec25a9cc63464b1e"
@@ -128,7 +116,6 @@
       "jsr:@crayon/crayon@4.0.0-alpha.3",
       "jsr:@crayon/literal@1.0.0-alpha.2",
       "jsr:@std/assert@^0.218",
-      "jsr:@std/fs@^0.218",
       "jsr:@tui/strings@^0.0.5"
     ]
   }

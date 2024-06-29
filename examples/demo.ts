@@ -3,6 +3,8 @@ import { crayon } from "https://deno.land/x/crayon@3.3.3/mod.ts";
 import { Nice } from "../mod.ts";
 import { horizontal, overlay, vertical } from "../src/layout/mod.ts";
 
+console.clear();
+
 const a = new Nice({
   style: crayon.bgLightBlue.lightWhite.bold,
   text: {
@@ -108,6 +110,7 @@ const popup4 = popup3.derive({
 });
 
 export function render() {
+  console.time("render time");
   const SCREEN_BG = horizontal(
     0.5,
     vertical(
@@ -167,9 +170,10 @@ export function render() {
     ),
   );
 
+  console.timeEnd("render time");
   return rendered;
 }
 
 if (import.meta.main) {
-  Deno.stdout.writeSync(new TextEncoder().encode("\x1b[1;1H\x1b[0J" + render()));
+  console.log(render());
 }
