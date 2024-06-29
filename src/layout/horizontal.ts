@@ -1,35 +1,48 @@
-import { textWidth } from "@tui/strings/text_width";
+import {
+  applyMetadata,
+  NICE_ANCHOR,
+  NICE_HEIGHT,
+  NICE_LEFT,
+  NICE_TOP,
+  NICE_WIDTH,
+  type NiceBlock,
+} from "../metadata.ts";
 
-export function horizontal(verticalPosition: number, ...blocks: string[][]): string[] {
-  const widths = blocks.map((x) => textWidth(x[0]));
+export function horizontal(verticalPosition: number, ...blocks: NiceBlock[]): NiceBlock {
+  const widths: number[] = [];
+  let maxHeight = 0;
+  let width = 0;
 
-  const maxHeight = blocks.reduce(
-    (maxHeight, block) => Math.max(maxHeight, block.length),
-    0,
-  );
-
-  const output = [];
-
-  for (let y = 0; y < maxHeight; ++y) {
-    let row = "";
-
-    for (const i in blocks) {
-      const block = blocks[i];
-      const maxWidth = widths[i];
-
-      const yOffset = Math.round((maxHeight - block.length) * verticalPosition);
-      let line = block[y - yOffset] ?? "";
-
-      const lineWidth = line ? textWidth(line) : 0;
-      if (lineWidth < maxWidth) {
-        line += " ".repeat(maxWidth - lineWidth);
-      }
-
-      row += line;
-    }
-
-    output.push(row);
+  for (const block of blocks) {
+    const blockWidth = block[NICE_WIDTH];
+    width += blockWidth;
+    widths.push(blockWidth);
+    maxHeight = Math.max(maxHeight, block[NICE_HEIGHT]);
   }
 
-  return output;
+  const output = Array<string>(maxHeight).fill("");
+
+  let left = 0;
+  for (const block of blocks) {
+    const yOffset = Math.round((maxHeight - block[NICE_HEIGHT]) * verticalPosition);
+    const blockWidth = block[NICE_WIDTH];
+
+    block[NICE_ANCHOR] = output as NiceBlock;
+    block[NICE_LEFT] = left;
+    block[NICE_TOP] = yOffset;
+
+    for (let y = 0; y < maxHeight; ++y) {
+      output[y] += block[y - yOffset] ?? " ".repeat(blockWidth);
+    }
+
+    left += blockWidth;
+  }
+
+  return applyMetadata(output, {
+    type: "Horizontal",
+    top: 0,
+    left: 0,
+    width,
+    height: maxHeight,
+  });
 }

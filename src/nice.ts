@@ -15,19 +15,26 @@ import {
 
 import type { Style } from "./types.ts";
 import {
-  NormalizedTextDefinition,
+  type NormalizedTextDefinition,
   normalizeTextDefinition,
-  TextDefinition,
+  type TextDefinition,
 } from "./text/normalization.ts";
 import {
-  BorderDefinition,
+  type BorderDefinition,
   normalizeBorder,
-  NormalizedBorderDefinition,
+  type NormalizedBorderDefinition,
 } from "./border/normalization.ts";
-import { MarginDefinition, NormalizedMarginDefinition, normalizeMargin } from "./margin/mod.ts";
-import { overlay } from "./layout/mod.ts";
-import { horizontal } from "./layout/horizontal.ts";
-import { vertical } from "./layout/vertical.ts";
+import {
+  type MarginDefinition,
+  type NormalizedMarginDefinition,
+  normalizeMargin,
+} from "./margin/mod.ts";
+
+import { applyMetadata, NICE_HEIGHT, NICE_WIDTH, type NiceBlock } from "./metadata.ts";
+
+export { overlay } from "./layout/mod.ts";
+export { horizontal } from "./layout/horizontal.ts";
+export { vertical } from "./layout/vertical.ts";
 
 // TODO: Tests, especially with weird characters
 
@@ -66,37 +73,22 @@ export class Nice {
     this.padding = normalizeMargin(padding);
   }
 
-  static render(input: string[]): string {
-    fitIntoDimensions(input, Deno.consoleSize());
+  static render(input: NiceBlock): string {
+    const consoleSize = Deno.consoleSize();
+    if (input[NICE_WIDTH] > consoleSize.columns || input[NICE_HEIGHT] > consoleSize.rows) {
+      fitIntoDimensions(input, consoleSize);
+    }
     return input.join("\n");
   }
 
-  static overlay(
-    x: number,
-    y: number,
-    fg: string[],
-    bg: string[],
-  ): string[] {
-    return overlay(x, y, fg, bg);
-  }
-
-  static horizontal(y: number, ...blocks: string[][]): string[] {
-    return horizontal(y, ...blocks);
-  }
-
-  static vertical(x: number, ...blocks: string[][]): string[] {
-    return vertical(x, ...blocks);
-  }
-
-  draw(input: string): string[] {
+  draw(input: string): NiceBlock {
     const { style, border, margin, padding, text } = this;
 
     const output = input.split("\n");
 
-    let width = this.width ??
-      output.reduce((maxWidth, line) => (
-        Math.max(maxWidth, textWidth(line))
-      ), 0);
+    let width = this.width ?? output.reduce((maxWidth, line) => (
+      Math.max(maxWidth, textWidth(line))
+    ), 0);
 
     wrapLines(output, width, text.wrap);
     resizeHorizontally(output, width, text);
@@ -105,7 +97,6 @@ export class Nice {
     let height = this.height ?? output.length;
     resizeVertically(output, height, text);
     alignVertically(output, height, text.verticalAlign);
-    height = output.length;
 
     if (style) {
       applyStyle(output, style);
@@ -120,8 +111,14 @@ export class Nice {
     width += (border.left ? 1 : 0) + (border.right ? 1 : 0);
 
     applyMargin(output, width, margin);
+    height = output.length;
 
-    return output;
+    return applyMetadata(output, {
+      top: 0,
+      left: 0,
+      width,
+      height,
+    });
   }
 
   clone(): Nice {

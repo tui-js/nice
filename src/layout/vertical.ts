@@ -1,34 +1,55 @@
-import { textWidth } from "@tui/strings/text_width";
+import {
+  applyMetadata,
+  NICE_ANCHOR,
+  NICE_HEIGHT,
+  NICE_LEFT,
+  NICE_TOP,
+  NICE_WIDTH,
+  type NiceBlock,
+} from "../metadata.ts";
 
-export function vertical(horizontalPosition: number, ...blocks: string[][]): string[] {
-  const output = [];
+export function vertical(horizontalPosition: number, ...blocks: NiceBlock[]): NiceBlock {
+  const output: string[] = [];
 
-  const widths = blocks.map((x) => textWidth(x[0]));
-  const maxWidth = widths.reduce((maxWidth, x) => {
-    return Math.max(maxWidth, x);
-  }, 0);
+  let maxWidth = 0;
+  let height = 0;
+  for (const block of blocks) {
+    block[NICE_ANCHOR] = output as NiceBlock;
 
-  for (let i = 0; i < blocks.length; ++i) {
-    const string = blocks[i];
-    const width = widths[i];
+    const blockWidth = block[NICE_WIDTH];
+    maxWidth = Math.max(maxWidth, blockWidth);
 
-    if (width === maxWidth) {
-      output.push(...string);
+    block[NICE_TOP] = height;
+    height += block[NICE_HEIGHT];
+  }
+
+  for (const block of blocks) {
+    const blockWidth = block[NICE_WIDTH];
+
+    if (blockWidth === maxWidth) {
+      output.push(...block);
       continue;
     }
 
-    for (let line of string) {
-      const lineWidth = textWidth(line);
+    const diff = maxWidth - blockWidth;
+    const lacksLeft = Math.round(diff * horizontalPosition);
+    const lacksRight = diff - lacksLeft;
 
-      if (lineWidth < maxWidth) {
-        const lacksLeft = Math.round((maxWidth - lineWidth) * horizontalPosition);
-        const lacksRight = maxWidth - lineWidth - lacksLeft;
-        line = " ".repeat(lacksLeft) + line + " ".repeat(lacksRight);
-      }
+    block[NICE_LEFT] = lacksLeft;
 
-      output.push(line);
+    const leftPad = " ".repeat(lacksLeft);
+    const rightPad = " ".repeat(lacksRight);
+
+    for (const line of block) {
+      output.push(leftPad + line + rightPad);
     }
   }
 
-  return output;
+  return applyMetadata(output, {
+    type: "Vertical",
+    top: 0,
+    left: 0,
+    width: maxWidth,
+    height,
+  });
 }

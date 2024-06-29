@@ -1,6 +1,7 @@
 import { type BorderCharset, BorderCharsets, type BorderCharsetType } from "./charsets.ts";
 import type { EitherType, Style } from "../types.ts";
 
+// FIXME: { all: true } without style is a valid border
 export type BorderX<T> = EitherType<[{ left: T; right: T }, { x: T }, { all: T }]>;
 export type BorderY<T> = EitherType<[{ top: T; bottom: T }, { y: T }, { all: T }]>;
 export type BorderTypeDefinition = EitherType<[
