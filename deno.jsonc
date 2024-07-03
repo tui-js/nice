@@ -1,6 +1,6 @@
 {
   "name": "@tui/nice",
-  "version": "0.3.0",
+  "version": "0.3.1",
   "exports": {
     ".": "./mod.ts",
     "./metadata": "./src/metadata.ts",
