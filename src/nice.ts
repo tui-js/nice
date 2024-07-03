@@ -1,42 +1,44 @@
 // Copyright 2023 Im-Beast. All rights reserved. MIT license.
-import { fitIntoDimensions } from "../mod.ts";
-import { textWidth } from "@tui/strings/text_width";
+import { cropEnd, textWidth } from "@tui/strings";
 
-import { applyBorder } from "./border/mod.ts";
-import { applyMargin } from "./margin/margin.ts";
 import {
   alignHorizontally,
   alignVertically,
   applyStyle,
+  type NormalizedTextDefinition,
+  normalizeTextDefinition,
   resizeHorizontally,
   resizeVertically,
+  type TextDefinition,
   wrapLines,
 } from "./text/mod.ts";
 
-import type { Style } from "./types.ts";
 import {
-  type NormalizedTextDefinition,
-  normalizeTextDefinition,
-  type TextDefinition,
-} from "./text/normalization.ts";
-import {
+  applyBorder,
   type BorderDefinition,
   normalizeBorder,
   type NormalizedBorderDefinition,
-} from "./border/normalization.ts";
+} from "./border/mod.ts";
+
 import {
+  applyMargin,
   type MarginDefinition,
   type NormalizedMarginDefinition,
   normalizeMargin,
 } from "./margin/mod.ts";
 
-import { applyMetadata, NICE_HEIGHT, NICE_WIDTH, type NiceBlock } from "./metadata.ts";
+import {
+  applyMetadata,
+  NICE_ANCHOR,
+  NICE_HEIGHT,
+  NICE_LEFT,
+  NICE_TOP,
+  NICE_WIDTH,
+  type NiceBlock,
+} from "./metadata.ts";
+import type { Style } from "./types.ts";
 
-export { overlay } from "./layout/mod.ts";
-export { horizontal } from "./layout/horizontal.ts";
-export { vertical } from "./layout/vertical.ts";
-
-// TODO: Tests, especially with weird characters
+export type { NiceBlock };
 
 export interface NiceOptions {
   style?: Style;
@@ -73,12 +75,69 @@ export class Nice {
     this.padding = normalizeMargin(padding);
   }
 
-  static render(input: NiceBlock): string {
-    const consoleSize = Deno.consoleSize();
-    if (input[NICE_WIDTH] > consoleSize.columns || input[NICE_HEIGHT] > consoleSize.rows) {
-      fitIntoDimensions(input, consoleSize);
+  /**
+   * In-place modifies {block} so it fits in the console.\
+   * It considers both dimensions and positioning.
+   *
+   * @throws when {block} is not a root block (is anchored to other blocks)
+   */
+  static fitIntoConsole(block: NiceBlock): NiceBlock {
+    if (block[NICE_ANCHOR]) {
+      throw new Error(
+        "You must not call `fitIntoConsole` or `render*` functions on non-root block.",
+      );
     }
+
+    const { columns, rows } = Deno.consoleSize();
+
+    const top = block[NICE_TOP];
+    const left = block[NICE_LEFT];
+
+    while ((top + block[NICE_HEIGHT]) > rows) {
+      block.pop();
+      block[NICE_HEIGHT] -= 1;
+    }
+
+    if ((left + block[NICE_WIDTH]) >= columns) {
+      block[NICE_WIDTH] = columns;
+      for (const [i, line] of block.entries()) {
+        block[i] = cropEnd(line, columns);
+      }
+    }
+
+    return block;
+  }
+
+  /**
+   * Render NiceBlock into a string which can be printed out to the console.\
+   * It ensures that block fits into the console.
+   *
+   * It uses newline ("\n") for changing rows.\
+   * If block might be rendered on different column than the first one, consider using {@linkcode Nice.renderRelative}.
+   */
+  static render(input: NiceBlock): string {
+    Nice.fitIntoConsole(input);
     return input.join("\n");
+  }
+
+  /**
+   * Compose string of NiceBlock which uses ANSI escape codes to position lines.\
+   * This allows the block to be rendered in any part of the terminal without causing visual glitches.
+   *
+   * If you know that block will always be rendered on the first column consider using {@linkcode Nice.render}.
+   *
+   * It ensures that block fits into the console.
+   */
+  static renderRelative(input: NiceBlock): string {
+    Nice.fitIntoConsole(input);
+
+    // This does these steps to render lines in correct position:
+    //  1. Save cursor position
+    //  2. Line
+    //  3. Reset cursor position
+    //  4. Move cursor down
+    //  5. Save cursor position
+    return "\x1b7" + input.join("\x1b8\x1b[1B\x1b7");
   }
 
   draw(input: string): NiceBlock {
