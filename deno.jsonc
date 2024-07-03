@@ -3,8 +3,11 @@
   "version": "0.2.1",
   "exports": {
     ".": "./mod.ts",
-    "./metadata": "./src/metadata.ts"
-    // TODO: export individual modules
+    "./metadata": "./src/metadata.ts",
+    "./layout": "./src/layout/mod.ts",
+    "./margin": "./src/margin/mod.ts",
+    "./border": "./src/border/mod.ts",
+    "./text": "./src/text/mod.ts"
   },
 
   "imports": {
