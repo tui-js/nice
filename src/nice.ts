@@ -27,15 +27,7 @@ import {
   normalizeMargin,
 } from "./margin/mod.ts";
 
-import {
-  applyMetadata,
-  NICE_ANCHOR,
-  NICE_HEIGHT,
-  NICE_LEFT,
-  NICE_TOP,
-  NICE_WIDTH,
-  type NiceBlock,
-} from "./metadata.ts";
+import { applyMetadata, getBoundingRect, NICE_HEIGHT, type NiceBlock } from "./metadata.ts";
 import type { Style } from "./types.ts";
 
 export type { NiceBlock };
@@ -78,30 +70,25 @@ export class Nice {
   /**
    * In-place modifies {block} so it fits in the console.\
    * It considers both dimensions and positioning.
-   *
-   * @throws when {block} is not a root block (is anchored to other blocks)
    */
   static fitIntoConsole(block: NiceBlock): NiceBlock {
-    if (block[NICE_ANCHOR]) {
-      throw new Error(
-        "You must not call `fitIntoConsole` or `render*` functions on non-root block.",
-      );
-    }
-
     const { columns, rows } = Deno.consoleSize();
 
-    const top = block[NICE_TOP];
-    const left = block[NICE_LEFT];
+    const { top, left, width } = getBoundingRect(block);
 
     while ((top + block[NICE_HEIGHT]) > rows) {
       block.pop();
       block[NICE_HEIGHT] -= 1;
     }
 
-    if ((left + block[NICE_WIDTH]) >= columns) {
-      block[NICE_WIDTH] = columns;
+    if ((left + width) >= columns) {
+      if (columns - left <= 0) {
+        block.length = 0;
+        return block;
+      }
+
       for (const [i, line] of block.entries()) {
-        block[i] = cropEnd(line, columns);
+        block[i] = cropEnd(line, columns - left);
       }
     }
 
