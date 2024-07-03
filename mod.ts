@@ -1,4 +1,4 @@
-// Copyright 2023 Im-Beast. All rights reserved. MIT license.
+// Copyright 2024 Im-Beast. All rights reserved. MIT license.
 export * from "./src/nice.ts";
 export * from "./src/metadata.ts";
 
