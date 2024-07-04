@@ -151,13 +151,14 @@ export class Nice {
     } else {
       applyMargin(output, width, padding);
     }
-
     width += padding.left + padding.right;
 
     applyBorder(output, width, border);
     width += (border.left ? 1 : 0) + (border.right ? 1 : 0);
 
     applyMargin(output, width, margin);
+    width += margin.left + margin.right;
+
     height = output.length;
 
     return applyMetadata(output, {
