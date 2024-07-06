@@ -1,7 +1,7 @@
 import crayon from "@crayon/crayon";
 import { TestCase } from "../nice-test-runner.ts";
 
-import { BorderCharsets, horizontal, Nice, overlay, vertical } from "../../mod.ts";
+import { BorderCharsets, horizontal, overlay, Style, vertical } from "../../mod.ts";
 import { getBoundingRect, type NiceBlock } from "../../src/metadata.ts";
 
 const noCornerCharset = BorderCharsets.rounded;
@@ -10,7 +10,7 @@ noCornerCharset.topRight = " ";
 noCornerCharset.bottomLeft = " ";
 noCornerCharset.bottomRight = " ";
 
-const style = new Nice({
+const style = new Style({
   border: {
     all: true,
     type: "custom",
@@ -25,7 +25,7 @@ function block(padded = false) {
   const block = style.derive({
     padding: padded ? { all: 1 } : undefined,
     border: { style: crayon.hsl(i++ * HUE_STEP, 50, 50) },
-  }).draw(`Item ${i}`);
+  }).create(`Item ${i}`);
   blocks.push(block);
   return block;
 }
@@ -78,7 +78,7 @@ function render() {
     ),
   );
 
-  console.log(Nice.render(SCREEN_FG));
+  console.log(Style.render(SCREEN_FG));
 
   const textEncoder = new TextEncoder();
   // We have to draw corners below the test introduction

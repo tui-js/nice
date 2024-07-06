@@ -1,11 +1,11 @@
 // Copyright 2024 Im-Beast. All rights reserved. MIT license.
-import { crayon } from "https://deno.land/x/crayon@3.3.3/mod.ts";
-import { Nice } from "../mod.ts";
+import crayon from "@crayon/crayon";
+import { Style } from "../mod.ts";
 import { horizontal, overlay, vertical } from "../src/layout/mod.ts";
 
 console.clear();
 
-const a = new Nice({
+const a = new Style({
   style: crayon.bgLightBlue.lightWhite.bold,
   text: {
     horizontalAlign: "justify",
@@ -115,38 +115,38 @@ export function render() {
     0.5,
     vertical(
       0.5,
-      a.draw(
+      a.create(
         "This gets justified\nAlone\none two three four five six\nlonger words come here\nbig spacing now",
       ),
       horizontal(
         0.5,
-        c.draw("Hello"),
-        c.draw("there"),
-        d.draw("This should get clipped"),
+        c.create("Hello"),
+        c.create("there"),
+        d.create("This should get clipped"),
       ),
     ),
-    b.draw(
+    b.create(
       "Nice 🔥\n（╯°□°）╯︵┻━┻\ndevanagari आआॠऋॲपॉ\nﾊﾊﾊThis text should get wrapped because widthəəə is explicit as日本verylongstringthaəə💩twillwrapnomatterwhat\nwowə\nالعربية",
     ),
     vertical(
       0.5,
-      e.draw("very long text that will wrap and will fit"),
-      e.draw("日本 long text that will wrap and totally won't fit"),
+      e.create("very long text that will wrap and will fit"),
+      e.create("日本 long text that will wrap and totally won't fit"),
     ),
     vertical(
       0.5,
-      f.draw(`ISBN: 978-0-1234-5678-7\n\nCSS: הרפתקה חדשה!`),
-      g.draw(`ISBN: 978-0-1234-5678-7\n\nCSS: הרפתקה חדשה!`),
-      h.draw(`ISBN: 978-0-1234-5678-7\n\nCSS: הרפתקה חדשה!`),
+      f.create(`ISBN: 978-0-1234-5678-7\n\nCSS: הרפתקה חדשה!`),
+      g.create(`ISBN: 978-0-1234-5678-7\n\nCSS: הרפתקה חדשה!`),
+      h.create(`ISBN: 978-0-1234-5678-7\n\nCSS: הרפתקה חדשה!`),
     ),
   );
 
-  const SCREEN_FG = popup.draw(`;)`);
-  const SCREEN_FG2 = popup2.draw("hi");
-  const SCREEN_FG3 = popup3.draw("Im on 13th column\nand fourth row");
-  const SCREEN_FG4 = popup4.draw("Im gone\nIm on negative coords\npart of me will get cut off");
+  const SCREEN_FG = popup.create(`;)`);
+  const SCREEN_FG2 = popup2.create("hi");
+  const SCREEN_FG3 = popup3.create("Im on 13th column\nand fourth row");
+  const SCREEN_FG4 = popup4.create("Im gone\nIm on negative coords\npart of me will get cut off");
 
-  const rendered = Nice.render(
+  const rendered = Style.render(
     overlay(
       -4,
       -2,

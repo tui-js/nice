@@ -8,7 +8,7 @@ export type EitherType<A> = A extends [infer A0, infer A1] ? TypeAorB<A0, A1>
   : A extends [infer A0, infer A1, ...infer A2] ? TypeAorB<A0, EitherType<[A1, ...A2]>>
   : never;
 
-export interface Style {
+export interface StringStyler {
   (char: string): string;
 }
 

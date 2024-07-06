@@ -1,5 +1,5 @@
 import { type BorderCharset, BorderCharsets, type BorderCharsetType } from "./charsets.ts";
-import type { EitherType, Style } from "../types.ts";
+import type { EitherType, StringStyler } from "../types.ts";
 
 // FIXME: { all: true } without style is a valid border
 export type BorderX<T> = EitherType<[{ left: T; right: T }, { x: T }, { all: T }]>;
@@ -9,9 +9,12 @@ export type BorderTypeDefinition = EitherType<[
   { type: "custom"; charset: BorderCharset },
 ]>;
 
-export type UniqueStyleBorder = BorderX<Style> & BorderY<Style> & BorderTypeDefinition;
+export type UniqueStyleBorder =
+  & BorderX<StringStyler>
+  & BorderY<StringStyler>
+  & BorderTypeDefinition;
 export type SharedStyleBorder = BorderX<boolean> & BorderY<boolean> & BorderTypeDefinition & {
-  style: Style;
+  style: StringStyler;
 };
 
 export type BorderDefinition = EitherType<[UniqueStyleBorder, SharedStyleBorder]>;
@@ -19,10 +22,10 @@ export type BorderDefinition = EitherType<[UniqueStyleBorder, SharedStyleBorder]
 const NORMALIZED_BORDER_DEFINITION = Symbol("Nice.NormalizedBorderDefinition");
 export interface NormalizedBorderDefinition {
   charset: BorderCharset;
-  top: Style | null;
-  bottom: Style | null;
-  left: Style | null;
-  right: Style | null;
+  top: StringStyler | null;
+  bottom: StringStyler | null;
+  left: StringStyler | null;
+  right: StringStyler | null;
 }
 
 export function isNormalizedBorderDefinition(

@@ -1,9 +1,9 @@
 import crayon from "@crayon/crayon";
 import { TestCase } from "../nice-test-runner.ts";
 
-import { horizontal, Nice } from "../../mod.ts";
+import { horizontal, Style } from "../../mod.ts";
 
-const style = new Nice({
+const style = new Style({
   style: crayon.bgBlue,
 
   width: 14,
@@ -32,7 +32,7 @@ function render() {
     "🦪", "🍦", "🍧", "🍨", "🍩", "🍪", "🎂", "🍰", "🧁", "🥧", "🍫", "🍬",
   ];
 
-  const SCREEN_FG = Nice.render(horizontal(0.5, style.draw(EMOJIS.join(" "))));
+  const SCREEN_FG = Style.render(horizontal(0.5, style.create(EMOJIS.join(" "))));
 
   console.log(SCREEN_FG);
 }

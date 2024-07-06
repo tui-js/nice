@@ -1,16 +1,16 @@
 import crayon from "@crayon/crayon";
 import "@crayon/literal";
 
-import { Nice, overlay } from "../mod.ts";
+import { overlay, Style } from "../mod.ts";
 import type { NiceBlock } from "../src/metadata.ts";
 
-const Title = new Nice({
+const Title = new Style({
   style: crayon.bold,
   border: { type: "thick", x: true, style: crayon.white },
   padding: { all: 0 },
 });
 
-const Description = new Nice({
+const Description = new Style({
   border: { type: "thick", x: true, y: true, style: crayon.white },
   padding: { all: 1 },
 });
@@ -26,15 +26,15 @@ export class TestCase {
     return overlay(
       0.5,
       0,
-      Title.draw(this.title),
-      Description.draw(this.description),
+      Title.create(this.title),
+      Description.create(this.description),
     );
   }
 
   run() {
     console.clear();
 
-    console.log(Nice.render(this.block()));
+    console.log(Style.render(this.block()));
 
     this.render();
   }

@@ -1,7 +1,7 @@
 import crayon from "@crayon/crayon";
 
 import { TestCase } from "../nice-test-runner.ts";
-import { horizontal, Nice, type NiceOptions, vertical } from "../../mod.ts";
+import { horizontal, Style, type StyleOptions, vertical } from "../../mod.ts";
 import type { NiceBlock } from "../../src/metadata.ts";
 
 const VERY_LONG_TEXT = `Ladies and gentlemen,
@@ -15,7 +15,7 @@ Thank you, and may the spirit of stoats and sables guide your path to freedom!`;
 const wrapLabel = crayon.magenta.bold("wrap");
 const nowrapLabel = crayon.cyan.bold("nowrap");
 
-const STYLES: [string, NiceOptions["text"]][] = [
+const STYLES: [string, StyleOptions["text"]][] = [
   [`ellipsis\n${nowrapLabel}`, { overflow: "ellipsis", wrap: "nowrap" }],
   [`custom ellipsis\n${nowrapLabel}`, {
     overflow: "ellipsis",
@@ -29,14 +29,14 @@ const STYLES: [string, NiceOptions["text"]][] = [
   [`clip\n${wrapLabel}`, { overflow: "clip", wrap: "wrap" }],
 ];
 
-const titleStyle = new Nice({
+const titleStyle = new Style({
   style: crayon.bold,
   text: {
     horizontalAlign: "center",
   },
 });
 
-const style = new Nice({
+const style = new Style({
   style: crayon.bgYellow,
 
   width: 13,
@@ -54,12 +54,12 @@ function render() {
 
     blocks.push(vertical(
       0.5,
-      titleStyle.draw(title),
-      elementStyle.draw(VERY_LONG_TEXT),
+      titleStyle.create(title),
+      elementStyle.create(VERY_LONG_TEXT),
     ));
   }
 
-  const SCREEN_FG = Nice.render(
+  const SCREEN_FG = Style.render(
     horizontal(0.5, ...blocks),
   );
 

@@ -1,7 +1,7 @@
 import crayon from "@crayon/crayon";
 import { TestCase } from "../nice-test-runner.ts";
 
-import { Nice } from "../../mod.ts";
+import { Style } from "../../mod.ts";
 import { horizontal, vertical } from "../../src/layout/mod.ts";
 
 const TEXT = `\
@@ -15,11 +15,11 @@ smack`;
 const wrapLabel = crayon.bold.green("wrap");
 const nowrapLabel = crayon.bold.magenta("nowrap");
 
-const titleStyle = new Nice({
+const titleStyle = new Style({
   text: { horizontalAlign: "center" },
 });
 
-const wrapStyle = new Nice({
+const wrapStyle = new Style({
   style: crayon.bgRed.bold.white,
 
   width: 13,
@@ -41,11 +41,11 @@ const nowrapStyle = wrapStyle.derive({
 });
 
 function render() {
-  const SCREEN_FG = Nice.render(
+  const SCREEN_FG = Style.render(
     horizontal(
       0.5,
-      vertical(0.5, titleStyle.draw(wrapLabel), wrapStyle.draw(TEXT)),
-      vertical(0.5, titleStyle.draw(nowrapLabel), nowrapStyle.draw(TEXT)),
+      vertical(0.5, titleStyle.create(wrapLabel), wrapStyle.create(TEXT)),
+      vertical(0.5, titleStyle.create(nowrapLabel), nowrapStyle.create(TEXT)),
     ),
   );
 

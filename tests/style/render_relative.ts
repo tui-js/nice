@@ -1,8 +1,8 @@
 import crayon from "@crayon/crayon";
 import { TestCase } from "../nice-test-runner.ts";
-import { Nice } from "../../mod.ts";
+import { Style } from "../../mod.ts";
 
-const style = new Nice({
+const style = new Style({
   border: {
     all: true,
     type: "rounded",
@@ -13,10 +13,10 @@ const style = new Nice({
 });
 
 function render() {
-  console.log(Nice.render(style.draw("Hello there")));
-  console.log(Nice.renderRelative(style.draw("Hello there")));
-  console.log("\x1b[10C", Nice.renderRelative(style.draw("Hello there")));
-  console.log("\x1b[10A\x1b[30C", Nice.renderRelative(style.draw("Hello there")), "\x1b[10B");
+  console.log(Style.render(style.create("Hello there")));
+  console.log(Style.renderRelative(style.create("Hello there")));
+  console.log("\x1b[10C", Style.renderRelative(style.create("Hello there")));
+  console.log("\x1b[10A\x1b[30C", Style.renderRelative(style.create("Hello there")), "\x1b[10B");
 }
 
 export const testCase = new TestCase(

@@ -27,13 +27,12 @@ import {
   normalizeMargin,
 } from "./margin/mod.ts";
 
-import { applyMetadata, getBoundingRect, NICE_HEIGHT, type NiceBlock } from "./metadata.ts";
-import type { Style } from "./types.ts";
+import type { StringStyler } from "./types.ts";
 
-export type { NiceBlock };
+import { Block } from "./block.ts";
 
-export interface NiceOptions {
-  style?: Style;
+export interface StyleOptions {
+  style?: StringStyler;
   width?: number;
   height?: number;
   text?: Partial<TextDefinition> | NormalizedTextDefinition;
@@ -42,8 +41,8 @@ export interface NiceOptions {
   border?: Partial<BorderDefinition> | NormalizedBorderDefinition;
 }
 
-export class Nice {
-  style?: Style;
+export class Style {
+  style?: StringStyler;
 
   width?: number;
   height?: number;
@@ -53,7 +52,7 @@ export class Nice {
   border: NormalizedBorderDefinition;
   text: NormalizedTextDefinition;
 
-  constructor(options: NiceOptions) {
+  constructor(options: StyleOptions) {
     this.style = options.style;
 
     const { border, text, margin, padding, width, height } = options;
@@ -71,24 +70,24 @@ export class Nice {
    * In-place modifies {block} so it fits in the console.\
    * It considers both dimensions and positioning.
    */
-  static fitIntoConsole(block: NiceBlock): NiceBlock {
+  static fitIntoConsole(block: Block): Block {
     const { columns, rows } = Deno.consoleSize();
 
-    const { top, left, width } = getBoundingRect(block);
+    const { top, left, width } = block.boundingRect();
 
-    while ((top + block[NICE_HEIGHT]) > rows) {
-      block.pop();
-      block[NICE_HEIGHT] -= 1;
+    while ((top + block.height) > rows) {
+      block.lines.pop();
+      block.height -= 1;
     }
 
     if ((left + width) >= columns) {
       if (columns - left <= 0) {
-        block.length = 0;
+        block.lines = [];
         return block;
       }
 
-      for (const [i, line] of block.entries()) {
-        block[i] = cropEnd(line, columns - left);
+      for (const [i, line] of block.lines.entries()) {
+        block.lines[i] = cropEnd(line, columns - left);
       }
     }
 
@@ -100,23 +99,23 @@ export class Nice {
    * It ensures that block fits into the console.
    *
    * It uses newline ("\n") for changing rows.\
-   * If block might be rendered on different column than the first one, consider using {@linkcode Nice.renderRelative}.
+   * If block might be rendered on different column than the first one, consider using {@linkcode Style.renderRelative}.
    */
-  static render(input: NiceBlock): string {
-    Nice.fitIntoConsole(input);
-    return input.join("\n");
+  static render(input: Block): string {
+    Style.fitIntoConsole(input);
+    return input.toString();
   }
 
   /**
    * Compose string of NiceBlock which uses ANSI escape codes to position lines.\
    * This allows the block to be rendered in any part of the terminal without causing visual glitches.
    *
-   * If you know that block will always be rendered on the first column consider using {@linkcode Nice.render}.
+   * If you know that block will always be rendered on the first column consider using {@linkcode Style.render}.
    *
    * It ensures that block fits into the console.
    */
-  static renderRelative(input: NiceBlock): string {
-    Nice.fitIntoConsole(input);
+  static renderRelative(input: Block): string {
+    Style.fitIntoConsole(input);
 
     // This does these steps to render lines in correct position:
     //  1. Save cursor position
@@ -124,13 +123,13 @@ export class Nice {
     //  3. Reset cursor position
     //  4. Move cursor down
     //  5. Save cursor position
-    return "\x1b7" + input.join("\x1b8\x1b[1B\x1b7");
+    return "\x1b7" + input.toString("\x1b8\x1b[1B\x1b7");
   }
 
-  draw(input: string): NiceBlock {
+  create(content: string): Block {
     const { style, border, margin, padding, text } = this;
 
-    const output = input.split("\n");
+    const output = content.split("\n");
 
     let width = this.width ?? output.reduce((maxWidth, line) => (
       Math.max(maxWidth, textWidth(line))
@@ -161,7 +160,7 @@ export class Nice {
 
     height = output.length;
 
-    return applyMetadata(output, {
+    return new Block(output, {
       top: 0,
       left: 0,
       width,
@@ -169,8 +168,8 @@ export class Nice {
     });
   }
 
-  clone(): Nice {
-    return new Nice({
+  clone(): Style {
+    return new Style({
       style: this.style,
       width: this.width,
       height: this.height,
@@ -181,15 +180,15 @@ export class Nice {
     });
   }
 
-  derive(options: Partial<NiceOptions>): Nice {
-    return new Nice({
+  derive(options: Partial<StyleOptions>): Style {
+    return new Style({
       style: "style" in options ? options.style : this.style,
       width: "width" in options ? options.width : this.width,
       height: "height" in options ? options.height : this.height,
       text: { ...this.text, ...options.text },
       margin: { ...this.margin, ...options.margin },
       padding: { ...this.padding, ...options.padding },
-      border: { ...this.border, ...options.border } as NiceOptions["border"],
+      border: { ...this.border, ...options.border } as StyleOptions["border"],
     });
   }
 }

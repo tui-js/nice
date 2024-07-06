@@ -2,71 +2,63 @@ import { insert } from "@tui/strings/insert";
 import { cropStart } from "@tui/strings/crop_start";
 
 import { normalizePosition } from "../utils/normalization.ts";
-import {
-  applyMetadata,
-  NICE_ANCHOR,
-  NICE_HEIGHT,
-  NICE_LEFT,
-  NICE_TOP,
-  NICE_WIDTH,
-  type NiceBlock,
-} from "../metadata.ts";
+import { Block } from "../block.ts";
 
 export function overlay(
   horizontalPosition: number,
   verticalPosition: number,
-  fg: NiceBlock,
-  bg: NiceBlock,
-): NiceBlock {
-  let fgWidth = fg[NICE_WIDTH];
-  const bgWidth = bg[NICE_WIDTH];
+  fg: Block,
+  bg: Block,
+): Block {
+  // TODO: check actual boundaries, not just width and height
+  let fgWidth = fg.width;
+  const bgWidth = bg.width;
   if (fgWidth > bgWidth) {
     throw new Error("You can't overlay foreground that's wider than background");
   }
 
-  const fgHeight = fg[NICE_HEIGHT];
-  const bgHeight = bg[NICE_HEIGHT];
+  const fgHeight = fg.height;
+  const bgHeight = bg.height;
   if (fgHeight > bgHeight) {
     throw new Error("You can't overlay foreground that's higher than background");
   }
 
-  const output: string[] = [];
-  bg[NICE_ANCHOR] = output as NiceBlock;
-  fg[NICE_ANCHOR] = output as NiceBlock;
+  const output = Block.from({
+    type: "Overlay",
+    width: bgWidth,
+    height: bgHeight,
+  });
+
+  bg.anchor = output;
+  fg.anchor = output;
 
   if (horizontalPosition < 0) {
     fgWidth += horizontalPosition;
     horizontalPosition = 0;
 
-    for (let i = 0; i < fg.length; ++i) {
-      fg[i] = cropStart(fg[i], fgWidth);
+    for (let i = 0; i < fg.lines.length; ++i) {
+      fg.lines[i] = cropStart(fg.lines[i], fgWidth);
     }
   }
 
   const offsetY = normalizePosition(verticalPosition, bgHeight - fgHeight);
   const offsetX = normalizePosition(horizontalPosition, bgWidth - fgWidth);
 
-  fg[NICE_TOP] = offsetY;
-  fg[NICE_LEFT] = offsetX;
+  fg.top = offsetY;
+  fg.left = offsetX;
 
   for (let i = 0; i < bgHeight; ++i) {
     const j = i - offsetY;
-    const bgLine = bg[i];
+    const bgLine = bg.lines[i];
 
     if (j < 0 || j >= fgHeight) {
-      output.push(bgLine);
+      output.lines.push(bgLine);
       continue;
     }
 
-    const fgLine = fg[j];
-    output.push(insert(bgLine, fgLine, offsetX, true));
+    const fgLine = fg.lines[j];
+    output.lines.push(insert(bgLine, fgLine, offsetX, true));
   }
 
-  return applyMetadata(output, {
-    type: "Overlay",
-    top: 0,
-    left: 0,
-    width: bgWidth,
-    height: bgHeight,
-  });
+  return output;
 }
