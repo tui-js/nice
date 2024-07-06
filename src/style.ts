@@ -144,12 +144,8 @@ export class Style {
     resizeHorizontally(output, width, text);
     alignHorizontally(output, width, text.horizontalAlign);
 
-    if (style) {
-      applyStyle(output, style);
-      applyMargin(output, width, padding, style(" "));
-    } else {
-      applyMargin(output, width, padding);
-    }
+    applyMargin(output, width, padding, " ");
+    if (style) applyStyle(output, style);
     width += padding.left + padding.right;
 
     applyBorder(output, width, border);
