@@ -164,27 +164,33 @@ export class Style {
     });
   }
 
-  clone(): Style {
-    return new Style({
-      style: this.style,
-      width: this.width,
-      height: this.height,
-      text: structuredClone(this.text),
-      margin: structuredClone(this.margin),
-      padding: structuredClone(this.padding),
-      border: structuredClone(this.border),
-    });
-  }
+  derive<const T extends Partial<StyleOptions>>(options: T): Style {
+    const extract = <K extends (keyof T & keyof Style)>(key: K) => {
+      if (key in options) {
+        const value = options[key];
+        if (typeof value !== "object") return value;
 
-  derive(options: Partial<StyleOptions>): Style {
-    return new Style({
-      style: "style" in options ? options.style : this.style,
-      width: "width" in options ? options.width : this.width,
-      height: "height" in options ? options.height : this.height,
-      text: { ...this.text, ...options.text },
-      margin: { ...this.margin, ...options.margin },
-      padding: { ...this.padding, ...options.padding },
-      border: { ...this.border, ...options.border } as StyleOptions["border"],
-    });
+        return {
+          ...this[key] as T[K],
+          ...value,
+        };
+      }
+
+      return this[key];
+    };
+
+    // Required is set here in case any more properties have been added
+    // to warn that it has to be updated here as well
+    const style: Required<StyleOptions> = {
+      style: extract("style")!,
+      width: extract("width")!,
+      height: extract("height")!,
+      text: extract("text")!,
+      margin: extract("margin")!,
+      padding: extract("padding")!,
+      border: extract("border")!,
+    };
+
+    return new Style(style);
   }
 }
