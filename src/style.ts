@@ -33,15 +33,29 @@ import { Block } from "./block.ts";
 
 export interface StyleOptions {
   style?: StringStyler;
+
   width?: number;
   height?: number;
+
   text?: Partial<TextDefinition> | NormalizedTextDefinition;
   margin?: Partial<MarginDefinition> | NormalizedMarginDefinition;
   padding?: Partial<MarginDefinition> | NormalizedMarginDefinition;
   border?: BorderDefinition | NormalizedBorderDefinition;
 }
 
-export class Style {
+export interface NormalizedStyle {
+  style?: StringStyler;
+
+  width?: number;
+  height?: number;
+
+  margin: NormalizedMarginDefinition;
+  padding: NormalizedMarginDefinition;
+  border: NormalizedBorderDefinition;
+  text: NormalizedTextDefinition;
+}
+
+export class Style implements NormalizedStyle {
   style?: StringStyler;
 
   width?: number;
@@ -126,18 +140,18 @@ export class Style {
     return "\x1b7" + input.toString("\x1b8\x1b[1B\x1b7");
   }
 
-  create(content: string): Block {
-    const { style, border, margin, padding, text } = this;
+  static create(content: string, blockStyle: NormalizedStyle): Block {
+    const { style, border, margin, padding, text } = blockStyle;
 
     const output = content.split("\n");
 
-    let width = this.width ?? output.reduce((maxWidth, line) => (
+    let width = blockStyle.width ?? output.reduce((maxWidth, line) => (
       Math.max(maxWidth, textWidth(line))
     ), 0);
 
     wrapLines(output, width, text.wrap);
 
-    let height = this.height ?? output.length;
+    let height = blockStyle.height ?? output.length;
     resizeVertically(output, height, text);
     alignVertically(output, height, text.verticalAlign);
 
@@ -156,12 +170,25 @@ export class Style {
 
     height = output.length;
 
-    return new Block(output, {
-      top: 0,
-      left: 0,
-      width,
-      height,
-    });
+    return new Block(output, { top: 0, left: 0, width, height });
+  }
+
+  create(content: string, overrideStyle?: Partial<NormalizedStyle>): Block {
+    if (overrideStyle) {
+      return Style.create(content, {
+        style: overrideStyle.style ?? this.style,
+
+        width: overrideStyle.width ?? this.width,
+        height: overrideStyle.height ?? this.height,
+
+        text: overrideStyle.text ?? this.text,
+        margin: overrideStyle.margin ?? this.margin,
+        padding: overrideStyle.padding ?? this.padding,
+        border: overrideStyle.border ?? this.border,
+      });
+    }
+
+    return Style.create(content, this);
   }
 
   derive<T extends Partial<StyleOptions>>(options: T): Style {
@@ -183,8 +210,10 @@ export class Style {
     // to warn that it has to be updated here as well
     const style: Required<StyleOptions> = {
       style: extract("style")!,
+
       width: extract("width")!,
       height: extract("height")!,
+
       text: extract("text")!,
       margin: extract("margin")!,
       padding: extract("padding")!,
