@@ -38,7 +38,7 @@ export interface StyleOptions {
   text?: Partial<TextDefinition> | NormalizedTextDefinition;
   margin?: Partial<MarginDefinition> | NormalizedMarginDefinition;
   padding?: Partial<MarginDefinition> | NormalizedMarginDefinition;
-  border?: Partial<BorderDefinition> | NormalizedBorderDefinition;
+  border?: BorderDefinition | NormalizedBorderDefinition;
 }
 
 export class Style {
@@ -164,7 +164,7 @@ export class Style {
     });
   }
 
-  derive<const T extends Partial<StyleOptions>>(options: T): Style {
+  derive<T extends Partial<StyleOptions>>(options: T): Style {
     const extract = <K extends (keyof T & keyof Style)>(key: K) => {
       if (key in options) {
         const value = options[key];
