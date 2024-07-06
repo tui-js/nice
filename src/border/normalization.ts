@@ -1,9 +1,9 @@
 import { type BorderCharset, BorderCharsets, type BorderCharsetType } from "./charsets.ts";
 import type { EitherType, StringStyler } from "../types.ts";
 
-// FIXME: { all: true } without style is a valid border
 export type BorderX<T> = EitherType<[{ left: T; right: T }, { x: T }, { all: T }]>;
 export type BorderY<T> = EitherType<[{ top: T; bottom: T }, { y: T }, { all: T }]>;
+
 export type BorderTypeDefinition = EitherType<[
   { type: BorderCharsetType },
   { type: "custom"; charset: BorderCharset },
@@ -13,6 +13,7 @@ export type UniqueStyleBorder =
   & BorderX<StringStyler>
   & BorderY<StringStyler>
   & BorderTypeDefinition;
+
 export type SharedStyleBorder = BorderX<boolean> & BorderY<boolean> & BorderTypeDefinition & {
   style: StringStyler;
 };
@@ -35,47 +36,43 @@ export function isNormalizedBorderDefinition(
 }
 
 export function normalizeBorder(
-  $border?: Partial<BorderDefinition> | NormalizedBorderDefinition,
+  border?: Partial<BorderDefinition> | NormalizedBorderDefinition,
 ): NormalizedBorderDefinition {
-  if (isNormalizedBorderDefinition($border)) {
-    return $border;
+  if (isNormalizedBorderDefinition(border)) {
+    return border;
   }
 
-  if ($border) {
-    if ("style" in $border) {
-      const border = $border as SharedStyleBorder;
-      const { all, x, y, top, bottom, left, right, style } = border;
+  if (!border) {
+    return { charset: BorderCharsets.sharp, top: null, bottom: null, left: null, right: null };
+  }
 
-      return {
-        charset: (border.type === "custom" || border.charset)
-          ? border.charset
-          : BorderCharsets[border.type],
-        top: (all || top || y) ? style : null,
-        bottom: (all || bottom || y) ? style : null,
-        left: (all || left || x) ? style : null,
-        right: (all || right || x) ? style : null,
-      };
-    }
+  const { all, x, y, top, bottom, left, right } = border;
+  const $top = all || top || y || null;
+  const $bottom = all || bottom || y || null;
+  const $left = all || left || x || null;
+  const $right = all || right || x || null;
 
-    const border = $border as UniqueStyleBorder;
-    const { all, x, y, top, bottom, left, right } = border;
+  const charset = (border.type === "custom" || border.charset)
+    ? border.charset!
+    : BorderCharsets[border.type!];
+
+  if ("style" in border) {
+    const { style } = border as SharedStyleBorder;
 
     return {
-      charset: (border.type === "custom" || border.charset)
-        ? border.charset
-        : BorderCharsets[border.type],
-      top: all ?? top ?? y ?? null,
-      bottom: all ?? bottom ?? y ?? null,
-      left: all ?? left ?? x ?? null,
-      right: all ?? right ?? x ?? null,
+      charset,
+      top: $top && style,
+      bottom: $bottom && style,
+      left: $left && style,
+      right: $right && style,
     };
   }
 
   return {
-    charset: BorderCharsets.sharp,
-    top: null,
-    bottom: null,
-    left: null,
-    right: null,
+    charset,
+    top: $top as StringStyler | null,
+    bottom: $bottom as StringStyler | null,
+    left: $left as StringStyler | null,
+    right: $right as StringStyler | null,
   };
 }

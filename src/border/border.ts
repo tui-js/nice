@@ -5,13 +5,7 @@ export function applyBorder(
   width: number,
   border: NormalizedBorderDefinition,
 ): void {
-  const {
-    top,
-    bottom,
-    left,
-    right,
-    charset,
-  } = border;
+  const { top, bottom, left, right, charset } = border;
 
   if (left || right) {
     const leftChar = left ? left(charset.left) : "";
