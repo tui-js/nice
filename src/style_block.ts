@@ -34,6 +34,7 @@ interface StyleOptions {
     margin?: Partial<MarginDefinition> | NormalizedMarginDefinition;
     padding?: Partial<MarginDefinition> | NormalizedMarginDefinition;
     border?: BorderDefinition | NormalizedBorderDefinition;
+    skipIfTooSmall?: boolean;
 }
 
 export class Style {
@@ -42,13 +43,15 @@ export class Style {
     margin: NormalizedMarginDefinition;
     padding: NormalizedMarginDefinition;
     border: NormalizedBorderDefinition;
+    skipIfTooSmall: boolean;
 
-    constructor({ string, text, margin, padding, border }: StyleOptions) {
+    constructor({ string, text, margin, padding, border, skipIfTooSmall }: StyleOptions) {
         this.string = string;
         this.text = normalizeTextDefinition(text);
         this.margin = normalizeMargin(margin);
         this.padding = normalizeMargin(padding);
         this.border = normalizeBorder(border);
+        this.skipIfTooSmall = skipIfTooSmall ?? false;
     }
 
     create(content: string, options?: Partial<BlockOptions>): StyleBlock {
@@ -74,6 +77,7 @@ export class Style {
             margin: extract("margin")!,
             padding: extract("padding")!,
             border: extract("border")!,
+            skipIfTooSmall: extract("skipIfTooSmall")!,
         };
 
         return new Style(style);
@@ -103,6 +107,7 @@ export class StyleBlock extends Block {
                 0,
             ) + paddingWidth + marginWidth + borderWidth;
         }
+
         if (typeof options.height === "undefined" || options.height === "auto") {
             const { padding, margin, border } = style;
 
@@ -133,15 +138,28 @@ export class StyleBlock extends Block {
         let width = computedWidth - paddingWidth - marginWidth - borderWidth;
         let height = computedHeight - paddingHeight - marginHeight - borderHeight;
 
-        // FIXME: If width or height is too small to fit things just ignore them instead of looping/throwing
+        if (this.style.skipIfTooSmall && (width < 0 || height < 0)) {
+            this.lines = [];
+            this.computedWidth = 0;
+            this.computedHeight = 0;
+            return;
+        } else if (width < 0) {
+            throw new Error(
+                `Element is too narrow to be created, its width is ${this.computedWidth}, too small by ${-width}`,
+            );
+        } else if (height < 0) {
+            throw new Error(
+                `Element is too short to be created, its height is ${this.computedHeight}, too small by ${-height}`,
+            );
+        }
 
         wrapLines(lines, width, text.wrap);
 
         resizeVertically(lines, height, text);
         alignVertically(lines, height, text.verticalAlign);
 
-        resizeHorizontally(lines, width, text);
-        alignHorizontally(lines, width, text.horizontalAlign);
+        resizeHorizontally(lines, width, height, text);
+        alignHorizontally(lines, width, height, text.horizontalAlign);
 
         applyMargin(lines, width, padding);
         width += paddingWidth;

@@ -5,9 +5,10 @@ export type TextHorizontalAlign = "left" | "center" | "right" | "justify";
 export function alignHorizontally(
   lines: string[],
   desiredWidth: number,
+  height: number,
   horizontalAlign: TextHorizontalAlign,
 ): void {
-  for (let i = 0; i < lines.length; i++) {
+  for (let i = 0; i < height; i++) {
     lines[i] = alignLineHorizontally(lines[i], desiredWidth, horizontalAlign);
   }
 }
