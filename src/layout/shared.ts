@@ -16,7 +16,6 @@ export function flexibleCompute(self: Block, parent: Block): void {
     if (self.width !== "auto") {
         self.computedWidth = normalizeUnit(self.width, parent.computedWidth);
     }
-
     if (self.height !== "auto") {
         self.computedHeight = normalizeUnit(self.height, parent.computedHeight);
     }
@@ -44,6 +43,16 @@ export function flexibleCompute(self: Block, parent: Block): void {
         height += child.computedHeight;
 
         child.compute(self);
+    }
+
+    if ((self.width === "auto" && width === 0)) {
+        throw new Error(
+            `${self.name}'s width is set to "auto" yet has no children that have predictable width`,
+        );
+    } else if (self.height === "auto" && height === 0) {
+        throw new Error(
+            `${self.name}'s height is set to "auto" yet has no children that have predictable height`,
+        );
     }
 
     self.computedWidth ||= width;

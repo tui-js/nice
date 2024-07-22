@@ -14,6 +14,8 @@ interface VerticalBlockOptions {
 }
 
 export class VerticalBlock extends Block {
+    name = "Vertical";
+
     declare children: Block[];
 
     string?: StringStyler;

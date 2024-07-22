@@ -4,6 +4,8 @@ import { Style } from "../src/style_block.ts";
 import { VerticalBlock } from "../src/layout/vertical_block.ts";
 import { HorizontalBlock } from "../src/layout/horizontal_block.ts";
 
+console.clear();
+
 const red = new Style({
   string: crayon.bgRed,
   text: {
@@ -23,7 +25,7 @@ const blue = new Style({
   },
 });
 const green = new Style({ string: crayon.bgGreen });
-const spacer = new Style({ string: crayon });
+const separator = new Style({ string: crayon.bgBlack });
 
 export function render() {
   console.time("render time");
@@ -34,29 +36,42 @@ export function render() {
       {
         string: crayon.bgYellow,
         width: "100%",
-        height: 25,
+        // FIXME: if width/height is set to 0 it inferes that as "auto"
         horizontalAlign: "50%",
         verticalAlign: "50%",
+        gap: 2,
       },
+      // new HorizontalBlock(
+      //   { width: "100%", height: "auto" },
+      //   red.create(
+      //     "Nice 🔥\n（╯°□°）╯︵┻━┻\ndevanagari आआॠऋॲपॉ\nﾊﾊﾊThis text should get wrapped because widthəəə is explicit as日本verylongstringthaəə💩twillwrapnomatterwhat\nwowə\nالعربية",
+      //     { width: "50%" },
+      //   ),
+      //   red.create(
+      //     "Nice 🔥\n（╯°□°）╯︵┻━┻\ndevanagari आआॠऋॲपॉ\nﾊﾊﾊThis text should get wrapped because widthəəə is explicit as日本verylongstringthaəə💩twillwrapnomatterwhat\nwowə\nالعربية",
+      //     { width: "50%" },
+      //   ),
+      // ),
       red.create(
         "Nice 🔥\n（╯°□°）╯︵┻━┻\ndevanagari आआॠऋॲपॉ\nﾊﾊﾊThis text should get wrapped because widthəəə is explicit as日本verylongstringthaəə💩twillwrapnomatterwhat\nwowə\nالعربية",
-        { width: 10 },
+        { width: "50%" },
       ),
       blue.create("hello2", { width: "20%" }),
       green.create("hello3"),
     ),
-    spacer.create(""),
+    separator.create("", { width: "100%" }),
     new HorizontalBlock(
       {
         string: crayon.bgMagenta,
+        height: "30%",
         width: "100%",
-        height: 15,
         horizontalAlign: "100%",
         verticalAlign: "50%",
+        gap: "15%",
       },
       red.create(
         "Nice 🔥\n（╯°□°）╯︵┻━┻\ndevanagari आआॠऋॲपॉ\nﾊﾊﾊThis text should get wrapped because widthəəə is explicit as日本verylongstringthaəə💩twillwrapnomatterwhat\nwowə\nالعربية",
-        { width: 10 },
+        { width: "30%" },
       ),
       blue.create("hello2", { width: "20%" }),
       green.create("hello3", { width: "50%", height: "100%" }),

@@ -8,6 +8,8 @@ export interface BlockOptions {
 }
 
 export class Block {
+    name?: string;
+
     width: Unit;
     height: Unit;
 
