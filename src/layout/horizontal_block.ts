@@ -31,7 +31,9 @@ export class HorizontalBlock extends Block {
         this.string = options.string;
     }
 
-    compute = flexibleCompute;
+    compute(parent: Block): void {
+        flexibleCompute(this, parent);
+    }
 
     layout(child: Block): void {
         child.draw();
