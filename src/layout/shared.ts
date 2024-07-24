@@ -1,24 +1,25 @@
 import { normalizeUnit } from "../unit.ts";
 import type { Block } from "../block.ts";
 
+interface BlockSize {
+    width: number;
+    height: number;
+}
+
+type CalculationCallback = (child: Block, size: BlockSize) => void;
+
 /**
  * {@linkcode Block.compute} methods which computes width and height depending on its children sizes.
  */
-export function flexibleCompute(self: Block, parent: Block): void {
+export function flexibleCompute(self: Block, parent: Block, calculation: CalculationCallback): void {
     if (!self.children) {
         throw new Error(
             "flexibleCompute requires Block which implements it to always have children",
         );
     }
 
-    let deferred: Block[] | undefined;
-
-    if (self.width !== "auto") {
-        self.computedWidth = normalizeUnit(self.width, parent.computedWidth);
-    }
-    if (self.height !== "auto") {
-        self.computedHeight = normalizeUnit(self.height, parent.computedHeight);
-    }
+    if (self.width !== "auto") self.computedWidth = normalizeUnit(self.width, parent.computedWidth);
+    if (self.height !== "auto") self.computedHeight = normalizeUnit(self.height, parent.computedHeight);
 
     if (self.computedWidth && self.computedHeight) {
         for (const child of self.children) {
@@ -27,8 +28,8 @@ export function flexibleCompute(self: Block, parent: Block): void {
         return;
     }
 
-    let width = 0;
-    let height = 0;
+    let deferred: Block[] | undefined;
+    const size = { width: 0, height: 0 };
     for (const child of self.children) {
         if (
             (!child.computedWidth && !self.computedWidth) ||
@@ -39,28 +40,28 @@ export function flexibleCompute(self: Block, parent: Block): void {
             continue;
         }
 
-        width += child.computedWidth;
-        height += child.computedHeight;
-
         child.compute(self);
+        calculation(child, size);
     }
 
-    if ((self.width === "auto" && width === 0)) {
-        throw new Error(
-            `${self.name}'s width is set to "auto" yet has no children that have predictable width`,
-        );
-    } else if (self.height === "auto" && height === 0) {
-        throw new Error(
-            `${self.name}'s height is set to "auto" yet has no children that have predictable height`,
-        );
+    if (deferred) {
+        for (const child of deferred) {
+            child.compute(self);
+            calculation(child, size);
+        }
     }
 
-    self.computedWidth ||= width;
-    self.computedHeight ||= height;
+    if ((self.width === "auto" && size.width === 0)) {
+        throw new Error(`${self.name}'s width is set to "auto" yet has no children that have predictable width`);
+    } else if (self.height === "auto" && size.height === 0) {
+        throw new Error(`${self.name}'s height is set to "auto" yet has no children that have predictable height`);
+    }
 
-    if (!deferred) return;
+    if (self.width === "auto") {
+        self.computedWidth = size.width;
+    }
 
-    for (const child of deferred) {
-        child.compute(self);
+    if (self.height === "auto") {
+        self.computedHeight = size.height;
     }
 }

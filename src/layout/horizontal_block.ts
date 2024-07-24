@@ -39,7 +39,10 @@ export class HorizontalBlock extends Block {
     }
 
     compute(parent: Block): void {
-        flexibleCompute(this, parent);
+        flexibleCompute(this, parent, (child, size) => {
+            size.width += child.computedWidth;
+            size.height = Math.max(size.height, child.computedHeight);
+        });
 
         this.computedGap = normalizeUnit(this.gap, this.computedHeight);
         if (this.computedGap < 0) throw new Error("Gap cannot be negative");
