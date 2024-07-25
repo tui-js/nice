@@ -45,6 +45,9 @@ export function flexibleCompute(self: Block, parent: Block, calculation: Calcula
     }
 
     if (deferred) {
+        if (self.width === "auto") self.computedWidth = size.width;
+        if (self.height === "auto") self.computedHeight = size.height;
+
         for (const child of deferred) {
             child.compute(self);
             calculation(child, size);
@@ -57,11 +60,6 @@ export function flexibleCompute(self: Block, parent: Block, calculation: Calcula
         throw new Error(`${self.name}'s height is set to "auto" yet has no children that have predictable height`);
     }
 
-    if (self.width === "auto") {
-        self.computedWidth = size.width;
-    }
-
-    if (self.height === "auto") {
-        self.computedHeight = size.height;
-    }
+    if (self.width === "auto") self.computedWidth = size.width;
+    if (self.height === "auto") self.computedHeight = size.height;
 }
