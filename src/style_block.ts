@@ -1,8 +1,8 @@
-import type { Crayon } from "@crayon/crayon";
 import { textWidth } from "@tui/strings/text_width";
 
 import { Block, type BlockOptions } from "./block.ts";
-import type { Unit } from "./unit.ts";
+import { normalizeUnit, type Unit } from "./unit.ts";
+import type { StringStyler } from "./types.ts";
 
 import {
     alignHorizontally,
@@ -16,20 +16,12 @@ import {
 } from "./text/mod.ts";
 import { normalizeTextDefinition } from "./text/normalization.ts";
 import { applyMargin } from "./margin/mod.ts";
-import {
-    type MarginDefinition,
-    type NormalizedMarginDefinition,
-    normalizeMargin,
-} from "./margin/normalization.ts";
-import {
-    type BorderDefinition,
-    normalizeBorder,
-    type NormalizedBorderDefinition,
-} from "./border/normalization.ts";
+import { type MarginDefinition, type NormalizedMarginDefinition, normalizeMargin } from "./margin/normalization.ts";
+import { type BorderDefinition, normalizeBorder, type NormalizedBorderDefinition } from "./border/normalization.ts";
 import { applyBorder } from "./border/border.ts";
 
 interface StyleOptions {
-    string: Crayon;
+    string: StringStyler;
     text?: Partial<TextDefinition> | NormalizedTextDefinition;
     margin?: Partial<MarginDefinition> | NormalizedMarginDefinition;
     padding?: Partial<MarginDefinition> | NormalizedMarginDefinition;
@@ -38,7 +30,7 @@ interface StyleOptions {
 }
 
 export class Style {
-    string: Crayon;
+    string: StringStyler;
     text: NormalizedTextDefinition;
     margin: NormalizedMarginDefinition;
     padding: NormalizedMarginDefinition;
@@ -54,8 +46,8 @@ export class Style {
         this.skipIfTooSmall = skipIfTooSmall ?? false;
     }
 
-    create(content: string, options?: Partial<BlockOptions>): StyleBlock {
-        return new StyleBlock(this, content, options);
+    create(content: string, options?: Partial<StyleOptions>, blockOptions?: Partial<BlockOptions>): StyleBlock {
+        return new StyleBlock(options ? this.derive(options) : this, content, blockOptions);
     }
 
     derive<T extends Partial<StyleOptions>>(overrides: T): Style {
@@ -95,32 +87,41 @@ export class StyleBlock extends Block {
     constructor(style: Style, content: string, options: Partial<BlockOptions> = {}) {
         const lines = content.split("\n");
 
-        if (typeof options.width === "undefined" || options.width === "auto") {
-            const { padding, margin, border } = style;
-
-            const paddingWidth = padding.left + padding.right;
-            const marginWidth = margin.left + margin.right;
-            const borderWidth = (border.left ? 1 : 0) + (border.right ? 1 : 0);
-
-            options.width = lines.reduce(
-                (maxWidth, line) => Math.max(maxWidth, textWidth(line)),
-                0,
-            ) + paddingWidth + marginWidth + borderWidth;
-        }
-
-        if (typeof options.height === "undefined" || options.height === "auto") {
-            const { padding, margin, border } = style;
-
-            const paddingHeight = padding.top + padding.bottom;
-            const marginHeight = margin.top + margin.bottom;
-            const borderHeight = (border.top ? 1 : 0) + (border.bottom ? 1 : 0);
-            options.height = lines.length + paddingHeight + marginHeight + borderHeight;
-        }
+        options.width ??= "auto";
+        options.height ??= "auto";
         super(options as BlockOptions);
 
         this.style = style;
         this.lines = lines;
         this.content = content;
+    }
+
+    compute(parent: Block): void {
+        if (this.width === "auto") {
+            const { padding, margin, border } = this.style;
+
+            const paddingWidth = padding.left + padding.right;
+            const marginWidth = margin.left + margin.right;
+            const borderWidth = (border.left ? 1 : 0) + (border.right ? 1 : 0);
+
+            this.computedWidth = this.lines.reduce(
+                (maxWidth, line) => Math.max(maxWidth, textWidth(line)),
+                0,
+            ) + paddingWidth + marginWidth + borderWidth;
+        } else {
+            this.computedWidth = normalizeUnit(this.width, parent.computedWidth);
+        }
+
+        if (this.height === "auto") {
+            const { padding, margin, border } = this.style;
+
+            const paddingHeight = padding.top + padding.bottom;
+            const marginHeight = margin.top + margin.bottom;
+            const borderHeight = (border.top ? 1 : 0) + (border.bottom ? 1 : 0);
+            this.computedHeight = this.lines.length + paddingHeight + marginHeight + borderHeight;
+        } else {
+            this.computedHeight = normalizeUnit(this.height, parent.computedHeight);
+        }
     }
 
     draw(): void {
@@ -138,12 +139,14 @@ export class StyleBlock extends Block {
         let width = computedWidth - paddingWidth - marginWidth - borderWidth;
         let height = computedHeight - paddingHeight - marginHeight - borderHeight;
 
-        if (this.style.skipIfTooSmall && (width < 0 || height < 0)) {
-            this.lines = [];
-            this.computedWidth = 0;
-            this.computedHeight = 0;
-            return;
-        } else if (width < 0) {
+        // TODO: Do this in compute
+        // if (this.style.skipIfTooSmall && (width < 0 || height < 0)) {
+        //     this.lines = [];
+        //     this.computedWidth = 0;
+        //     this.computedHeight = 0;
+        //     return;
+        // } else
+        if (width < 0) {
             throw new Error(
                 `Element is too narrow to be created, its width is ${this.computedWidth}, too small by ${-width}`,
             );

@@ -1,98 +1,91 @@
 // Copyright 2024 Im-Beast. All rights reserved. MIT license.
 import crayon from "@crayon/crayon";
-import { Style } from "../src/style_block.ts";
+import { Style, StyleBlock } from "../src/style_block.ts";
 import { VerticalBlock } from "../src/layout/vertical_block.ts";
 import { HorizontalBlock } from "../src/layout/horizontal_block.ts";
+import { createdBlocks } from "../src/block.ts";
 
-console.clear();
+let h = 1;
+const color = () => crayon.bgHsl(((++h) * 60) % 360, 60, 40);
 
-const red = new Style({
-  string: crayon.bgRed,
+const style = new Style({
+  string: crayon.bgMagenta,
   text: {
     horizontalAlign: "center",
   },
   padding: { all: 1 },
+  margin: { all: 1 },
   border: {
     all: true,
-    style: crayon.green,
+    style: crayon.black.bgYellow,
     type: "rounded",
   },
 });
-const blue = new Style({
-  string: crayon.bgBlue,
-  padding: {
-    all: 1,
-  },
-});
-const green = new Style({ string: crayon.bgGreen });
-const separator = new Style({ string: crayon.bgBlack });
 
 export function render() {
   console.time("render time");
 
-  const root = new VerticalBlock(
-    { string: crayon.bgLightYellow, width: "100%", height: "100%" },
+  const root = new HorizontalBlock(
+    {
+      string: crayon.bgBlack,
+      width: "100%",
+
+      horizontalAlign: "50%",
+
+      gap: 2,
+    },
     new VerticalBlock(
-      {
-        string: crayon.bgYellow,
-        width: "100%",
-        verticalAlign: "50%",
-        gap: 2,
-      },
+      { width: "49%", string: color() },
+      style.create("First column", { string: color() }),
+      style.create("Test", { string: color() }),
+    ),
+    new VerticalBlock(
+      { width: "49%", string: color(), gap: 4 },
+      style.create("Second column", { string: color() }),
+      style.create("Test 2", { string: color() }),
       new HorizontalBlock(
-        { width: "100%" },
-        red.create(
-          "Nice 🔥\n（╯°□°）╯︵┻━┻\ndevanagari आआॠऋॲपॉ\nﾊﾊﾊThis text should get wrapped because widthəəə is explicit as日本verylongstringthaəə💩twillwrapnomatterwhat\nwowə\nالعربية",
-          { width: "50%" },
-        ),
-        blue.create(
-          "Nice 🔥\n（╯°□°）╯︵┻━┻\ndevanagari आआॠऋॲपॉ\nﾊﾊﾊThis text should get wrapped because widthəəə is explicit as日本verylongstringthaəə💩twillwrapnomatterwhat\nwowə\nالعربية",
-          { width: "50%" },
-        ),
+        { width: "100%", string: color(), gap: 5 },
+        style.create("Test 3", { string: color() }, { width: "30%" }),
+        style.create("Test 4", { string: color() }, { width: "30%" }),
+        style.create("Test 4", { string: color() }, { width: "30%" }),
       ),
-      blue.create("hello2", { width: "20%" }),
-      green.create("hello3"),
-    ),
-    separator.create("", { width: "100%" }),
-    new VerticalBlock(
-      {
-        string: crayon.bgYellow,
-        width: "100%",
-        horizontalAlign: "50%",
-        verticalAlign: "50%",
-        gap: 2,
-      },
-      red.create(
-        "Nice 🔥\n（╯°□°）╯︵┻━┻\ndevanagari आआॠऋॲपॉ\nﾊﾊﾊThis text should get wrapped because widthəəə is explicit as日本verylongstringthaəə💩twillwrapnomatterwhat\nwowə\nالعربية",
-        { width: "50%" },
-      ),
-      blue.create("hello2", { width: "20%" }),
-      green.create("hello3"),
-    ),
-    separator.create("", { width: "100%" }),
-    new HorizontalBlock(
-      {
-        string: crayon.bgMagenta,
-        height: "30%",
-        width: "100%",
-        horizontalAlign: "100%",
-        verticalAlign: "50%",
-        gap: "15%",
-      },
-      red.create(
-        "Nice 🔥\n（╯°□°）╯︵┻━┻\ndevanagari आआॠऋॲपॉ\nﾊﾊﾊThis text should get wrapped because widthəəə is explicit as日本verylongstringthaəə💩twillwrapnomatterwhat\nwowə\nالعربية",
-        { width: "30%" },
-      ),
-      blue.create("hello2", { width: "20%" }),
-      green.create("hello3", { width: "50%", height: "100%" }),
     ),
   );
 
   root.draw();
+
   console.timeEnd("render time");
   return root.lines.join("\n");
 }
 
-if (import.meta.main) {
+x: if (import.meta.main) {
+  console.clear();
   console.log(render());
+
+  if (!Deno.args.includes("bb")) break x;
+
+  const textEncoder = new TextEncoder();
+  const draw = (y: number, x: number, s: string): void => {
+    Deno.stdout.writeSync(textEncoder.encode(
+      `\x1b[${y + 2};${x + 1}H${s}`,
+    ));
+  };
+
+  for (const block of createdBlocks) {
+    const { top, left, width, height } = block.boundingRectangle();
+
+    const style = block instanceof StyleBlock && block.style.string
+      ? block.style.string
+      : (block instanceof VerticalBlock || block instanceof HorizontalBlock) && block.string
+      ? block.string
+      : undefined;
+    if (!style) continue;
+
+    draw(top, left, style("Q"));
+    draw(top, left + width - 1, style("W"));
+    draw(top + height - 1, left, style("A"));
+    draw(top + height - 1, left + width - 1, style("D"));
+  }
+
+  draw(createdBlocks.at(-2)!.computedHeight, 0, "");
 }

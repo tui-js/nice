@@ -6,7 +6,7 @@ interface BlockSize {
     height: number;
 }
 
-type CalculationCallback = (child: Block, size: BlockSize) => void;
+type CalculationCallback = (index: number, child: Block, size: BlockSize) => void;
 
 /**
  * {@linkcode Block.compute} methods which computes width and height depending on its children sizes.
@@ -20,20 +20,20 @@ export function flexibleCompute(self: Block, parent: Block, calculation: Calcula
 
     if (self.width !== "auto") self.computedWidth = normalizeUnit(self.width, parent.computedWidth);
     if (self.height !== "auto") self.computedHeight = normalizeUnit(self.height, parent.computedHeight);
-
-    if (self.computedWidth && self.computedHeight) {
+    if (self.width !== "auto" && self.height !== "auto") {
         for (const child of self.children) {
             child.compute(self);
         }
         return;
     }
 
+    let i = 0;
     let deferred: Block[] | undefined;
     const size = { width: 0, height: 0 };
     for (const child of self.children) {
         if (
-            (!child.computedWidth && !self.computedWidth) ||
-            (!child.computedHeight && !self.computedHeight)
+            (!child.computedWidth && self.width === "auto") ||
+            (!child.computedHeight && self.height === "auto")
         ) {
             deferred ??= [];
             deferred.push(child);
@@ -41,7 +41,7 @@ export function flexibleCompute(self: Block, parent: Block, calculation: Calcula
         }
 
         child.compute(self);
-        calculation(child, size);
+        calculation(i++, child, size);
     }
 
     if (deferred) {
@@ -50,7 +50,7 @@ export function flexibleCompute(self: Block, parent: Block, calculation: Calcula
 
         for (const child of deferred) {
             child.compute(self);
-            calculation(child, size);
+            calculation(i++, child, size);
         }
     }
 

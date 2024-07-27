@@ -2,9 +2,18 @@ import { normalizeUnit, type Unit } from "./unit.ts";
 
 // FIXME: Negative values
 
+export const createdBlocks: Block[] = [];
+
 export interface BlockOptions {
     width: Unit;
     height: Unit;
+}
+
+export interface BoundingRectangle {
+    top: number;
+    left: number;
+    width: number;
+    height: number;
 }
 
 export class Block {
@@ -18,6 +27,7 @@ export class Block {
     computedWidth = 0;
     computedHeight = 0;
 
+    parent?: Block;
     children?: Block[];
 
     lines: string[] = [];
@@ -27,6 +37,21 @@ export class Block {
         this.height = options.height;
         if (typeof this.width === "number") this.computedWidth = this.width;
         if (typeof this.height === "number") this.computedHeight = this.height;
+        createdBlocks.push(this);
+    }
+
+    boundingRectangle(): BoundingRectangle {
+        let top = this.computedTop;
+        let left = this.computedLeft;
+
+        let parent = this.parent;
+        while (parent) {
+            top += parent.computedTop;
+            left += parent.computedLeft;
+            parent = parent.parent;
+        }
+
+        return { top, left, width: this.computedWidth, height: this.computedHeight };
     }
 
     addChild(block: Block): void {
@@ -42,29 +67,28 @@ export class Block {
         }
 
         if (this.children) {
+            // Stack of  all children and then finishLayout them in reverse order
             for (const child of this.children) {
+                child.compute(this);
+                child.draw();
                 this.layout(child);
             }
-        }
 
-        this.finishLayout();
+            this.finishLayout();
+        }
     }
 
     layout(_child: Block): void {
         throw new Error("Default block doesn't implement 'Block.layout'");
     }
 
-    finishLayout(): void {}
+    finishLayout(): void {
+        throw new Error("Default block doesn't implement 'Block.finishLayout'");
+    }
 
     compute(parent: Block): void {
         this.computedWidth = normalizeUnit(this.width, parent.computedWidth);
         this.computedHeight = normalizeUnit(this.height, parent.computedHeight);
-
-        if (this.children) {
-            for (const child of this.children) {
-                child.compute(this);
-            }
-        }
     }
 
     render(relative = false): string {

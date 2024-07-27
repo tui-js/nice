@@ -32,6 +32,8 @@ export class HorizontalBlock extends Block {
         super(options as BlockOptions);
 
         this.children = children;
+        for (const child of this.children) child.parent = this;
+
         this.verticalAlign = options.verticalAlign ?? 0;
         this.horizontalAlign = options.horizontalAlign ?? 0;
         this.gap = options.gap ?? 0;
@@ -39,39 +41,21 @@ export class HorizontalBlock extends Block {
     }
 
     compute(parent: Block): void {
-        flexibleCompute(this, parent, (child, size) => {
-            size.width += child.computedWidth;
-            size.height = Math.max(size.height, child.computedHeight);
-        });
-
         this.computedGap = normalizeUnit(this.gap, this.computedHeight);
         if (this.computedGap < 0) throw new Error("Gap cannot be negative");
 
-        if (this.width === "auto") {
-            this.computedWidth += (this.children.length - 1) * this.computedGap;
-        }
+        flexibleCompute(this, parent, (i, child, size) => {
+            size.width += child.computedWidth;
+            size.height = Math.max(size.height, child.computedHeight);
+            if (i !== 0) size.width += this.computedGap;
+        });
     }
 
     layout(child: Block): void {
-        child.draw();
-
-        const offsetX = normalizeUnit(
-            this.horizontalAlign,
-            this.computedWidth - child.computedWidth,
-        );
-        // FIXME: child computedLeft
-        child.computedLeft = this.computedLeft + offsetX;
-
-        const offsetY = normalizeUnit(
-            this.verticalAlign,
-            this.computedHeight - child.computedHeight,
-        );
-        child.computedTop = this.computedTop + offsetY;
-
         let maxWidthInBounds = this.computedWidth - this.#occupiedWidth;
         if (maxWidthInBounds <= 0) return;
 
-        // Gap
+        //#region Gap
         let gapString = "";
         if (this.#occupiedWidth !== 0 && this.computedGap) {
             const gapWidthInBounds = Math.min(maxWidthInBounds, this.computedGap);
@@ -82,10 +66,13 @@ export class HorizontalBlock extends Block {
             this.#occupiedWidth += gapWidthInBounds;
             maxWidthInBounds -= gapWidthInBounds;
         }
+        //#endregion
 
+        //#region Align and add child lines
+        const offsetY = normalizeUnit(this.verticalAlign, this.computedHeight - child.computedHeight);
+        child.computedTop += offsetY;
+        child.computedLeft += this.#occupiedWidth;
         const line = " ".repeat(child.computedWidth);
-
-        // Align and add child lines
         if (child.computedWidth <= maxWidthInBounds) {
             this.#occupiedWidth += child.computedWidth;
 
@@ -104,12 +91,16 @@ export class HorizontalBlock extends Block {
                 );
             }
         }
+        //#endregion
     }
 
     finishLayout(): void {
-        // FIXME: What if occupiedWidth > computedWidth
         const widthDiff = this.computedWidth - this.#occupiedWidth;
         const offsetX = normalizeUnit(this.horizontalAlign, widthDiff);
+
+        for (const child of this.children) {
+            child.computedLeft += offsetX;
+        }
 
         const lacksLeft = offsetX;
         const lacksRight = widthDiff - lacksLeft;
