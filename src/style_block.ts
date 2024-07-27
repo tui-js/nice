@@ -1,6 +1,6 @@
 import { textWidth } from "@tui/strings/text_width";
 
-import { Block, type BlockOptions } from "./block.ts";
+import { Block } from "./block.ts";
 import { normalizeUnit, type Unit } from "./unit.ts";
 import type { StringStyler } from "./types.ts";
 
@@ -21,58 +21,67 @@ import { type BorderDefinition, normalizeBorder, type NormalizedBorderDefinition
 import { applyBorder } from "./border/border.ts";
 
 interface StyleOptions {
+    width?: Unit;
+    height?: Unit;
+    skipIfTooSmall?: boolean;
+
     string: StringStyler;
+
     text?: Partial<TextDefinition> | NormalizedTextDefinition;
     margin?: Partial<MarginDefinition> | NormalizedMarginDefinition;
     padding?: Partial<MarginDefinition> | NormalizedMarginDefinition;
     border?: BorderDefinition | NormalizedBorderDefinition;
-    skipIfTooSmall?: boolean;
 }
 
 export class Style {
+    width: Unit;
+    height: Unit;
+    skipIfTooSmall: boolean;
+
     string: StringStyler;
+
     text: NormalizedTextDefinition;
     margin: NormalizedMarginDefinition;
     padding: NormalizedMarginDefinition;
     border: NormalizedBorderDefinition;
-    skipIfTooSmall: boolean;
 
-    constructor({ string, text, margin, padding, border, skipIfTooSmall }: StyleOptions) {
+    constructor({ string, text, margin, padding, border, skipIfTooSmall, width, height }: StyleOptions) {
         this.string = string;
         this.text = normalizeTextDefinition(text);
         this.margin = normalizeMargin(margin);
         this.padding = normalizeMargin(padding);
         this.border = normalizeBorder(border);
         this.skipIfTooSmall = skipIfTooSmall ?? false;
+        this.width = width ?? "auto";
+        this.height = height ?? "auto";
     }
 
-    create(content: string, options?: Partial<StyleOptions>, blockOptions?: Partial<BlockOptions>): StyleBlock {
-        return new StyleBlock(options ? this.derive(options) : this, content, blockOptions);
+    create(content: string, options?: Partial<StyleOptions>): StyleBlock {
+        return new StyleBlock(options ? this.derive(options) : this, content);
     }
 
-    derive<T extends Partial<StyleOptions>>(overrides: T): Style {
-        const extract = <K extends (keyof T & keyof Style)>(key: K) => {
-            if (key in overrides) {
-                const value = overrides[key];
-                if (typeof value !== "object") return value;
-                else return { ...this[key] as T[K], ...value };
+    derive(overrides: Partial<StyleOptions>): Style {
+        const pick = <const K extends keyof StyleOptions>(key: K) => {
+            if (typeof overrides[key] === "object" && typeof this[key] === "object") {
+                return { ...this[key], ...overrides[key] };
             }
-
-            return this[key];
+            return key in overrides ? overrides[key]! : this[key];
         };
 
         // Required is set here in case any more properties have been added
         // to warn that it has to be updated here as well
-        const style: Required<StyleOptions> = {
-            string: extract("string")!,
-            text: extract("text")!,
-            margin: extract("margin")!,
-            padding: extract("padding")!,
-            border: extract("border")!,
-            skipIfTooSmall: extract("skipIfTooSmall")!,
+        const derived: Required<StyleOptions> = {
+            width: pick("width"),
+            height: pick("height"),
+            string: pick("string"),
+            text: pick("text"),
+            margin: pick("margin"),
+            padding: pick("padding"),
+            border: pick("border"),
+            skipIfTooSmall: pick("skipIfTooSmall"),
         };
 
-        return new Style(style);
+        return new Style(derived);
     }
 }
 
@@ -84,13 +93,10 @@ export class StyleBlock extends Block {
     style: Style;
     content: string;
 
-    constructor(style: Style, content: string, options: Partial<BlockOptions> = {}) {
+    constructor(style: Style, content: string) {
+        super(style);
+
         const lines = content.split("\n");
-
-        options.width ??= "auto";
-        options.height ??= "auto";
-        super(options as BlockOptions);
-
         this.style = style;
         this.lines = lines;
         this.content = content;

@@ -45,9 +45,9 @@ export function render() {
       style.create("Test 2", { string: color() }),
       new HorizontalBlock(
         { width: "100%", string: color(), gap: 5 },
-        style.create("Test 3", { string: color() }, { width: "30%" }),
-        style.create("Test 4", { string: color() }, { width: "30%" }),
-        style.create("Test 4", { string: color() }, { width: "30%" }),
+        style.create("Test 3", { string: color(), width: "30%" }),
+        style.create("Test 4", { string: color(), width: "30%" }),
+        style.create("Test 4", { string: color(), width: "30%" }),
       ),
     ),
   );
