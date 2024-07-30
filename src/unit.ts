@@ -57,45 +57,56 @@ function isUnit(op: string | number | Dynamic): op is Unit {
  * Dynamic calculation of size
  * @example
  * ```ts
- * calc("90% - 2 + 10% / 3", 10);
+ * calc("90% - 2 + 10% / 3 + 2 / 3", 10);
  * ```
  */
 export function calc(formula: string): Dynamic {
-    return (size) => {
-        const operators: Operator[] = [];
-        const operands: number[] = [];
+    const operators: Operator[] = [];
+    const operands: NoAutoUnit[] = [];
 
-        for (const part of formula.split(" ")) {
-            if (isOperator(part)) {
-                operators.push(part);
-            } else if (isUnit(part)) {
-                if (part === "auto") throw new Error("Cannot use 'auto' in calc");
-                operands.push(normalizeUnit(part, size));
-            } else {
-                throw new Error(`Invalid formula contains ${part} which is not a unit nor an operator`);
-            }
+    for (const string of formula.split(" ")) {
+        if (isOperator(string)) {
+            operators.push(string);
+        } else if (isUnit(string)) {
+            if (string === "auto") throw new Error("Cannot use 'auto' in calc");
+            operands.push(string);
+        } else {
+            throw new Error(`Invalid formula contains ${string} which is not a unit nor an operator`);
         }
+    }
+
+    if (operands.length === 0 || operators.length + 1 !== operands.length) {
+        throw new Error(`Invalid calc formula: ${formula}`);
+    }
+
+    return (size) => {
+        const localOperands = [...operands];
 
         for (const operator of operators) {
-            const [a, b] = operands.splice(0, 2);
+            const a = normalizeUnit(localOperands.shift()!, size);
+            const b = normalizeUnit(localOperands.shift()!, size);
             switch (operator) {
                 case "+":
-                    operands.unshift(a + b);
+                    localOperands.unshift(a + b);
                     break;
                 case "-":
-                    operands.unshift(a - b);
+                    localOperands.unshift(a - b);
                     break;
                 case "*":
-                    operands.unshift(a * b);
+                    localOperands.unshift(a * b);
                     break;
                 case "/":
-                    operands.unshift(a / b);
+                    localOperands.unshift(a / b);
                     break;
             }
         }
 
-        if (operands.length > 1) throw new Error("Not empty stack?" + operands);
+        if (localOperands.length > 1) {
+            throw new Error(
+                `Operation stack is not empty for calc with formula: ${formula}\nOperation stack: [${localOperands}]`,
+            );
+        }
 
-        return operands[0];
+        return localOperands[0] as number;
     };
 }
