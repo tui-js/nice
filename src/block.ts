@@ -1,4 +1,4 @@
-import { normalizeUnit, type Unit } from "./unit.ts";
+import type { Unit } from "./unit.ts";
 
 // FIXME: Negative values
 
@@ -19,6 +19,8 @@ export interface BoundingRectangle {
 export class Block {
     name?: string;
 
+    // Whether block depends on parent when width or height are set to "auto"
+    autoParentDependant = true;
     width: Unit;
     height: Unit;
 
@@ -26,6 +28,9 @@ export class Block {
     computedLeft = 0;
     computedWidth = 0;
     computedHeight = 0;
+
+    usedWidth = 0;
+    usedHeight = 0;
 
     parent?: Block;
     children?: Block[];
@@ -63,17 +68,15 @@ export class Block {
         if (!this.computedHeight || !this.computedWidth) {
             const { rows, columns } = Deno.consoleSize();
             const terminal = new Block({ height: rows, width: columns });
+            this.parent = terminal;
             this.compute(terminal);
+            this.draw();
         }
 
         if (this.children) {
-            // Stack of  all children and then finishLayout them in reverse order
             for (const child of this.children) {
-                child.compute(this);
-                child.draw();
                 this.layout(child);
             }
-
             this.finishLayout();
         }
     }
@@ -86,9 +89,15 @@ export class Block {
         throw new Error("Default block doesn't implement 'Block.finishLayout'");
     }
 
-    compute(parent: Block): void {
-        this.computedWidth = normalizeUnit(this.width, parent.computedWidth);
-        this.computedHeight = normalizeUnit(this.height, parent.computedHeight);
+    compute(_parent: Block): void {
+        if (!this.children) return;
+
+        for (const child of this.children) {
+            console.log(child.computedWidth);
+            child.compute(this);
+            child.draw();
+            this.layout(child);
+        }
     }
 
     render(relative = false): string {

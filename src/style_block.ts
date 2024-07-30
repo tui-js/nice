@@ -90,6 +90,7 @@ export class StyleBlock extends Block {
     declare height: Unit;
     declare children: never;
 
+    autoParentDependant = false;
     style: Style;
     content: string;
 
@@ -103,6 +104,8 @@ export class StyleBlock extends Block {
     }
 
     compute(parent: Block): void {
+        super.compute(parent);
+
         if (this.width === "auto") {
             const { padding, margin, border } = this.style;
 

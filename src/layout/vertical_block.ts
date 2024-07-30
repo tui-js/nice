@@ -1,6 +1,6 @@
 import { cropEnd } from "@tui/strings";
 import { Block, type BlockOptions } from "../block.ts";
-import { normalizeUnit, type Unit } from "../unit.ts";
+import { type NoAutoUnit, normalizeUnit, type Unit } from "../unit.ts";
 import { flexibleCompute } from "./shared.ts";
 import type { StringStyler } from "../types.ts";
 
@@ -44,10 +44,10 @@ export class VerticalBlock extends Block {
         this.computedGap = normalizeUnit(this.gap, this.computedHeight);
         if (this.computedGap < 0) throw new Error("Gap cannot be negative");
 
-        flexibleCompute(this, parent, (i, child, size) => {
-            size.width = Math.max(size.width, child.computedWidth);
-            size.height += child.computedHeight;
-            if (i !== 0) size.height += this.computedGap;
+        flexibleCompute(this, parent, (i, child) => {
+            this.usedWidth = Math.max(this.usedWidth, child.computedWidth);
+            this.usedHeight += child.computedHeight;
+            if (i !== 0) this.usedHeight += this.computedGap;
         });
     }
 
