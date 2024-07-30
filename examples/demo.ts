@@ -15,7 +15,7 @@ const style = new Style({
     horizontalAlign: "center",
   },
   padding: { all: 1 },
-  // margin: { all: 1 },
+  margin: { all: 1 },
   border: {
     all: true,
     style: crayon.black.bgYellow,
