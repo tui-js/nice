@@ -88,7 +88,9 @@ export class Style {
 export class StyleBlock extends Block {
     declare width: Unit;
     declare height: Unit;
-    declare children: never;
+
+    contentWidth?: number;
+    contentHeight?: number;
 
     autoParentDependant = false;
     style: Style;
@@ -113,49 +115,54 @@ export class StyleBlock extends Block {
             const marginWidth = margin.left + margin.right;
             const borderWidth = (border.left ? 1 : 0) + (border.right ? 1 : 0);
 
-            this.computedWidth = this.lines.reduce(
-                (maxWidth, line) => Math.max(maxWidth, textWidth(line)),
-                0,
-            ) + paddingWidth + marginWidth + borderWidth;
+            this.contentWidth = this.lines.reduce((maxWidth, line) => Math.max(maxWidth, textWidth(line)), 0);
+            this.computedWidth = this.contentWidth +
+                paddingWidth + marginWidth + borderWidth;
         } else {
+            const { padding, border, margin } = this.style;
+            const paddingWidth = padding.left + padding.right;
+            const marginWidth = margin.left + margin.right;
+            const borderWidth = (border.left ? 1 : 0) + (border.right ? 1 : 0);
+
             this.computedWidth = normalizeUnit(this.width, parent.computedWidth, parent.usedWidth);
+            this.contentWidth = this.computedWidth - paddingWidth - marginWidth - borderWidth;
         }
 
         if (this.height === "auto") {
             const { padding, margin, border } = this.style;
-
             const paddingHeight = padding.top + padding.bottom;
             const marginHeight = margin.top + margin.bottom;
             const borderHeight = (border.top ? 1 : 0) + (border.bottom ? 1 : 0);
-            this.computedHeight = this.lines.length + paddingHeight + marginHeight + borderHeight;
+
+            this.contentHeight = this.lines.length;
+            this.computedHeight = this.contentHeight + paddingHeight + marginHeight + borderHeight;
         } else {
+            const { padding, border, margin } = this.style;
+            const paddingHeight = padding.top + padding.bottom;
+            const marginHeight = margin.top + margin.bottom;
+            const borderHeight = (border.top ? 1 : 0) + (border.bottom ? 1 : 0);
+
             this.computedHeight = normalizeUnit(this.height, parent.computedHeight, parent.usedHeight);
+            this.contentHeight = this.computedHeight - paddingHeight - marginHeight - borderHeight;
+        }
+
+        if (this.style.skipIfTooSmall && (this.contentWidth < 0 || this.contentHeight < 0)) {
+            this.lines = [];
+            this.computedWidth = 0;
+            this.computedHeight = 0;
         }
     }
 
     draw(): void {
-        const { lines, computedHeight, computedWidth } = this;
+        const { lines } = this;
         const { text, margin, padding, border } = this.style;
 
-        const paddingWidth = padding.left + padding.right;
-        const marginWidth = margin.left + margin.right;
-        const borderWidth = (border.left ? 1 : 0) + (border.right ? 1 : 0);
+        let width = this.contentWidth!;
+        let height = this.contentHeight!;
 
-        const paddingHeight = padding.top + padding.bottom;
-        const marginHeight = margin.top + margin.bottom;
-        const borderHeight = (border.top ? 1 : 0) + (border.bottom ? 1 : 0);
-
-        let width = computedWidth - paddingWidth - marginWidth - borderWidth;
-        let height = computedHeight - paddingHeight - marginHeight - borderHeight;
-
-        // TODO: Do this in compute
-        // if (this.style.skipIfTooSmall && (width < 0 || height < 0)) {
-        //     this.lines = [];
-        //     this.computedWidth = 0;
-        //     this.computedHeight = 0;
-        //     return;
-        // } else
-        if (width < 0) {
+        if (this.style.skipIfTooSmall && (width < 0 || height < 0)) {
+            return;
+        } else if (width < 0) {
             throw new Error(
                 `Element is too narrow to be created, its width is ${this.computedWidth}, too small by ${-width}`,
             );
@@ -174,16 +181,16 @@ export class StyleBlock extends Block {
         alignHorizontally(lines, width, height, text.horizontalAlign);
 
         applyMargin(lines, width, padding);
-        width += paddingWidth;
-        height += paddingHeight;
+        width += padding.left + padding.right;
+        height += padding.top + padding.bottom;
         applyStyle(lines, this.style.string);
 
         applyBorder(lines, width, border);
-        width += borderWidth;
-        height += borderHeight;
+        width += (border.left ? 1 : 0) + (border.right ? 1 : 0);
+        height += (border.top ? 1 : 0) + (border.bottom ? 1 : 0);
 
         applyMargin(lines, width, margin);
-        width += marginWidth;
-        height += marginHeight;
+        width += margin.left + margin.right;
+        height += margin.top + margin.bottom;
     }
 }
