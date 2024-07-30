@@ -106,8 +106,6 @@ export class StyleBlock extends Block {
     }
 
     compute(parent: Block): void {
-        super.compute(parent);
-
         if (this.width === "auto") {
             const { padding, margin, border } = this.style;
 

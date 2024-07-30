@@ -90,14 +90,7 @@ export class Block {
     }
 
     compute(_parent: Block): void {
-        if (!this.children) return;
-
-        for (const child of this.children) {
-            console.log(child.computedWidth);
-            child.compute(this);
-            child.draw();
-            this.layout(child);
-        }
+        throw new Error("Default block doesn't implement 'Block.compute'");
     }
 
     render(relative = false): string {
