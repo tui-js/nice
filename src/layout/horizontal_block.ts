@@ -1,5 +1,5 @@
 import { Block, type BlockOptions } from "../block.ts";
-import { normalizeUnit, type Unit } from "../unit.ts";
+import { type NoAutoUnit, normalizeUnit, type Unit } from "../unit.ts";
 import { flexibleCompute } from "./shared.ts";
 import type { StringStyler } from "../types.ts";
 import { cropEnd } from "@tui/strings";
@@ -8,9 +8,9 @@ interface HorizontalBlockOptions {
     string?: StringStyler;
     width?: Unit;
     height?: Unit;
-    verticalAlign?: Unit;
-    horizontalAlign?: Unit;
-    gap?: Unit;
+    verticalAlign?: NoAutoUnit;
+    horizontalAlign?: NoAutoUnit;
+    gap?: NoAutoUnit;
 }
 
 export class HorizontalBlock extends Block {
@@ -19,9 +19,9 @@ export class HorizontalBlock extends Block {
     declare children: Block[];
 
     string?: StringStyler;
-    verticalAlign: Unit;
-    horizontalAlign: Unit;
-    gap: Unit;
+    verticalAlign: NoAutoUnit;
+    horizontalAlign: NoAutoUnit;
+    gap: NoAutoUnit;
 
     computedGap = 0;
     #occupiedWidth = 0;

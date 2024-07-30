@@ -8,9 +8,9 @@ interface VerticalBlockOptions {
     string?: StringStyler;
     width?: Unit;
     height?: Unit;
-    verticalAlign?: Unit;
-    horizontalAlign?: Unit;
-    gap?: Unit;
+    verticalAlign?: NoAutoUnit;
+    horizontalAlign?: NoAutoUnit;
+    gap?: NoAutoUnit;
 }
 
 export class VerticalBlock extends Block {
@@ -19,9 +19,9 @@ export class VerticalBlock extends Block {
     declare children: Block[];
 
     string?: StringStyler;
-    horizontalAlign: Unit;
-    verticalAlign: Unit;
-    gap: Unit;
+    horizontalAlign: NoAutoUnit;
+    verticalAlign: NoAutoUnit;
+    gap: NoAutoUnit;
 
     computedGap = 0;
 

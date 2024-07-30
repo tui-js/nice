@@ -115,7 +115,7 @@ export class StyleBlock extends Block {
                 0,
             ) + paddingWidth + marginWidth + borderWidth;
         } else {
-            this.computedWidth = normalizeUnit(this.width, parent.computedWidth);
+            this.computedWidth = normalizeUnit(this.width, parent.computedWidth, parent.usedWidth);
         }
 
         if (this.height === "auto") {
@@ -126,7 +126,7 @@ export class StyleBlock extends Block {
             const borderHeight = (border.top ? 1 : 0) + (border.bottom ? 1 : 0);
             this.computedHeight = this.lines.length + paddingHeight + marginHeight + borderHeight;
         } else {
-            this.computedHeight = normalizeUnit(this.height, parent.computedHeight);
+            this.computedHeight = normalizeUnit(this.height, parent.computedHeight, parent.usedHeight);
         }
     }
 
