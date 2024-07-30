@@ -36,3 +36,66 @@ export function normalizeUnit(value: NoAutoUnit, size: number, usedSize?: number
     }
     return cells;
 }
+
+type Operator = "+" | "-" | "*" | "/";
+function isOperator(op: string): op is Operator {
+    return op === "+" || op === "-" || op === "*" || op === "/";
+}
+
+function isUnit(op: string | number | Dynamic): op is Unit {
+    if (op === "auto" || typeof op === "number") {
+        return true;
+    } else if (typeof op === "function") {
+        return op.length === 1;
+    } else if (op.endsWith("%")) {
+        return !isNaN(Number(op.slice(0, -1)));
+    }
+    return !isNaN(Number(op));
+}
+
+/**
+ * Dynamic calculation of size
+ * @example
+ * ```ts
+ * calc("90% - 2 + 10% / 3", 10);
+ * ```
+ */
+export function calc(formula: string): Dynamic {
+    return (size) => {
+        const operators: Operator[] = [];
+        const operands: number[] = [];
+
+        for (const part of formula.split(" ")) {
+            if (isOperator(part)) {
+                operators.push(part);
+            } else if (isUnit(part)) {
+                if (part === "auto") throw new Error("Cannot use 'auto' in calc");
+                operands.push(normalizeUnit(part, size));
+            } else {
+                throw new Error(`Invalid formula contains ${part} which is not a unit nor an operator`);
+            }
+        }
+
+        for (const operator of operators) {
+            const [a, b] = operands.splice(0, 2);
+            switch (operator) {
+                case "+":
+                    operands.unshift(a + b);
+                    break;
+                case "-":
+                    operands.unshift(a - b);
+                    break;
+                case "*":
+                    operands.unshift(a * b);
+                    break;
+                case "/":
+                    operands.unshift(a / b);
+                    break;
+            }
+        }
+
+        if (operands.length > 1) throw new Error("Not empty stack?" + operands);
+
+        return operands[0];
+    };
+}
