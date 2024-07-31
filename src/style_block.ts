@@ -30,7 +30,7 @@ interface StyleOptions {
     text?: Partial<TextDefinition> | NormalizedTextDefinition;
     margin?: Partial<MarginDefinition> | NormalizedMarginDefinition;
     padding?: Partial<MarginDefinition> | NormalizedMarginDefinition;
-    border?: BorderDefinition | NormalizedBorderDefinition;
+    border?: Partial<BorderDefinition> | NormalizedBorderDefinition;
 }
 
 export class Style {
@@ -105,7 +105,7 @@ export class StyleBlock extends Block {
         this.content = content;
     }
 
-    compute(parent: Block): void {
+    compute(parent?: Block): void {
         if (this.width === "auto") {
             const { padding, margin, border } = this.style;
 
@@ -122,7 +122,11 @@ export class StyleBlock extends Block {
             const marginWidth = margin.left + margin.right;
             const borderWidth = (border.left ? 1 : 0) + (border.right ? 1 : 0);
 
-            this.computedWidth = normalizeUnit(this.width, parent.computedWidth, parent.usedWidth);
+            if (typeof this.width !== "number" && !parent) {
+                throw new Error(`StyleBlock's has no parent and its width is not statically analyzable: ${this.width}`);
+            }
+
+            this.computedWidth = normalizeUnit(this.width, parent!.computedWidth, parent!.usedWidth);
             this.contentWidth = this.computedWidth - paddingWidth - marginWidth - borderWidth;
         }
 
@@ -140,7 +144,13 @@ export class StyleBlock extends Block {
             const marginHeight = margin.top + margin.bottom;
             const borderHeight = (border.top ? 1 : 0) + (border.bottom ? 1 : 0);
 
-            this.computedHeight = normalizeUnit(this.height, parent.computedHeight, parent.usedHeight);
+            if (typeof this.height !== "number" && !parent) {
+                throw new Error(
+                    `StyleBlock's has no parent and its height is not statically analyzable: ${this.height}`,
+                );
+            }
+
+            this.computedHeight = normalizeUnit(this.height, parent!.computedHeight, parent!.usedHeight);
             this.contentHeight = this.computedHeight - paddingHeight - marginHeight - borderHeight;
         }
 
@@ -152,6 +162,8 @@ export class StyleBlock extends Block {
     }
 
     draw(): void {
+        if (!this.parent) this.compute();
+
         const { lines } = this;
         const { text, margin, padding, border } = this.style;
 
@@ -181,6 +193,7 @@ export class StyleBlock extends Block {
         applyMargin(lines, width, padding);
         width += padding.left + padding.right;
         height += padding.top + padding.bottom;
+
         applyStyle(lines, this.style.string);
 
         applyBorder(lines, width, border);
