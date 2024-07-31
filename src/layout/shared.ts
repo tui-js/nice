@@ -5,9 +5,10 @@ type ComputationCallback = (index: number, child: Block) => void;
 type BasicComputableBlock = Block & { width: NoAutoUnit; height: NoAutoUnit };
 
 export function isBasicComputable(block: Block): block is BasicComputableBlock {
-    return block.width !== "auto" && block.height !== "auto";
+    return !block.autoParentDependant || (block.width !== "auto" && block.height !== "auto");
 }
 
+// TODO: Use custom basicCompute in layouts, because children might overflow it, so it might need to adjust the final child width
 export function basicCompute(self: BasicComputableBlock, parent: Block, computation: ComputationCallback): void {
     if (!self.children) {
         throw new Error("defaultCompute requires Block which implements it to always have children");
@@ -46,10 +47,7 @@ export function flexibleCompute(self: Block, parent: Block, computation: Computa
     let i = 0;
     let deferred: Block[] | undefined;
     for (const child of self.children) {
-        if (
-            (!child.computedWidth && child.autoParentDependant && self.width === "auto") ||
-            (!child.computedHeight && child.autoParentDependant && self.height === "auto")
-        ) {
+        if (!isBasicComputable(child)) {
             deferred ??= [];
             deferred.push(child);
             continue;
