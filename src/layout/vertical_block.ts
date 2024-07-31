@@ -88,7 +88,7 @@ export class VerticalBlock extends Block {
 
             for (let i = 0; i < childLinesInBounds; ++i) {
                 const line = child.lines[i];
-                const paddedLine = padLeft + cropEnd(line, this.computedWidth) + "\x1b[0m" + padRight;
+                const paddedLine = padLeft + cropEnd(line, this.computedWidth) + padRight;
                 this.lines.push(this.string ? this.string(paddedLine) : paddedLine);
             }
 
@@ -96,7 +96,7 @@ export class VerticalBlock extends Block {
         } else if (child.computedWidth > this.computedWidth) {
             for (let i = 0; i < childLinesInBounds; ++i) {
                 const line = child.lines[i];
-                const croppedLine = cropEnd(line, this.computedWidth) + "\x1b[0m";
+                const croppedLine = cropEnd(line, this.computedWidth);
                 this.lines.push(this.string ? this.string(croppedLine) : croppedLine);
             }
         } else {
