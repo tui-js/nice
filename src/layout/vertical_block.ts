@@ -30,8 +30,9 @@ export class VerticalBlock extends Block {
         options.height ??= "auto";
         super(options as BlockOptions);
 
-        this.children = children;
-        for (const child of this.children) child.parent = this;
+        for (const child of children) {
+            this.addChild(child);
+        }
 
         this.horizontalAlign = options.horizontalAlign ?? 0;
         this.verticalAlign = options.verticalAlign ?? 0;

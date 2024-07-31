@@ -60,17 +60,17 @@ export class Block {
     }
 
     addChild(block: Block): void {
+        block.parent = this;
         this.children ??= [];
         this.children.push(block);
     }
 
     draw() {
-        if (!this.computedHeight || !this.computedWidth) {
+        if (!this.parent) {
             const { rows, columns } = Deno.consoleSize();
             const terminal = new Block({ height: rows, width: columns });
-            this.parent = terminal;
+            terminal.addChild(this);
             this.compute(terminal);
-            this.draw();
         }
 
         if (this.children) {
@@ -94,6 +94,8 @@ export class Block {
     }
 
     render(relative = false): string {
+        this.draw();
+
         if (relative) {
             // This does these steps to render lines in correct position no matter the cursor position:
             //  1. Save cursor position
