@@ -86,10 +86,11 @@ export class HorizontalBlock extends Block {
 
             for (let i = 0; i < this.computedHeight; ++i) {
                 this.lines[i] ??= "";
+                // TODO: Check if cropEnd should be modified to do style resetting more reliably
                 this.lines[i] += gapString + cropEnd(
                     child.lines[i - offsetY] ?? line,
                     maxWidthInBounds,
-                );
+                ) + "\x1b[0m";
             }
         }
         //#endregion
