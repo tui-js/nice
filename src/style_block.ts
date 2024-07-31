@@ -20,7 +20,7 @@ import { type MarginDefinition, type NormalizedMarginDefinition, normalizeMargin
 import { type BorderDefinition, normalizeBorder, type NormalizedBorderDefinition } from "./border/normalization.ts";
 import { applyBorder } from "./border/border.ts";
 
-interface StyleOptions {
+export interface StyleOptions {
     width?: Unit;
     height?: Unit;
     skipIfTooSmall?: boolean;

@@ -1,13 +1,14 @@
 import crayon from "@crayon/crayon";
-import { TestCase } from "../nice-test-runner.ts";
 
-import { horizontal, Style } from "../../mod.ts";
+import { TestCase } from "../nice-test-runner.ts";
+import { Style } from "#src/style_block.ts";
+import { HorizontalBlock } from "#src/layout/horizontal_block.ts";
 
 const style = new Style({
-  style: crayon.bgBlue,
+  string: crayon.bgBlue,
 
-  width: 14,
-  height: 19,
+  width: "100%",
+  height: "100%",
 
   padding: { all: 1 },
   margin: { right: 1 },
@@ -32,9 +33,12 @@ function render() {
     "🦪", "🍦", "🍧", "🍨", "🍩", "🍪", "🎂", "🍰", "🧁", "🥧", "🍫", "🍬",
   ];
 
-  const SCREEN_FG = Style.render(horizontal(0.5, style.create(EMOJIS.join(" "))));
+  const SCREEN_FG = new HorizontalBlock(
+    { verticalAlign: 0, width: 22, height: 20 },
+    style.create(EMOJIS.join(" ")),
+  );
 
-  console.log(SCREEN_FG);
+  console.log(SCREEN_FG.render());
 }
 
 export const testCase = new TestCase(
