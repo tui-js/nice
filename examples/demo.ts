@@ -83,10 +83,9 @@ export function render() {
     ),
   );
 
-  root.draw();
-
+  const rendered = root.render();
   console.log("render time:", performance.now() - start);
-  return root.lines.join("\n");
+  return rendered;
 }
 
 x: if (import.meta.main) {
