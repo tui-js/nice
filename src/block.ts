@@ -103,7 +103,7 @@ export class Block {
             //  3. Reset cursor position
             //  4. Move cursor down
             //  5. Save cursor position
-            return `\x1b${this.lines.join("\x1b8\x1b[1B\x1b7")}`;
+            return `\x1b7${this.lines.join("\x1b8\x1b[1B\x1b7")}`;
         }
 
         return this.lines.join("\n");
