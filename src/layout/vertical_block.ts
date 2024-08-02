@@ -4,7 +4,7 @@ import { type NoAutoUnit, normalizeUnit, type Unit } from "../unit.ts";
 import { flexibleCompute } from "./shared.ts";
 import type { StringStyler } from "../types.ts";
 
-interface VerticalBlockOptions {
+export interface VerticalBlockOptions {
     string?: StringStyler;
     width?: Unit;
     height?: Unit;

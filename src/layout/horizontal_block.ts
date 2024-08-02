@@ -4,7 +4,7 @@ import { flexibleCompute } from "./shared.ts";
 import type { StringStyler } from "../types.ts";
 import { cropEnd } from "@tui/strings";
 
-interface HorizontalBlockOptions {
+export interface HorizontalBlockOptions {
     string?: StringStyler;
     width?: Unit;
     height?: Unit;
@@ -46,6 +46,8 @@ export class HorizontalBlock extends Block {
         if (this.computedGap < 0) throw new Error("Gap cannot be negative");
 
         flexibleCompute(this, parent, (i, child) => {
+            // TODO: Move child position computation here
+
             this.usedWidth += child.computedWidth;
             this.usedHeight = Math.max(this.usedHeight, child.computedHeight);
             if (i !== 0) this.usedWidth += this.computedGap;
