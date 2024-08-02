@@ -6,6 +6,7 @@ import { HorizontalBlock } from "#src/layout/horizontal_block.ts";
 import type { Block } from "#src/block.ts";
 import { Style } from "#src/style_block.ts";
 import { BorderCharsets } from "#src/border/charsets.ts";
+import { OverlayBlock } from "#src/layout/overlay_block.ts";
 
 const noCornerCharset = BorderCharsets.rounded;
 noCornerCharset.topLeft = " ";
@@ -66,14 +67,17 @@ function render() {
           { horizontalAlign: "80%" },
           block(),
           block(),
-          new VerticalBlock(
-            { horizontalAlign: "50%", verticalAlign: "50%" },
-            block(),
-            new HorizontalBlock(
-              { width: 30, horizontalAlign: 2 },
-              block(true),
-              block(true),
-            ),
+          new OverlayBlock(
+            {
+              x: "50%",
+              y: "50%",
+              fg: block(),
+              bg: new HorizontalBlock(
+                { width: 30, horizontalAlign: 2 },
+                block(true),
+                block(true),
+              ),
+            },
           ),
         ),
       ),

@@ -4,6 +4,7 @@ import "@crayon/literal";
 import { Style } from "#src/style_block.ts";
 import { VerticalBlock } from "#src/layout/vertical_block.ts";
 import type { Block } from "#src/block.ts";
+import { OverlayBlock } from "#src/layout/overlay_block.ts";
 
 const Title = new Style({
   string: crayon.bold,
@@ -25,11 +26,12 @@ export class TestCase {
   ) {}
 
   block(): Block {
-    return new VerticalBlock(
-      { horizontalAlign: "50%" },
-      Title.create(this.title),
-      Description.create(this.description),
-    );
+    return new OverlayBlock({
+      bg: Description.create(this.description),
+      fg: Title.create(this.title),
+      x: "50%",
+      y: 0,
+    });
   }
 
   run() {
