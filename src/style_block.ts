@@ -1,6 +1,6 @@
 import { textWidth } from "@tui/strings/text_width";
 
-import { Block } from "./block.ts";
+import { Block, type BoundingRectangle } from "./block.ts";
 import { normalizeUnit, type Unit } from "./unit.ts";
 import type { StringStyler } from "./types.ts";
 
@@ -45,9 +45,7 @@ export class Style {
   padding: NormalizedMarginDefinition;
   border: NormalizedBorderDefinition;
 
-  constructor(
-    { string, text, margin, padding, border, skipIfTooSmall, width, height }: StyleOptions,
-  ) {
+  constructor({ string, text, margin, padding, border, skipIfTooSmall, width, height }: StyleOptions) {
     this.string = string;
     this.text = normalizeTextDefinition(text);
     this.margin = normalizeMargin(margin);
@@ -105,6 +103,20 @@ export class StyleBlock extends Block {
     this.style = style;
     this.lines = lines;
     this.content = content;
+  }
+
+  boundingRectangle(includeMargins = false): BoundingRectangle {
+    const rectangle = super.boundingRectangle();
+
+    if (!includeMargins) {
+      const { margin } = this.style;
+      rectangle.top += margin.top;
+      rectangle.left += margin.left;
+      rectangle.width -= margin.right + margin.left;
+      rectangle.height -= margin.bottom + margin.top;
+    }
+
+    return rectangle;
   }
 
   compute(parent?: Block): void {
