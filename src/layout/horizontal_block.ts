@@ -8,8 +8,8 @@ export interface HorizontalBlockOptions {
     string?: StringStyler;
     width?: Unit;
     height?: Unit;
-    verticalAlign?: NoAutoUnit;
-    horizontalAlign?: NoAutoUnit;
+    x?: NoAutoUnit;
+    y?: NoAutoUnit;
     gap?: NoAutoUnit;
 }
 
@@ -19,11 +19,13 @@ export class HorizontalBlock extends Block {
     declare children: Block[];
 
     string?: StringStyler;
-    verticalAlign: NoAutoUnit;
-    horizontalAlign: NoAutoUnit;
+    x: NoAutoUnit;
+    y: NoAutoUnit;
     gap: NoAutoUnit;
 
+    computedX = 0;
     computedGap = 0;
+
     #occupiedWidth = 0;
 
     constructor(options: HorizontalBlockOptions, ...children: Block[]) {
@@ -35,8 +37,8 @@ export class HorizontalBlock extends Block {
             this.addChild(child);
         }
 
-        this.verticalAlign = options.verticalAlign ?? 0;
-        this.horizontalAlign = options.horizontalAlign ?? 0;
+        this.y = options.y ?? 0;
+        this.x = options.x ?? 0;
         this.gap = options.gap ?? 0;
         this.string = options.string;
     }
@@ -46,74 +48,71 @@ export class HorizontalBlock extends Block {
         if (this.computedGap < 0) throw new Error("Gap cannot be negative");
 
         flexibleCompute(this, parent, (i, child) => {
-            // TODO: Move child position computation here
+            if (i !== 0) this.usedWidth += this.computedGap;
+
+            child.computedLeft += this.usedWidth;
 
             this.usedWidth += child.computedWidth;
             this.usedHeight = Math.max(this.usedHeight, child.computedHeight);
-            if (i !== 0) this.usedWidth += this.computedGap;
         });
+
+        this.computedX = normalizeUnit(this.x, this.computedWidth - this.usedWidth);
+
+        this.#occupiedWidth = 0;
     }
 
     layout(child: Block): void {
-        let maxWidthInBounds = this.computedWidth - this.#occupiedWidth;
-        if (maxWidthInBounds <= 0) return;
+        let freeSpace = this.computedWidth - this.#occupiedWidth;
+        if (freeSpace <= 0) return;
 
-        //#region Gap
-        let gapString = "";
-        if (this.#occupiedWidth !== 0 && this.computedGap) {
-            const gapWidthInBounds = Math.min(maxWidthInBounds, this.computedGap);
-
-            gapString = " ".repeat(gapWidthInBounds);
-            if (this.string) gapString = this.string(gapString);
-
-            this.#occupiedWidth += gapWidthInBounds;
-            maxWidthInBounds -= gapWidthInBounds;
-        }
-        //#endregion
-
-        //#region Align and add child lines
-        const offsetY = normalizeUnit(this.verticalAlign, this.computedHeight - child.computedHeight);
+        const offsetY = normalizeUnit(this.y, this.computedHeight - child.computedHeight);
         child.computedTop += offsetY;
-        child.computedLeft += this.#occupiedWidth;
-        const line = " ".repeat(child.computedWidth);
-        if (child.computedWidth <= maxWidthInBounds) {
-            this.#occupiedWidth += child.computedWidth;
+        child.computedLeft += this.computedX;
 
-            for (let i = 0; i < this.computedHeight; ++i) {
-                this.lines[i] ??= "";
-                this.lines[i] += gapString + (child.lines[i - offsetY] ?? line);
-            }
-        } else {
-            this.#occupiedWidth += maxWidthInBounds;
+        let gapString = "";
+        if (this.#occupiedWidth !== 0 && this.computedGap > 0) {
+            const gapLinesInBounds = Math.min(freeSpace, this.computedGap);
+            gapString = " ".repeat(gapLinesInBounds);
 
-            for (let i = 0; i < this.computedHeight; ++i) {
-                this.lines[i] ??= "";
-                // TODO: Check if cropEnd should be modified to do style resetting more reliably
-                this.lines[i] += gapString + cropEnd(
-                    child.lines[i - offsetY] ?? line,
-                    maxWidthInBounds,
-                ) + "\x1b[0m";
-            }
+            this.#occupiedWidth += gapLinesInBounds;
+            freeSpace -= gapLinesInBounds;
         }
-        //#endregion
+
+        if (freeSpace <= 0) return;
+
+        if (child.computedWidth <= freeSpace) {
+            const emptyLine = " ".repeat(child.computedWidth);
+
+            for (let i = 0; i < this.computedHeight; ++i) {
+                this.lines[i] ??= "";
+                const line = child.lines[i - offsetY] ?? emptyLine;
+
+                this.lines[i] += gapString + line;
+            }
+            this.#occupiedWidth += child.computedWidth;
+        } else {
+            const emptyLine = " ".repeat(freeSpace);
+
+            for (let i = 0; i < this.computedHeight; ++i) {
+                this.lines[i] ??= "";
+                const line = child.lines[i - offsetY] ?? emptyLine;
+                this.lines[i] += gapString + cropEnd(line, freeSpace) + "\x1b[0m";
+            }
+            this.#occupiedWidth += freeSpace;
+        }
     }
 
     finishLayout(): void {
-        const widthDiff = this.computedWidth - this.#occupiedWidth;
-        const offsetX = normalizeUnit(this.horizontalAlign, widthDiff);
+        const lacksLeft = this.computedX;
+        const lacksRight = this.computedWidth - this.#occupiedWidth - lacksLeft;
 
-        for (const child of this.children) {
-            child.computedLeft += offsetX;
-        }
+        if (lacksLeft <= 0 && lacksRight <= 0 && !this.string) return;
 
-        const lacksLeft = offsetX;
-        const lacksRight = widthDiff - lacksLeft;
         const padLeft = " ".repeat(lacksLeft);
         const padRight = " ".repeat(lacksRight);
 
         for (let i = 0; i < this.lines.length; ++i) {
-            const line = this.lines[i];
-            const paddedLine = padLeft + line + padRight;
+            const paddedLine = padLeft + this.lines[i] + padRight;
             this.lines[i] = this.string ? this.string(paddedLine) : paddedLine;
         }
     }
