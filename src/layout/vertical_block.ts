@@ -23,7 +23,6 @@ export class VerticalBlock extends Block {
   y: NoAutoUnit;
   gap: NoAutoUnit;
 
-  computedX = 0;
   computedY = 0;
   computedGap = 0;
 
@@ -52,11 +51,7 @@ export class VerticalBlock extends Block {
       if (i !== 0) this.usedHeight += this.computedGap;
     });
 
-    this.computedX = normalizeUnit(this.x, this.computedWidth - this.usedWidth);
-    this.computedY = normalizeUnit(
-      this.y,
-      this.computedHeight - this.usedHeight,
-    );
+    this.computedY = normalizeUnit(this.y, this.computedHeight - this.usedHeight);
 
     this.lines.length = 0;
   }
@@ -87,21 +82,22 @@ export class VerticalBlock extends Block {
 
     if (child.computedWidth < this.computedWidth) {
       const widthDiff = this.computedWidth - child.computedWidth;
+      const computedX = normalizeUnit(this.x, widthDiff);
 
       // FIXME: what if offsetX > width or something?
-      const lacksLeft = this.computedX;
+      const lacksLeft = computedX;
       const lacksRight = widthDiff - lacksLeft;
+
       const padLeft = " ".repeat(lacksLeft);
       const padRight = " ".repeat(lacksRight);
 
       for (let i = 0; i < childLinesInBounds; ++i) {
         const line = child.lines[i];
-        const paddedLine = padLeft + cropEnd(line, this.computedWidth) +
-          padRight;
+        const paddedLine = padLeft + line + padRight;
         this.lines.push(this.string ? this.string(paddedLine) : paddedLine);
       }
 
-      child.computedLeft += this.computedX;
+      child.computedLeft += computedX;
     } else if (child.computedWidth > this.computedWidth) {
       for (let i = 0; i < childLinesInBounds; ++i) {
         const line = child.lines[i];
