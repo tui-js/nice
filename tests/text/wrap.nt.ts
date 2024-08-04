@@ -1,8 +1,8 @@
 import crayon from "@crayon/crayon";
 import { TestCase } from "../nice-test-runner.ts";
-
-import { Style } from "../../mod.ts";
-import { horizontal, vertical } from "../../src/layout/mod.ts";
+import { Style } from "#src/style_block.ts";
+import { HorizontalBlock } from "#src/layout/horizontal_block.ts";
+import { VerticalBlock } from "#src/layout/vertical_block.ts";
 
 const TEXT = `\
 Sneaky
@@ -16,17 +16,17 @@ const wrapLabel = crayon.bold.green("wrap");
 const nowrapLabel = crayon.bold.magenta("nowrap");
 
 const titleStyle = new Style({
+  string: crayon.white,
   text: { horizontalAlign: "center" },
 });
 
 const wrapStyle = new Style({
-  style: crayon.bgRed.bold.white,
+  string: crayon.bgRed.bold.white,
 
   width: 13,
   height: 12,
 
   padding: { all: 1 },
-  margin: { right: 1 },
   border: { type: "rounded", all: true, style: crayon.white },
 
   text: {
@@ -36,20 +36,18 @@ const wrapStyle = new Style({
 });
 
 const nowrapStyle = wrapStyle.derive({
-  style: crayon.bgBlue.bold.white,
+  string: crayon.bgBlue.bold.white,
   text: { wrap: "nowrap" },
 });
 
 function render() {
-  const SCREEN_FG = Style.render(
-    horizontal(
-      0.5,
-      vertical(0.5, titleStyle.create(wrapLabel), wrapStyle.create(TEXT)),
-      vertical(0.5, titleStyle.create(nowrapLabel), nowrapStyle.create(TEXT)),
-    ),
+  const SCREEN_FG = new HorizontalBlock(
+    { y: "50%", gap: 1 },
+    new VerticalBlock({ x: "50%" }, titleStyle.create(wrapLabel), wrapStyle.create(TEXT)),
+    new VerticalBlock({ x: "50%" }, titleStyle.create(nowrapLabel), nowrapStyle.create(TEXT)),
   );
 
-  console.log(SCREEN_FG);
+  console.log(SCREEN_FG.render());
 }
 
 export const testCase = new TestCase(

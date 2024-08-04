@@ -61,7 +61,7 @@ function render() {
 
     blocks.push(
       new VerticalBlock(
-        { horizontalAlign: "50%" },
+        { x: "50%" },
         titleStyle.create(title),
         elementStyle.create(VERY_LONG_TEXT),
       ),
