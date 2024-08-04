@@ -57,7 +57,6 @@ export class HorizontalBlock extends Block {
         });
 
         this.computedX = normalizeUnit(this.x, this.computedWidth - this.usedWidth);
-
         this.#occupiedWidth = 0;
     }
 
@@ -81,6 +80,7 @@ export class HorizontalBlock extends Block {
         if (freeSpace <= 0) return;
 
         if (child.computedWidth <= freeSpace) {
+            // TODO: compute styledLine?
             const emptyLine = " ".repeat(child.computedWidth);
 
             for (let i = 0; i < this.computedHeight; ++i) {

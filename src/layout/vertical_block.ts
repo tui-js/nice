@@ -8,8 +8,8 @@ export interface VerticalBlockOptions {
     string?: StringStyler;
     width?: Unit;
     height?: Unit;
-    verticalAlign?: NoAutoUnit;
-    horizontalAlign?: NoAutoUnit;
+    x?: NoAutoUnit;
+    y?: NoAutoUnit;
     gap?: NoAutoUnit;
 }
 
@@ -19,10 +19,12 @@ export class VerticalBlock extends Block {
     declare children: Block[];
 
     string?: StringStyler;
-    horizontalAlign: NoAutoUnit;
-    verticalAlign: NoAutoUnit;
+    x: NoAutoUnit;
+    y: NoAutoUnit;
     gap: NoAutoUnit;
 
+    computedX = 0;
+    computedY = 0;
     computedGap = 0;
 
     constructor(options: VerticalBlockOptions, ...children: Block[]) {
@@ -34,14 +36,13 @@ export class VerticalBlock extends Block {
             this.addChild(child);
         }
 
-        this.horizontalAlign = options.horizontalAlign ?? 0;
-        this.verticalAlign = options.verticalAlign ?? 0;
+        this.x = options.x ?? 0;
+        this.y = options.y ?? 0;
         this.gap = options.gap ?? 0;
         this.string = options.string;
     }
 
     compute(parent: Block): void {
-        // TODO: Consider moving normalization of units into compute
         this.computedGap = normalizeUnit(this.gap, this.computedHeight);
         if (this.computedGap < 0) throw new Error("Gap cannot be negative");
 
@@ -50,38 +51,42 @@ export class VerticalBlock extends Block {
             this.usedHeight += child.computedHeight;
             if (i !== 0) this.usedHeight += this.computedGap;
         });
+
+        this.computedX = normalizeUnit(this.x, this.computedWidth - this.usedWidth);
+        this.computedY = normalizeUnit(this.y, this.computedHeight - this.usedHeight);
+
+        this.lines.length = 0;
     }
 
     layout(child: Block): void {
-        let maxLinesInBounds = this.computedHeight - this.lines.length;
-        if (maxLinesInBounds <= 0) return;
+        let freeSpace = this.computedHeight - this.lines.length;
+        if (freeSpace <= 0) return;
 
-        //#region Gap
-        if (this.lines.length !== 0 && this.computedGap) {
+        if (freeSpace < this.computedHeight && this.computedGap > 0) {
             const emptyLine = " ".repeat(this.computedWidth);
+            // TODO: compute styledLine?
             const styledLine = this.string ? this.string(emptyLine) : emptyLine;
 
-            const gapLinesInBounds = Math.min(maxLinesInBounds, this.computedGap);
+            const gapLinesInBounds = Math.min(freeSpace, this.computedGap);
             for (let i = 0; i < gapLinesInBounds; ++i) {
                 this.lines.push(styledLine);
             }
-
-            maxLinesInBounds -= gapLinesInBounds;
+            freeSpace -= gapLinesInBounds;
         }
-        //#endregion
+
+        if (freeSpace <= 0) return;
 
         // TODO: Decide whether child lines should be styled
         //       For now it seems like a good idea, however there might be some odd edge-cases
 
-        //#region Align and add child lines
         child.computedTop += this.lines.length;
-        const childLinesInBounds = Math.min(child.lines.length, maxLinesInBounds);
+        const childLinesInBounds = Math.min(child.lines.length, freeSpace);
+
         if (child.computedWidth < this.computedWidth) {
             const widthDiff = this.computedWidth - child.computedWidth;
-            const offsetX = normalizeUnit(this.horizontalAlign, widthDiff);
 
             // FIXME: what if offsetX > width or something?
-            const lacksLeft = offsetX;
+            const lacksLeft = this.computedX;
             const lacksRight = widthDiff - lacksLeft;
             const padLeft = " ".repeat(lacksLeft);
             const padRight = " ".repeat(lacksRight);
@@ -92,7 +97,7 @@ export class VerticalBlock extends Block {
                 this.lines.push(this.string ? this.string(paddedLine) : paddedLine);
             }
 
-            child.computedLeft += offsetX;
+            child.computedLeft += this.computedX;
         } else if (child.computedWidth > this.computedWidth) {
             for (let i = 0; i < childLinesInBounds; ++i) {
                 const line = child.lines[i];
@@ -105,15 +110,15 @@ export class VerticalBlock extends Block {
                 this.lines.push(this.string ? this.string(line) : line);
             }
         }
-        //#endregion
     }
 
     finishLayout(): void {
         const heightDiff = this.computedHeight - this.lines.length;
-        const offsetY = normalizeUnit(this.verticalAlign, heightDiff);
 
-        const lacksTop = offsetY;
+        const lacksTop = this.computedY;
         const lacksBottom = heightDiff - lacksTop;
+
+        if (lacksTop <= 0 && lacksBottom <= 0) return;
 
         const emptyLine = " ".repeat(this.computedWidth);
         const styledLine = this.string ? this.string(emptyLine) : emptyLine;
