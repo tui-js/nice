@@ -3,12 +3,17 @@
   "version": "0.3.2",
   "exports": {
     ".": "./mod.ts",
-    "./style": "./src/style.ts",
     "./block": "./src/block.ts",
-    "./layout": "./src/layout/mod.ts",
+
+    "./style_block": "./src/style_block.ts",
     "./margin": "./src/margin/mod.ts",
     "./border": "./src/border/mod.ts",
-    "./text": "./src/text/mod.ts"
+    "./text": "./src/text/mod.ts",
+
+    "./layout": "./src/layout/mod.ts",
+    "./layout/horizontal": "./src/layout/horizontal_block.ts",
+    "./layout/vertical": "./src/layout/vertical_block.ts",
+    "./layout/overlay": "./src/layout/overlay_block.ts"
   },
 
   "imports": {
