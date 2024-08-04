@@ -28,7 +28,11 @@ const STYLES: [string, StyleOptions["text"]][] = [
   [`clip\n${nowrapLabel}`, { overflow: "clip", wrap: "nowrap" }],
 
   [`ellipsis\n${wrapLabel}`, { overflow: "ellipsis", wrap: "wrap" }],
-  [`custom ellipsis\n${wrapLabel}`, { overflow: "ellipsis", wrap: "wrap", ellipsisString: "..." }],
+  [`custom ellipsis\n${wrapLabel}`, {
+    overflow: "ellipsis",
+    wrap: "wrap",
+    ellipsisString: "...",
+  }],
   [`clip\n${wrapLabel}`, { overflow: "clip", wrap: "wrap" }],
 ];
 
@@ -64,7 +68,7 @@ function render() {
     );
   }
 
-  const SCREEN_FG = new HorizontalBlock({ verticalAlign: "50%" }, ...blocks);
+  const SCREEN_FG = new HorizontalBlock({ y: "50%" }, ...blocks);
 
   console.log(SCREEN_FG.render());
 }

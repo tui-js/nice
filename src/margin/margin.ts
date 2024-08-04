@@ -10,7 +10,9 @@ export function applyMargin(
   const chWidth = charWidth(char);
   const leftSide = char.repeat(margin.left / chWidth);
   const rightSide = margin.left === margin.right ? leftSide : char.repeat(margin.right / chWidth);
-  const verticalSide = char.repeat((width + margin.left + margin.right) / chWidth);
+  const verticalSide = char.repeat(
+    (width + margin.left + margin.right) / chWidth,
+  );
 
   for (const i in lines) {
     lines[i] = `${leftSide}${lines[i]}${rightSide}`;

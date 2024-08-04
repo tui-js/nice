@@ -17,7 +17,11 @@ function render() {
   console.log("\x1b[3A\x1b[30C", style.create("Hello there").render(true));
   console.log(style.create("Hello there").render(true));
   console.log("\x1b[10C", style.create("Hello there").render(true));
-  console.log("\x1b[10A\x1b[30C", style.create("Hello there").render(true), "\x1b[10B");
+  console.log(
+    "\x1b[10A\x1b[30C",
+    style.create("Hello there").render(true),
+    "\x1b[10B",
+  );
 }
 
 export const testCase = new TestCase(

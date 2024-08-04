@@ -42,16 +42,17 @@ export function render() {
 
       gap: 2,
 
-      horizontalAlign: "50%",
+      x: "50%",
+      y: "50%",
     },
     new VerticalBlock(
-      { width: calc("50% - 1"), gap: 2, string: crayon.bgBlack, horizontalAlign: "50%" },
+      { width: calc("50% - 1"), gap: 2, string: crayon.bgLightBlack, x: "50%" },
       style.create(
         "Nice 🔥\n（╯°□°）╯︵┻━┻\ndevanagari आआॠऋॲपॉ\nﾊﾊﾊThis text should get wrapped because widthəəə is explicit as日本verylongstringthaəə💩twillwrapnomatterwhat\nwowə\nلعربيةا",
         { string: color() },
       ),
       new HorizontalBlock(
-        { gap: 2, string: color() },
+        { gap: 2, string: color(), y: "50%" },
         style.create(
           "This gets justified\nAlone\none two three four five six\nlonger words come here\nbig spacing now",
           {
@@ -59,8 +60,13 @@ export function render() {
             text: { horizontalAlign: "justify" },
           },
         ),
-        style2.create("ISBN: 978-0-1234-5678-7\n\nCSS: הרפתקה חדשה!", { string: color() }),
-        style2.create("ISBN: 978-0-1234-5678-7\n\nCSS: הרפתקה חדשה!", { string: color(), text: { overflow: "clip" } }),
+        style2.create("ISBN: 978-0-1234-5678-7\n\nCSS: הרפתקה חדשה!", {
+          string: color(),
+        }),
+        style2.create("ISBN: 978-0-1234-5678-7\n\nCSS: הרפתקה חדשה!", {
+          string: color(),
+          text: { overflow: "clip" },
+        }),
         style2.create("ISBN: 978-0-1234-5678-7\n\nCSS: הרפתקה חדשה!", {
           string: color(),
           text: { ellipsisString: "..." },
@@ -68,17 +74,33 @@ export function render() {
       ),
     ),
     new VerticalBlock(
-      { width: calc("50% - 1"), height: "100%", string: crayon.bgBlack, gap: 1 },
+      {
+        width: calc("50% - 1"),
+        height: "100%",
+        string: crayon.bgBlack,
+        gap: 1,
+      },
       new VerticalBlock(
         { width: "100%", height: "50%", string: color() },
         style.create("Second column", { string: color() }),
         style.create("Test 2", { string: color() }),
       ),
       new HorizontalBlock(
-        { width: "100%", height: calc("50% - 2"), string: color(), gap: 4, horizontalAlign: "50%" },
+        {
+          width: "100%",
+          height: calc("50% - 2"),
+          string: color(),
+          gap: 4,
+          x: "50%",
+          y: "50%",
+        },
         style.create("Test 3", { string: color(), width: calc("33.3% - 4%") }),
         style.create("Test 4", { string: color(), width: calc("33.3% - 4%") }),
-        style.create("Test 5", { string: color(), width: calc("33.3% - 4%"), height: "100%" }),
+        style.create("Test 5", {
+          string: color(),
+          width: calc("33.3% - 4%"),
+          height: "100%",
+        }),
       ),
     ),
   );
@@ -106,7 +128,8 @@ x: if (import.meta.main) {
 
     const style = block instanceof StyleBlock && block.style.string
       ? block.style.string
-      : (block instanceof VerticalBlock || block instanceof HorizontalBlock) && block.string
+      : (block instanceof VerticalBlock || block instanceof HorizontalBlock) &&
+          block.string
       ? block.string
       : undefined;
     if (!style) continue;

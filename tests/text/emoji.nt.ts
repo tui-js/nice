@@ -34,7 +34,7 @@ function render() {
   ];
 
   const SCREEN_FG = new HorizontalBlock(
-    { verticalAlign: 0, width: 22, height: 20 },
+    { y: 0, width: 22, height: 20 },
     style.create(EMOJIS.join(" ")),
   );
 

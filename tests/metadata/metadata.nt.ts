@@ -37,18 +37,18 @@ function block(padded = false) {
 
 function render() {
   const SCREEN_FG = new VerticalBlock(
-    { horizontalAlign: "70%" },
+    { x: "70%" },
     new VerticalBlock(
-      { horizontalAlign: "50%" },
+      { x: "50%" },
       block(),
       new HorizontalBlock(
-        { verticalAlign: "50%" },
+        { y: "50%" },
         block(),
         block(),
       ),
     ),
     new HorizontalBlock(
-      { verticalAlign: "50%" },
+      { y: "50%" },
       block(),
       block(),
       block(),
@@ -57,14 +57,14 @@ function render() {
       block(),
     ),
     new VerticalBlock(
-      { verticalAlign: "50%", horizontalAlign: "50%" },
+      { y: "50%", x: "50%" },
       block(),
       new HorizontalBlock(
-        { verticalAlign: "20%" },
+        { y: "20%" },
         block(),
         block(),
         new VerticalBlock(
-          { horizontalAlign: "80%" },
+          { x: "80%" },
           block(),
           block(),
           new OverlayBlock(
@@ -73,7 +73,7 @@ function render() {
               y: "50%",
               fg: block(),
               bg: new HorizontalBlock(
-                { width: 30, horizontalAlign: 2 },
+                { width: 30, x: 2 },
                 block(true),
                 block(true),
               ),

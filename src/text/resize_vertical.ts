@@ -17,8 +17,7 @@ export function resizeVertically(
       const lastLine = lines[lines.length - 1];
       const lineWidth = textWidth(lastLine);
 
-      lines[lines.length - 1] = cropEnd(lastLine, lineWidth - textWidth(ellipsisString)) +
-        ellipsisString;
+      lines[lines.length - 1] = cropEnd(lastLine, lineWidth - textWidth(ellipsisString)) + ellipsisString;
     }
   }
 }
