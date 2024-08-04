@@ -2,7 +2,6 @@ import crayon from "@crayon/crayon";
 import "@crayon/literal";
 
 import { Style } from "#src/style_block.ts";
-import { VerticalBlock } from "#src/layout/vertical_block.ts";
 import type { Block } from "#src/block.ts";
 import { OverlayBlock } from "#src/layout/overlay_block.ts";
 
