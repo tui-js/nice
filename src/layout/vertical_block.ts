@@ -51,6 +51,7 @@ export class VerticalBlock extends Block {
       if (i !== 0) this.usedHeight += this.computedGap;
     });
 
+    this.usedHeight = Math.min(this.computedHeight, this.usedHeight);
     this.computedY = normalizeUnit(this.y, this.computedHeight - this.usedHeight);
 
     this.lines.length = 0;

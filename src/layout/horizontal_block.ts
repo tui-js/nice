@@ -56,6 +56,7 @@ export class HorizontalBlock extends Block {
       this.usedHeight = Math.max(this.usedHeight, child.computedHeight);
     });
 
+    this.usedWidth = Math.min(this.computedWidth, this.usedWidth);
     this.computedX = normalizeUnit(this.x, this.computedWidth - this.usedWidth);
     this.#occupiedWidth = 0;
   }
