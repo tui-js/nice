@@ -1,93 +1,116 @@
-export interface BoundingRect {
+import type { Unit } from "./unit.ts";
+
+// FIXME: Negative values
+
+export const createdBlocks: Block[] = [];
+
+export interface BlockOptions {
+  width: Unit;
+  height: Unit;
+}
+
+export interface BoundingRectangle {
   top: number;
   left: number;
   width: number;
   height: number;
 }
 
-export interface Metadata {
-  type?: string;
-  anchor?: Block;
-  top: number;
-  left: number;
-  width: number;
-  height: number;
-}
+export class Block {
+  name?: string;
 
-export class Block implements Metadata {
-  lines: string[];
+  // Whether block depends on parent when width or height are set to "auto"
+  autoParentDependant = true;
+  width: Unit;
+  height: Unit;
 
-  // Metadata
-  type?: string;
-  anchor?: Block;
-  top: number;
-  left: number;
-  width: number;
-  height: number;
+  computedTop = 0;
+  computedLeft = 0;
+  computedWidth = 0;
+  computedHeight = 0;
 
-  constructor(lines: string[], metadata: Metadata) {
-    this.lines = lines;
+  usedWidth = 0;
+  usedHeight = 0;
 
-    this.type = metadata.type;
-    this.anchor = metadata.anchor;
-    this.top = metadata.top;
-    this.left = metadata.left;
-    this.width = metadata.width;
-    this.height = metadata.height;
+  parent?: Block;
+  children?: Block[];
+
+  lines: string[] = [];
+
+  constructor(options: BlockOptions) {
+    this.width = options.width;
+    this.height = options.height;
+    if (typeof this.width === "number") this.computedWidth = this.width;
+    if (typeof this.height === "number") this.computedHeight = this.height;
+    createdBlocks.push(this);
   }
 
-  /**
-   * Creates empty {@linkcode Block} with given {@linkcode metadata}.
-   *
-   * @param [fillHeight=false] Whether to fill {@linkcode Block.lines} with {@linkcode Metadata.height} empty strings
-   *
-   * @example
-   * ```ts
-   * const block = Block.from({ ..., height: 5, width: 5 });
-   * console.log(block.lines); // [];
-   *
-   * const block = Block.from({ ..., height: 5, width: 5 }, true);
-   * console.log(block.lines); // ["", "", "", "", ""];
-   * ```
-   */
-  static from(metadata: Partial<Metadata>, fillHeight = false): Block {
-    const lines: string[] = [];
-    if (fillHeight && metadata.height) {
-      for (let i = 0; i < metadata.height; ++i) lines.push("");
-    }
-    return new Block(lines, {
-      top: 0,
-      left: 0,
-      width: 0,
-      height: 0,
-      ...metadata,
-    });
-  }
+  boundingRectangle(): BoundingRectangle {
+    let top = this.computedTop;
+    let left = this.computedLeft;
 
-  /**
-   * Converts {@linkcode Block} to string.\
-   * It joins {@linkcode Block.lines} with given {@linkcode delimiter}.
-   */
-  toString(delimiter = "\n"): string {
-    return this.lines.join(delimiter);
-  }
-
-  /**
-   * Returns {@linkcode BoundingRect} of the {@linkcode Block}.\
-   * It takes positioning of all of its ancestors into account.
-   */
-  boundingRect(): BoundingRect {
-    let top = this.top;
-    let left = this.left;
-
-    let anchor = this.anchor;
-    while (anchor) {
-      top += anchor.top;
-      left += anchor.left;
-
-      anchor = anchor.anchor;
+    let parent = this.parent;
+    while (parent) {
+      top += parent.computedTop;
+      left += parent.computedLeft;
+      parent = parent.parent;
     }
 
-    return { top, left, width: this.width, height: this.height };
+    return {
+      top,
+      left,
+      width: this.computedWidth,
+      height: this.computedHeight,
+    };
+  }
+
+  addChild(block: Block): void {
+    block.parent = this;
+    this.children ??= [];
+    this.children.push(block);
+  }
+
+  draw() {
+    if (!this.parent) {
+      const { rows, columns } = Deno.consoleSize();
+      const terminal = new Block({ height: rows, width: columns });
+      terminal.addChild(this);
+      this.compute(terminal);
+    }
+
+    if (this.children) {
+      for (const child of this.children) {
+        this.layout(child);
+      }
+      this.finishLayout();
+    }
+  }
+
+  layout(_child: Block): void {
+    throw new Error("Default block doesn't implement 'Block.layout'");
+  }
+
+  finishLayout(): void {
+    throw new Error("Default block doesn't implement 'Block.finishLayout'");
+  }
+
+  compute(_parent: Block): void {
+    throw new Error("Default block doesn't implement 'Block.compute'");
+  }
+
+  render(relative = false): string {
+    this.draw();
+
+    if (relative) {
+      // This does these steps to render lines in correct position no matter the cursor position:
+      //  1. Save cursor position
+      //  2. Line
+      //  3. Reset cursor position
+      //  4. Move cursor down
+      //  5. Save cursor position
+      return `\x1b7${this.lines.join("\x1b8\x1b[1B\x1b7")}`;
+    }
+
+    return this.lines.join("\n");
   }
 }

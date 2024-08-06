@@ -1,16 +1,18 @@
 import crayon from "@crayon/crayon";
 import "@crayon/literal";
 
-import { overlay, Style } from "../mod.ts";
-import type { NiceBlock } from "../src/metadata.ts";
+import { Style } from "#src/style_block.ts";
+import type { Block } from "#src/block.ts";
+import { OverlayBlock } from "#src/layout/overlay_block.ts";
 
 const Title = new Style({
-  style: crayon.bold,
+  string: crayon.bold,
   border: { type: "thick", x: true, style: crayon.white },
   padding: { all: 0 },
 });
 
 const Description = new Style({
+  string: crayon.white,
   border: { type: "thick", x: true, y: true, style: crayon.white },
   padding: { all: 1 },
 });
@@ -22,20 +24,18 @@ export class TestCase {
     public render: () => void,
   ) {}
 
-  block(): NiceBlock {
-    return overlay(
-      0.5,
-      0,
-      Title.create(this.title),
-      Description.create(this.description),
-    );
+  block(): Block {
+    return new OverlayBlock({
+      bg: Description.create(this.description),
+      fg: Title.create(this.title),
+      x: "50%",
+      y: 0,
+    });
   }
 
   run() {
     console.clear();
-
-    console.log(Style.render(this.block()));
-
+    console.log(this.block().render());
     this.render();
   }
 }

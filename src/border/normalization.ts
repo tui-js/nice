@@ -4,15 +4,11 @@ import type { EitherType, StringStyler } from "../types.ts";
 export type BorderX<T> = EitherType<[{ left: T; right: T }, { x: T }, { all: T }]>;
 export type BorderY<T> = EitherType<[{ top: T; bottom: T }, { y: T }, { all: T }]>;
 
-export type BorderTypeDefinition = EitherType<[
-  { type: BorderCharsetType },
-  { type: "custom"; charset: BorderCharset },
-]>;
+export type BorderTypeDefinition = EitherType<
+  [{ type: BorderCharsetType }, { type: "custom"; charset: BorderCharset }]
+>;
 
-export type UniqueStyleBorder =
-  & BorderX<StringStyler>
-  & BorderY<StringStyler>
-  & BorderTypeDefinition;
+export type UniqueStyleBorder = BorderX<StringStyler> & BorderY<StringStyler> & BorderTypeDefinition;
 
 export type SharedStyleBorder = BorderX<boolean> & BorderY<boolean> & BorderTypeDefinition & {
   style: StringStyler;
@@ -52,9 +48,7 @@ export function normalizeBorder(
   const $left = all || left || x || null;
   const $right = all || right || x || null;
 
-  const charset = (border.type === "custom" || border.charset)
-    ? border.charset!
-    : BorderCharsets[border.type!];
+  const charset = (border.type === "custom" || border.charset) ? border.charset! : BorderCharsets[border.type!];
 
   if ("style" in border) {
     const { style } = border as SharedStyleBorder;

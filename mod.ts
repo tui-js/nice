@@ -1,5 +1,4 @@
-// Copyright 2024 Im-Beast. All rights reserved. MIT license.
-export * from "./src/style.ts";
+export * from "./src/style_block.ts";
 export * from "./src/block.ts";
 
 export * from "./src/layout/mod.ts";

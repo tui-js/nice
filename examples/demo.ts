@@ -1,179 +1,144 @@
 // Copyright 2024 Im-Beast. All rights reserved. MIT license.
 import crayon from "@crayon/crayon";
-import { Style } from "../mod.ts";
-import { horizontal, overlay, vertical } from "../src/layout/mod.ts";
+import { Style, StyleBlock } from "../src/style_block.ts";
+import { VerticalBlock } from "../src/layout/vertical_block.ts";
+import { HorizontalBlock } from "../src/layout/horizontal_block.ts";
+import { createdBlocks } from "../src/block.ts";
+import { calc } from "../src/unit.ts";
 
-console.clear();
+let h = 1;
+const color = () => crayon.bgHsl(((++h) * 40) % 360, 60, 40);
 
-const a = new Style({
-  style: crayon.bgLightBlue.lightWhite.bold,
-  text: {
-    horizontalAlign: "justify",
-    verticalAlign: "middle",
-    overflow: "ellipsis",
-  },
-  border: {
-    type: "thick",
-    style: crayon.white.bold,
-    x: true,
-    y: true,
-  },
-  padding: {
-    bottom: 1,
-    top: 1,
-    right: 2,
-    left: 2,
-  },
-  margin: {
-    top: 0,
-    bottom: 0,
-    left: 0,
-    right: 0,
-  },
-});
-
-const b = a.derive({
-  style: crayon.bgRed,
-  width: 25,
-  height: 13,
+const style = new Style({
+  string: crayon.bgMagenta,
   text: {
     horizontalAlign: "center",
   },
+  padding: { all: 1 },
+  margin: { all: 1 },
+  border: {
+    all: true,
+    style: crayon.black.bgYellow,
+    type: "rounded",
+  },
 });
-
-const c = a.derive({
-  style: crayon.bgGreen,
-});
-
-const d = c.derive({
-  width: 5,
-  height: 2,
-  style: crayon.bgMagenta,
-});
-
-const e = d.derive({
-  style: crayon.bgYellow,
-  width: 10,
-  height: 5,
+const style2 = style.derive({
+  width: 14,
+  height: 8,
   text: {
     horizontalAlign: "justify",
     overflow: "ellipsis",
   },
 });
 
-const f = e.derive({
-  style: crayon.bgLightGreen,
-  width: 22,
-  height: 3,
-  text: {
-    horizontalAlign: "right",
-  },
-});
-
-const g = f.derive({
-  text: {
-    overflow: "clip",
-  },
-});
-
-const h = f.derive({
-  text: {
-    overflow: "ellipsis",
-    ellipsisString: "...",
-  },
-});
-
-const popup = a.derive({
-  style: crayon.bgLightYellow.red.bold,
-  margin: { top: 1, bottom: 1, left: 2, right: 2 },
-  width: 17,
-  height: 1,
-  text: { horizontalAlign: "center" },
-});
-
-const popup2 = popup.derive({
-  style: crayon.bgBlue.lightWhite,
-  height: 1,
-  width: 4,
-  margin: { top: 0, bottom: 0, left: 0, right: 0 },
-  padding: { top: 0, bottom: 0, left: 0, right: 0 },
-});
-
-const popup3 = popup2.derive({
-  style: crayon.bgMagenta.lightWhite,
-  width: undefined,
-  height: undefined,
-});
-
-const popup4 = popup3.derive({
-  style: crayon.bgYellow.blue,
-});
-
 export function render() {
-  console.time("render time");
-  const SCREEN_BG = horizontal(
-    0.5,
-    vertical(
-      0.5,
-      a.create(
-        "This gets justified\nAlone\none two three four five six\nlonger words come here\nbig spacing now",
-      ),
-      horizontal(
-        0.5,
-        c.create("Hello"),
-        c.create("there"),
-        d.create("This should get clipped"),
-      ),
-    ),
-    b.create(
-      "Nice 🔥\n（╯°□°）╯︵┻━┻\ndevanagari आआॠऋॲपॉ\nﾊﾊﾊThis text should get wrapped because widthəəə is explicit as日本verylongstringthaəə💩twillwrapnomatterwhat\nwowə\nالعربية",
-    ),
-    vertical(
-      0.5,
-      e.create("very long text that will wrap and will fit"),
-      e.create("日本 long text that will wrap and totally won't fit"),
-    ),
-    vertical(
-      0.5,
-      f.create(`ISBN: 978-0-1234-5678-7\n\nCSS: הרפתקה חדשה!`),
-      g.create(`ISBN: 978-0-1234-5678-7\n\nCSS: הרפתקה חדשה!`),
-      h.create(`ISBN: 978-0-1234-5678-7\n\nCSS: הרפתקה חדשה!`),
-    ),
-  );
+  const start = performance.now();
 
-  const SCREEN_FG = popup.create(`;)`);
-  const SCREEN_FG2 = popup2.create("hi");
-  const SCREEN_FG3 = popup3.create("Im on 13th column\nand fourth row");
-  const SCREEN_FG4 = popup4.create("Im gone\nIm on negative coords\npart of me will get cut off");
+  const root = new HorizontalBlock(
+    {
+      string: crayon.bgBlack,
+      width: "100%",
+      height: "80%",
 
-  const rendered = Style.render(
-    overlay(
-      -4,
-      -2,
-      SCREEN_FG4,
-      overlay(
-        13,
-        4,
-        SCREEN_FG3,
-        overlay(
-          0.2,
-          0.2,
-          SCREEN_FG2,
-          overlay(
-            0.5,
-            0.5,
-            SCREEN_FG,
-            SCREEN_BG,
-          ),
+      gap: 2,
+
+      x: "50%",
+      y: "50%",
+    },
+    new VerticalBlock(
+      { width: calc("50% - 1"), gap: 2, string: crayon.bgLightBlack, x: "50%" },
+      style.create(
+        "Nice 🔥\n（╯°□°）╯︵┻━┻\ndevanagari आआॠऋॲपॉ\nﾊﾊﾊThis text should get wrapped because widthəəə is explicit as日本verylongstringthaəə💩twillwrapnomatterwhat\nwowə\nلعربيةا",
+        { string: color() },
+      ),
+      new HorizontalBlock(
+        { gap: 2, string: color(), y: "50%" },
+        style.create(
+          "This gets justified\nAlone\none two three four five six\nlonger words come here\nbig spacing now",
+          {
+            string: color(),
+            text: { horizontalAlign: "justify" },
+          },
         ),
+        style2.create("ISBN: 978-0-1234-5678-7\n\nCSS: הרפתקה חדשה!", {
+          string: color(),
+        }),
+        style2.create("ISBN: 978-0-1234-5678-7\n\nCSS: הרפתקה חדשה!", {
+          string: color(),
+          text: { overflow: "clip" },
+        }),
+        style2.create("ISBN: 978-0-1234-5678-7\n\nCSS: הרפתקה חדשה!", {
+          string: color(),
+          text: { ellipsisString: "..." },
+        }),
+      ),
+    ),
+    new VerticalBlock(
+      {
+        width: calc("50% - 1"),
+        height: "100%",
+        string: crayon.bgBlack,
+        gap: 1,
+      },
+      new VerticalBlock(
+        { width: "100%", height: "50%", string: color() },
+        style.create("Second column", { string: color() }),
+        style.create("Test 2", { string: color() }),
+      ),
+      new HorizontalBlock(
+        {
+          width: "100%",
+          height: calc("50% - 2"),
+          string: color(),
+          gap: 4,
+          x: "50%",
+          y: "50%",
+        },
+        style.create("Test 3", { string: color(), width: calc("33.3% - 4%") }),
+        style.create("Test 4", { string: color(), width: calc("33.3% - 4%") }),
+        style.create("Test 5", {
+          string: color(),
+          width: calc("33.3% - 4%"),
+          height: "100%",
+        }),
       ),
     ),
   );
 
-  console.timeEnd("render time");
+  const rendered = root.render();
+  console.log("render time:", performance.now() - start);
   return rendered;
 }
 
-if (import.meta.main) {
+x: if (import.meta.main) {
+  console.clear();
   console.log(render());
+
+  if (!Deno.args.includes("bb")) break x;
+
+  const textEncoder = new TextEncoder();
+  const draw = (y: number, x: number, s: string): void => {
+    Deno.stdout.writeSync(textEncoder.encode(
+      `\x1b[${y + 2};${x + 1}H${s}`,
+    ));
+  };
+
+  for (const block of createdBlocks) {
+    const { top, left, width, height } = block.boundingRectangle();
+
+    const style = block instanceof StyleBlock && block.style.string
+      ? block.style.string
+      : (block instanceof VerticalBlock || block instanceof HorizontalBlock) &&
+          block.string
+      ? block.string
+      : undefined;
+    if (!style) continue;
+
+    draw(top, left, style("Q"));
+    draw(top, left + width - 1, style("W"));
+    draw(top + height - 1, left, style("A"));
+    draw(top + height - 1, left + width - 1, style("D"));
+  }
+
+  draw(createdBlocks.at(-2)!.computedHeight, 0, "");
 }

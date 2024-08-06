@@ -5,9 +5,10 @@ import type { NormalizedTextDefinition } from "./normalization.ts";
 export function resizeHorizontally(
   lines: string[],
   desiredWidth: number,
+  height: number,
   textDefinition: NormalizedTextDefinition,
 ): void {
-  for (let i = 0; i < lines.length; i++) {
+  for (let i = 0; i < height; i++) {
     lines[i] = resizeLineHorizontally(lines[i], desiredWidth, textDefinition);
   }
 }

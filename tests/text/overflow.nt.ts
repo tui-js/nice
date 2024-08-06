@@ -1,8 +1,11 @@
 import crayon from "@crayon/crayon";
 
 import { TestCase } from "../nice-test-runner.ts";
-import { horizontal, Style, type StyleOptions, vertical } from "../../mod.ts";
-import type { NiceBlock } from "../../src/metadata.ts";
+
+import { Style, type StyleOptions } from "#src/style_block.ts";
+import type { Block } from "#src/block.ts";
+import { VerticalBlock } from "#src/layout/vertical_block.ts";
+import { HorizontalBlock } from "#src/layout/horizontal_block.ts";
 
 const VERY_LONG_TEXT = `Ladies and gentlemen,
 Today, we gather to celebrate the freedom and collaboration that the GNU Project and the Linux kernel have brought to the world of software. Together, they form what we like to call GNU/Linux. It's a powerful, free operating system that respects users' freedom and community spirit.
@@ -25,19 +28,23 @@ const STYLES: [string, StyleOptions["text"]][] = [
   [`clip\n${nowrapLabel}`, { overflow: "clip", wrap: "nowrap" }],
 
   [`ellipsis\n${wrapLabel}`, { overflow: "ellipsis", wrap: "wrap" }],
-  [`custom ellipsis\n${wrapLabel}`, { overflow: "ellipsis", wrap: "wrap", ellipsisString: "..." }],
+  [`custom ellipsis\n${wrapLabel}`, {
+    overflow: "ellipsis",
+    wrap: "wrap",
+    ellipsisString: "...",
+  }],
   [`clip\n${wrapLabel}`, { overflow: "clip", wrap: "wrap" }],
 ];
 
 const titleStyle = new Style({
-  style: crayon.bold,
+  string: crayon.bold,
   text: {
     horizontalAlign: "center",
   },
 });
 
 const style = new Style({
-  style: crayon.bgYellow,
+  string: crayon.bgYellow,
 
   width: 13,
   height: 12,
@@ -46,24 +53,24 @@ const style = new Style({
 });
 
 function render() {
-  const blocks: NiceBlock[] = [];
+  const blocks: Block[] = [];
   for (const [title, textStyle] of STYLES) {
     const elementStyle = style.derive({
       text: textStyle,
     });
 
-    blocks.push(vertical(
-      0.5,
-      titleStyle.create(title),
-      elementStyle.create(VERY_LONG_TEXT),
-    ));
+    blocks.push(
+      new VerticalBlock(
+        { x: "50%" },
+        titleStyle.create(title),
+        elementStyle.create(VERY_LONG_TEXT),
+      ),
+    );
   }
 
-  const SCREEN_FG = Style.render(
-    horizontal(0.5, ...blocks),
-  );
+  const SCREEN_FG = new HorizontalBlock({ y: "50%" }, ...blocks);
 
-  console.log(SCREEN_FG);
+  console.log(SCREEN_FG.render());
 }
 
 export const testCase = new TestCase(

@@ -1,8 +1,12 @@
 import crayon from "@crayon/crayon";
 import { TestCase } from "../nice-test-runner.ts";
 
-import { BorderCharsets, horizontal, overlay, Style, vertical } from "../../mod.ts";
-import { getBoundingRect, type NiceBlock } from "../../src/metadata.ts";
+import { VerticalBlock } from "#src/layout/vertical_block.ts";
+import { HorizontalBlock } from "#src/layout/horizontal_block.ts";
+import type { Block } from "#src/block.ts";
+import { Style } from "#src/style_block.ts";
+import { BorderCharsets } from "#src/border/charsets.ts";
+import { OverlayBlock } from "#src/layout/overlay_block.ts";
 
 const noCornerCharset = BorderCharsets.rounded;
 noCornerCharset.topLeft = " ";
@@ -11,6 +15,7 @@ noCornerCharset.bottomLeft = " ";
 noCornerCharset.bottomRight = " ";
 
 const style = new Style({
+  string: crayon.white,
   border: {
     all: true,
     type: "custom",
@@ -20,7 +25,7 @@ const style = new Style({
 
 const HUE_STEP = 20;
 let i = 0;
-const blocks: NiceBlock[] = [];
+const blocks: Block[] = [];
 function block(padded = false) {
   const block = style.derive({
     padding: padded ? { all: 1 } : undefined,
@@ -31,58 +36,61 @@ function block(padded = false) {
 }
 
 function render() {
-  const SCREEN_FG = vertical(
-    0.7,
-    vertical(
-      0.5,
+  const SCREEN_FG = new VerticalBlock(
+    { x: "70%" },
+    new VerticalBlock(
+      { x: "50%" },
       block(),
-      horizontal(
-        0.5,
+      new HorizontalBlock(
+        { y: "50%" },
         block(),
         block(),
       ),
     ),
-    horizontal(
-      0,
+    new HorizontalBlock(
+      { y: "50%" },
       block(),
       block(),
       block(),
-      block(),
+      block(true),
       block(),
       block(),
     ),
-    overlay(
-      0.5,
-      0.4,
+    new VerticalBlock(
+      { y: "50%", x: "50%" },
       block(),
-      horizontal(
-        0,
+      new HorizontalBlock(
+        { y: "20%" },
         block(),
         block(),
-        vertical(
-          0.5,
+        new VerticalBlock(
+          { x: "80%" },
           block(),
           block(),
-          overlay(
-            0.5,
-            0.5,
-            block(),
-            horizontal(
-              0,
-              block(true),
-              block(true),
-            ),
+          new OverlayBlock(
+            {
+              x: "50%",
+              y: "50%",
+              fg: block(),
+              bg: new HorizontalBlock(
+                { width: 30, x: 2 },
+                block(true),
+                block(true),
+              ),
+            },
           ),
         ),
       ),
     ),
   );
 
-  console.log(Style.render(SCREEN_FG));
+  console.log(SCREEN_FG.render());
 
   const textEncoder = new TextEncoder();
   // We have to draw corners below the test introduction
-  const OFFSET_Y = testCase.block().length;
+  const tcblock = testCase.block();
+  tcblock.draw();
+  const OFFSET_Y = tcblock.computedHeight;
   function draw(y: number, x: number, s: string): void {
     Deno.stdout.writeSync(textEncoder.encode(
       `\x1b[${y + OFFSET_Y + 1};${x + 1}H${s}`,
@@ -93,7 +101,7 @@ function render() {
   for (const [i, block] of blocks.entries()) {
     const style = crayon.hsl(i * HUE_STEP, 50, 50);
 
-    const { top, left, width, height } = getBoundingRect(block);
+    const { top, left, width, height } = block.boundingRectangle();
 
     draw(top, left, style("╭"));
     draw(top, left + width - 1, style("╮"));
@@ -104,7 +112,7 @@ function render() {
   }
 
   // move cursor so it doesn't interfere with just drawn things
-  draw(SCREEN_FG.length, 0, "");
+  draw(SCREEN_FG.computedHeight, 0, "");
 }
 
 export const testCase = new TestCase(
