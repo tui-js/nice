@@ -1,4 +1,4 @@
-import { cropEnd } from "@tui/strings";
+import { cropEnd, cropStart } from "@tui/strings";
 import { Block, type BlockOptions } from "../block.ts";
 import { type NoAutoUnit, normalizeUnit, type Unit } from "../unit.ts";
 import { flexibleCompute } from "./shared.ts";
@@ -54,6 +54,8 @@ export class VerticalBlock extends Block {
     this.usedHeight = Math.min(this.computedHeight, this.usedHeight);
     this.computedY = normalizeUnit(this.y, this.computedHeight - this.usedHeight);
 
+    this.computedTop += this.computedY;
+
     this.lines.length = 0;
   }
 
@@ -85,17 +87,24 @@ export class VerticalBlock extends Block {
       const widthDiff = this.computedWidth - child.computedWidth;
       const computedX = normalizeUnit(this.x, widthDiff);
 
-      // FIXME: what if offsetX > width or something?
-      const lacksLeft = computedX;
-      const lacksRight = widthDiff - lacksLeft;
+      if (computedX < 0) {
+        const padRight = " ".repeat(widthDiff - computedX);
+        const croppedLineWidth = child.computedWidth + computedX;
 
-      const padLeft = " ".repeat(lacksLeft);
-      const padRight = " ".repeat(lacksRight);
+        for (let i = 0; i < childLinesInBounds; ++i) {
+          const line = cropStart(child.lines[i], croppedLineWidth);
+          const paddedLine = line + padRight;
+          this.lines.push(this.string ? this.string(paddedLine) : paddedLine);
+        }
+      } else {
+        const padLeft = " ".repeat(computedX);
+        const padRight = " ".repeat(widthDiff - computedX);
 
-      for (let i = 0; i < childLinesInBounds; ++i) {
-        const line = child.lines[i];
-        const paddedLine = padLeft + line + padRight;
-        this.lines.push(this.string ? this.string(paddedLine) : paddedLine);
+        for (let i = 0; i < childLinesInBounds; ++i) {
+          const line = child.lines[i];
+          const paddedLine = padLeft + line + padRight;
+          this.lines.push(this.string ? this.string(paddedLine) : paddedLine);
+        }
       }
 
       child.computedLeft += computedX;
@@ -114,21 +123,25 @@ export class VerticalBlock extends Block {
   }
 
   finishLayout(): void {
+    if (!this.computedY) return;
+
     const heightDiff = this.computedHeight - this.lines.length;
 
-    const lacksTop = this.computedY;
-    const lacksBottom = heightDiff - lacksTop;
-
-    if (lacksTop <= 0 && lacksBottom <= 0) return;
+    if (this.computedY < 0) {
+      for (let i = 0; i < -this.computedY; ++i) {
+        this.lines.shift();
+      }
+      return;
+    }
 
     const emptyLine = " ".repeat(this.computedWidth);
     const styledLine = this.string ? this.string(emptyLine) : emptyLine;
 
-    for (let i = 0; i < lacksTop; ++i) {
+    for (let i = 0; i < this.computedY; ++i) {
       this.lines.unshift(styledLine);
     }
 
-    for (let i = 0; i < lacksBottom; ++i) {
+    for (let i = 0; i < heightDiff - this.computedY; ++i) {
       this.lines.push(styledLine);
     }
   }

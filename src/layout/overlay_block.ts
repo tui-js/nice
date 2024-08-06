@@ -1,6 +1,6 @@
 import { Block } from "../block.ts";
 import { type NoAutoUnit, normalizeUnit } from "#src/unit.ts";
-import { insert } from "@tui/strings";
+import { cropStart, insert } from "@tui/strings";
 
 export interface OverlayBlockOptions {
   bg: Block;
@@ -41,22 +41,22 @@ export class OverlayBlock extends Block {
     this.computedHeight = bg.computedHeight;
 
     this.computedX = normalizeUnit(this.x, bg.computedWidth - fg.computedWidth);
-    this.computedY = normalizeUnit(
-      this.y,
-      bg.computedHeight - fg.computedHeight,
-    );
+    this.computedY = normalizeUnit(this.y, bg.computedHeight - fg.computedHeight);
 
     fg.computedTop += this.computedY;
     fg.computedLeft += this.computedX;
+
+    this.lines.length = 0;
   }
 
   layout(): void {}
 
   finishLayout(): void {
     const [bg, fg] = this.children;
+    const { computedX, computedY } = this;
 
     for (let bgLinePos = 0; bgLinePos < bg.computedHeight; ++bgLinePos) {
-      const fgLinePos = bgLinePos - this.computedY;
+      const fgLinePos = bgLinePos - computedY;
       const bgLine = bg.lines[bgLinePos];
 
       if (fgLinePos < 0 || fgLinePos >= fg.computedHeight) {
@@ -65,10 +65,20 @@ export class OverlayBlock extends Block {
       }
 
       const fgLine = fg.lines[fgLinePos];
-      if (fg.computedWidth === bg.computedWidth) {
-        this.lines.push(fgLine);
+      if (computedX < 0) {
+        this.lines.push(
+          cropStart(fgLine, fg.computedWidth + computedX) +
+            cropStart(bgLine, bg.computedWidth - fg.computedWidth - computedX),
+        );
       } else {
-        this.lines.push(insert(bgLine, fgLine, this.computedX, true));
+        if (fg.computedWidth === bg.computedWidth) {
+          this.lines.push(fgLine);
+        } else {
+          // TODO: Just inlining insert and using computedWidths instead of recalculating them
+          //       is an easy way to improve perf, but maybe @tui/strings should add a way to
+          //       set widths if they are known instead
+          this.lines.push(insert(bgLine, fgLine, computedX, true));
+        }
       }
     }
   }

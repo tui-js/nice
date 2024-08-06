@@ -2,7 +2,7 @@ import { Block, type BlockOptions } from "../block.ts";
 import { type NoAutoUnit, normalizeUnit, type Unit } from "../unit.ts";
 import { flexibleCompute } from "./shared.ts";
 import type { StringStyler } from "../types.ts";
-import { cropEnd } from "@tui/strings";
+import { cropEnd, cropStart } from "@tui/strings";
 
 export interface HorizontalBlockOptions {
   string?: StringStyler;
@@ -104,13 +104,21 @@ export class HorizontalBlock extends Block {
   }
 
   finishLayout(): void {
-    const lacksLeft = this.computedX;
-    const lacksRight = this.computedWidth - this.#occupiedWidth - lacksLeft;
+    if (this.computedX < 0) {
+      const padRight = " ".repeat(this.computedWidth - this.#occupiedWidth - this.computedX);
+      const croppedLineWidth = this.computedWidth + this.computedX;
 
-    if (lacksLeft <= 0 && lacksRight <= 0 && !this.string) return;
+      for (let i = 0; i < this.lines.length; ++i) {
+        const paddedLine = cropStart(this.lines[i], croppedLineWidth) + padRight;
+        this.lines[i] = this.string ? this.string(paddedLine) : paddedLine;
+      }
+      return;
+    }
 
-    const padLeft = " ".repeat(lacksLeft);
-    const padRight = " ".repeat(lacksRight);
+    if (!this.computedX && !this.string) return;
+
+    const padLeft = " ".repeat(this.computedX);
+    const padRight = " ".repeat(this.computedWidth - this.#occupiedWidth - this.computedX);
 
     for (let i = 0; i < this.lines.length; ++i) {
       const paddedLine = padLeft + this.lines[i] + padRight;
