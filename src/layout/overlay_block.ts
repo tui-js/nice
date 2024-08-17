@@ -1,5 +1,5 @@
 import { Block } from "../block.ts";
-import { type NoAutoUnit, normalizeUnit } from "#src/unit.ts";
+import { type NoAutoUnit, normalizeUnit } from "../unit.ts";
 import { cropStart, insert } from "@tui/strings";
 
 export interface OverlayBlockOptions {
