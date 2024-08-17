@@ -1,5 +1,7 @@
-export * from "./src/style_block.ts";
 export * from "./src/block.ts";
+export * from "./src/unit.ts";
+
+export * from "./src/style_block.ts";
 
 export * from "./src/layout/mod.ts";
 

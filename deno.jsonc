@@ -4,6 +4,7 @@
   "exports": {
     ".": "./mod.ts",
     "./block": "./src/block.ts",
+    "./unit": "./src/unit.ts",
 
     "./style_block": "./src/style_block.ts",
     "./margin": "./src/margin/mod.ts",
