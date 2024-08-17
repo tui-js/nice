@@ -1,12 +1,12 @@
 import crayon from "@crayon/crayon";
 import { TestCase } from "../nice-test-runner.ts";
 
-import { VerticalBlock } from "#src/layout/vertical_block.ts";
-import { HorizontalBlock } from "#src/layout/horizontal_block.ts";
-import type { Block } from "#src/block.ts";
-import { Style } from "#src/style_block.ts";
-import { BorderCharsets } from "#src/border/charsets.ts";
-import { OverlayBlock } from "#src/layout/overlay_block.ts";
+import { VerticalBlock } from "../../src/layout/vertical_block.ts";
+import { HorizontalBlock } from "../../src/layout/horizontal_block.ts";
+import type { Block } from "../../src/block.ts";
+import { Style } from "../../src/style_block.ts";
+import { BorderCharsets } from "../../src/border/charsets.ts";
+import { OverlayBlock } from "../../src/layout/overlay_block.ts";
 
 const noCornerCharset = BorderCharsets.rounded;
 noCornerCharset.topLeft = " ";

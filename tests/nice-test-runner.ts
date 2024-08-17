@@ -1,9 +1,9 @@
 import crayon from "@crayon/crayon";
 import "@crayon/literal";
 
-import { Style } from "#src/style_block.ts";
-import type { Block } from "#src/block.ts";
-import { OverlayBlock } from "#src/layout/overlay_block.ts";
+import { Style } from "../src/style_block.ts";
+import type { Block } from "../src/block.ts";
+import { OverlayBlock } from "../src/layout/overlay_block.ts";
 
 const Title = new Style({
   string: crayon.bold,

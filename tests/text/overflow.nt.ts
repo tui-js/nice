@@ -2,10 +2,10 @@ import crayon from "@crayon/crayon";
 
 import { TestCase } from "../nice-test-runner.ts";
 
-import { Style, type StyleOptions } from "#src/style_block.ts";
-import type { Block } from "#src/block.ts";
-import { VerticalBlock } from "#src/layout/vertical_block.ts";
-import { HorizontalBlock } from "#src/layout/horizontal_block.ts";
+import { Style, type StyleOptions } from "../../src/style_block.ts";
+import type { Block } from "../../src/block.ts";
+import { VerticalBlock } from "../../src/layout/vertical_block.ts";
+import { HorizontalBlock } from "../../src/layout/horizontal_block.ts";
 
 const VERY_LONG_TEXT = `Ladies and gentlemen,
 Today, we gather to celebrate the freedom and collaboration that the GNU Project and the Linux kernel have brought to the world of software. Together, they form what we like to call GNU/Linux. It's a powerful, free operating system that respects users' freedom and community spirit.

@@ -1,6 +1,6 @@
 import crayon from "@crayon/crayon";
 import { TestCase } from "../nice-test-runner.ts";
-import { Style } from "#src/style_block.ts";
+import { Style } from "../../src/style_block.ts";
 
 const style = new Style({
   string: crayon.bgBlue,
