@@ -60,7 +60,7 @@ export class VerticalBlock extends Block {
   }
 
   layout(child: Block): void {
-    let freeSpace = this.computedHeight - this.lines.length;
+    let freeSpace = this.computedHeight - this.computedY - this.lines.length;
     if (freeSpace <= 0) return;
 
     if (freeSpace < this.computedHeight && this.computedGap > 0) {
