@@ -55,9 +55,11 @@ export class OverlayBlock extends Block {
     const [bg, fg] = this.children;
     const { computedX, computedY } = this;
 
+    const emptyLine = " ".repeat(bg.computedWidth);
+
     for (let bgLinePos = 0; bgLinePos < bg.computedHeight; ++bgLinePos) {
       const fgLinePos = bgLinePos - computedY;
-      const bgLine = bg.lines[bgLinePos];
+      const bgLine = bg.lines[bgLinePos] ?? emptyLine;
 
       if (fgLinePos < 0 || fgLinePos >= fg.computedHeight) {
         this.lines.push(bgLine);
@@ -65,6 +67,7 @@ export class OverlayBlock extends Block {
       }
 
       const fgLine = fg.lines[fgLinePos];
+
       if (computedX < 0) {
         this.lines.push(
           cropStart(fgLine, fg.computedWidth + computedX) +
