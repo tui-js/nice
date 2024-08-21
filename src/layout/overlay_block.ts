@@ -9,6 +9,7 @@ export interface OverlayBlockOptions {
   y: NoAutoUnit;
 }
 
+// FIXME: Sometimes fg clears style after it
 export class OverlayBlock extends Block {
   name = "Overlay";
 

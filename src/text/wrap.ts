@@ -1,5 +1,6 @@
 import { textWidth } from "@tui/strings/text_width";
 
+// TODO: Prettier text wrap based on Knuth–Plass algorithm
 export type TextWrapType = "wrap" | "nowrap";
 
 // Lets say it should wrap here (desiredWidth: 12)
@@ -17,37 +18,36 @@ export type TextWrapType = "wrap" | "nowrap";
 // Keep in mind that words longer than desiredWidth        |
 // will not be modified, and instead kept in their own line.
 export function wrapLinesNormal(lines: string[], desiredWidth: number): void {
-  for (let i = 0; i < lines.length; i++) {
-    let offset = 0;
-    let currentWidth = 0;
+  let spaceLeft = desiredWidth;
 
-    const words = lines[i].split(" ");
-    const currentSplit: string[] = [];
+  let j = 0;
+  for (const line of lines.splice(0)) {
+    const words = line.split(" ");
 
-    for (const word of words) {
-      let wordWidth = textWidth(word);
-      currentWidth += wordWidth;
-
-      if (offset > 0 && currentSplit[offset]) {
-        wordWidth += 1;
-        currentWidth += 1;
-      }
-
-      if (wordWidth >= desiredWidth || currentWidth >= desiredWidth) {
-        currentSplit.push(word);
-        offset += 1;
-        currentWidth = 0;
-        continue;
-      }
-
-      if (currentSplit[offset]) {
-        currentSplit[offset] += " " + word;
-      } else {
-        currentSplit[offset] = word;
-      }
+    if (words[0] === "") {
+      lines[++j] = "";
+      lines[++j] = "";
+      spaceLeft = desiredWidth;
+      continue;
     }
 
-    lines.splice(i, 1, ...currentSplit);
+    for (const word of words) {
+      const wordWidth = textWidth(word);
+      const currentLine = lines[j];
+
+      if (wordWidth + (currentLine ? 1 : 0) > spaceLeft) {
+        lines[++j] = word;
+        spaceLeft = desiredWidth - wordWidth;
+      } else {
+        if (currentLine) {
+          lines[j] += " " + word;
+          spaceLeft -= wordWidth + 1;
+        } else {
+          lines[j] = word;
+          spaceLeft -= wordWidth;
+        }
+      }
+    }
   }
 }
 
