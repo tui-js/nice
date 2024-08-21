@@ -4,13 +4,7 @@ import { Style } from "../../src/style_block.ts";
 import { HorizontalBlock } from "../../src/layout/horizontal_block.ts";
 import { VerticalBlock } from "../../src/layout/vertical_block.ts";
 
-const TEXT = `\
-Sneaky
-
-Tippity tick tapity typing test theoritically taking time to test the tight text
-
-snack
-smack`;
+const TEXT = `one two three four five six seven eight nine ten eleven twelve thirteen fourteen fifteen sixteen`;
 
 const wrapLabel = crayon.bold.green("wrap");
 const nowrapLabel = crayon.bold.magenta("nowrap");
@@ -23,7 +17,7 @@ const titleStyle = new Style({
 const wrapStyle = new Style({
   string: crayon.bgRed.bold.white,
 
-  width: 18,
+  width: 21,
   height: 12,
 
   padding: { all: 1 },
@@ -54,12 +48,10 @@ export const testCase = new TestCase(
   "Text wrapping",
   crayon`\
 {bold This test showcases the different text wrapping modes.}
-Words starting with an "S" should be alone on their line.
-There should be 1 line of space between words starting with an "S" and words starting with "T".
 
-${wrapLabel} should contain 3 words starting with an "S" and 13 words starting with "T".
+${wrapLabel} should not cut any words out.
 
-${nowrapLabel} should contain 3 words starting with an "S" and 2 words starting with "T".`,
+${nowrapLabel} should contain 4 whole words and 1 cut one.`,
   render,
 );
 

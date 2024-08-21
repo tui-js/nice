@@ -7,13 +7,13 @@ import { OverlayBlock } from "../src/layout/overlay_block.ts";
 
 const Title = new Style({
   string: crayon.bold,
-  border: { type: "thick", x: true, style: crayon.white },
+  border: { type: "thick", x: crayon.white },
   padding: { all: 0 },
 });
 
 const Description = new Style({
   string: crayon.white,
-  border: { type: "thick", x: true, y: true, style: crayon.white },
+  border: { type: "thick", all: crayon.white },
   padding: { all: 1 },
 });
 
