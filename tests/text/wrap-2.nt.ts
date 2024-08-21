@@ -21,7 +21,7 @@ const wrapStyle = new Style({
   height: 12,
 
   padding: { all: 1 },
-  border: { type: "rounded", all: true, style: crayon.white },
+  border: { type: "rounded", all: crayon.white },
 
   text: {
     wrap: "wrap",

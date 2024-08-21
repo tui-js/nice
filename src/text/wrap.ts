@@ -24,10 +24,9 @@ export function wrapLinesNormal(lines: string[], desiredWidth: number): void {
   for (const line of lines.splice(0)) {
     const words = line.split(" ");
 
+    lines[j] ??= "";
     if (words[0] === "") {
       lines[++j] = "";
-      lines[++j] = "";
-      spaceLeft = desiredWidth;
       continue;
     }
 
@@ -48,6 +47,9 @@ export function wrapLinesNormal(lines: string[], desiredWidth: number): void {
         }
       }
     }
+
+    j++;
+    spaceLeft = desiredWidth;
   }
 }
 
