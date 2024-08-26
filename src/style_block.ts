@@ -1,4 +1,5 @@
 import { textWidth } from "@tui/strings/text_width";
+import { type BaseSignal, computed } from "../../../@tui/signals/mod.ts";
 
 import { Block, type BoundingRectangle } from "./block.ts";
 import { normalizeUnit, type Unit } from "./unit.ts";
@@ -56,7 +57,7 @@ export class Style {
     this.height = height ?? "auto";
   }
 
-  create(content: string, options?: Partial<StyleOptions>): StyleBlock {
+  create(content: string | BaseSignal<string>, options?: Partial<StyleOptions>): StyleBlock {
     return new StyleBlock(options ? this.derive(options) : this, content);
   }
 
@@ -94,15 +95,31 @@ export class StyleBlock extends Block {
 
   autoParentDependant = false;
   style: Style;
-  content: string;
 
-  constructor(style: Style, content: string) {
+  #rawLines!: string[];
+  contentLines!: string[];
+
+  constructor(style: Style, content: string | BaseSignal<string>) {
     super(style);
 
-    const lines = content.split("\n");
     this.style = style;
-    this.lines = lines;
-    this.content = content;
+    if (typeof content === "string") {
+      this.#rawLines = content.split("\n");
+      this.contentLines = Array.from(this.#rawLines);
+    } else {
+      computed(() => {
+        this.changed = true;
+        this.#rawLines = content.get().split("\n");
+        this.contentLines = Array.from(this.#rawLines);
+      });
+    }
+  }
+
+  setStyle(style: Style) {
+    if (this.style === style) return;
+    this.style = style;
+    this.changed = true;
+    this.contentLines = Array.from(this.#rawLines);
   }
 
   boundingRectangle(includeMargins = false): BoundingRectangle {
@@ -120,6 +137,9 @@ export class StyleBlock extends Block {
   }
 
   compute(parent?: Block): void {
+    super.compute(this.parent!);
+    if (!this.hasChanged()) return;
+
     if (this.width === "auto") {
       const { padding, margin, border } = this.style;
 
@@ -127,7 +147,7 @@ export class StyleBlock extends Block {
       const marginWidth = margin.left + margin.right;
       const borderWidth = (border.left ? 1 : 0) + (border.right ? 1 : 0);
 
-      this.contentWidth = this.lines.reduce((maxWidth, line) => Math.max(maxWidth, textWidth(line)), 0);
+      this.contentWidth = this.contentLines.reduce((maxWidth, line) => Math.max(maxWidth, textWidth(line)), 0);
       this.computedWidth = this.contentWidth + paddingWidth + marginWidth + borderWidth;
     } else {
       const { padding, border, margin } = this.style;
@@ -151,7 +171,7 @@ export class StyleBlock extends Block {
       const marginHeight = margin.top + margin.bottom;
       const borderHeight = (border.top ? 1 : 0) + (border.bottom ? 1 : 0);
 
-      this.contentHeight = this.lines.length;
+      this.contentHeight = this.contentLines.length;
       this.computedHeight = this.contentHeight + paddingHeight + marginHeight +
         borderHeight;
     } else {
@@ -181,9 +201,11 @@ export class StyleBlock extends Block {
   }
 
   draw(): void {
-    if (!this.parent) this.compute();
+    super.draw();
+    if (!this.hasChanged()) return;
+    this.changed = false;
 
-    const { lines } = this;
+    const { contentLines } = this;
     const { text, margin, padding, border } = this.style;
 
     let width = this.contentWidth!;
@@ -201,26 +223,28 @@ export class StyleBlock extends Block {
       );
     }
 
-    wrapLines(lines, width, text.wrap);
+    wrapLines(contentLines, width, text.wrap);
 
-    resizeVertically(lines, height, text);
-    alignVertically(lines, height, text.verticalAlign);
+    resizeVertically(contentLines, height, text);
+    alignVertically(contentLines, height, text.verticalAlign);
 
-    resizeHorizontally(lines, width, height, text);
-    alignHorizontally(lines, width, height, text.horizontalAlign);
+    resizeHorizontally(contentLines, width, height, text);
+    alignHorizontally(contentLines, width, height, text.horizontalAlign);
 
-    applyMargin(lines, width, padding);
+    applyMargin(contentLines, width, padding);
     width += padding.left + padding.right;
     height += padding.top + padding.bottom;
 
-    applyStyle(lines, this.style.string);
+    applyStyle(contentLines, this.style.string);
 
-    applyBorder(lines, width, border);
+    applyBorder(contentLines, width, border);
     width += (border.left ? 1 : 0) + (border.right ? 1 : 0);
     height += (border.top ? 1 : 0) + (border.bottom ? 1 : 0);
 
-    applyMargin(lines, width, margin);
+    applyMargin(contentLines, width, margin);
     width += margin.left + margin.right;
     height += margin.top + margin.bottom;
+
+    this.lines = Array.from(contentLines);
   }
 }

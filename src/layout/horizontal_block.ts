@@ -44,13 +44,15 @@ export class HorizontalBlock extends Block {
   }
 
   compute(parent: Block): void {
+    super.compute(parent);
+    if (!this.hasChanged()) return;
+
     this.computedGap = normalizeUnit(this.gap, this.computedHeight);
     if (this.computedGap < 0) throw new Error("Gap cannot be negative");
 
+    this.usedWidth = 0;
     flexibleCompute(this, parent, (i, child) => {
       if (i !== 0) this.usedWidth += this.computedGap;
-
-      child.computedLeft += this.usedWidth;
 
       this.usedWidth += child.computedWidth;
       this.usedHeight = Math.max(this.usedHeight, child.computedHeight);
@@ -61,13 +63,32 @@ export class HorizontalBlock extends Block {
     this.#occupiedWidth = 0;
   }
 
+  startLayout(): void {
+    if (this.hasChanged()) {
+      this.compute(this.parent!);
+      this.lines.length = 0;
+    }
+  }
+
   layout(child: Block): void {
+    if (!this.hasChanged()) return;
+
+    const childChanged = child.hasChanged();
+    if (childChanged) {
+      child.compute(this);
+      child.draw();
+    }
+
     let freeSpace = this.computedWidth - this.#occupiedWidth;
     if (freeSpace <= 0) return;
 
     const offsetY = normalizeUnit(this.y, this.computedHeight - child.computedHeight);
-    child.computedTop += offsetY;
-    child.computedLeft += this.computedX;
+
+    if (childChanged || !child.computedLeft) {
+      child.computedTop += offsetY;
+      child.computedLeft += this.#occupiedWidth;
+      child.computedLeft += this.computedX;
+    }
 
     let gapString = "";
     if (this.#occupiedWidth !== 0 && this.computedGap > 0) {
@@ -104,6 +125,9 @@ export class HorizontalBlock extends Block {
   }
 
   finishLayout(): void {
+    if (!this.hasChanged()) return;
+    this.changed = false;
+
     if (this.computedX < 0) {
       const padRight = " ".repeat(this.computedWidth - this.#occupiedWidth - this.computedX);
       const croppedLineWidth = this.computedWidth + this.computedX;

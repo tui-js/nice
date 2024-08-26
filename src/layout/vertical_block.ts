@@ -42,9 +42,16 @@ export class VerticalBlock extends Block {
   }
 
   compute(parent: Block): void {
+    super.compute(parent);
+    if (!this.hasChanged()) return;
+
+    this.computedWidth = 0;
+    this.computedHeight = 0;
+
     this.computedGap = normalizeUnit(this.gap, this.computedHeight);
     if (this.computedGap < 0) throw new Error("Gap cannot be negative");
 
+    this.usedHeight = 0;
     flexibleCompute(this, parent, (i, child) => {
       this.usedWidth = Math.max(this.usedWidth, child.computedWidth);
       this.usedHeight += child.computedHeight;
@@ -55,11 +62,23 @@ export class VerticalBlock extends Block {
     this.computedY = normalizeUnit(this.y, this.computedHeight - this.usedHeight);
 
     this.computedTop += this.computedY;
+  }
 
-    this.lines.length = 0;
+  startLayout(): void {
+    if (this.hasChanged()) {
+      this.lines.length = 0;
+    }
   }
 
   layout(child: Block): void {
+    if (!this.hasChanged()) return;
+
+    const childChanged = child.hasChanged();
+    if (childChanged) {
+      child.compute(this);
+      child.draw();
+    }
+
     let freeSpace = this.computedHeight - this.computedY - this.lines.length;
     if (freeSpace <= 0) return;
 
@@ -79,8 +98,10 @@ export class VerticalBlock extends Block {
 
     // TODO: Decide whether child lines should be styled
     //       For now it seems like a good idea, however there might be some odd edge-cases
-
-    child.computedTop += this.lines.length;
+    // TODO: This condition might lead to some issues later on
+    if (childChanged || !child.computedTop) {
+      child.computedTop += this.lines.length;
+    }
     const childLinesInBounds = Math.min(child.lines.length, freeSpace);
 
     if (child.computedWidth < this.computedWidth) {
@@ -107,7 +128,9 @@ export class VerticalBlock extends Block {
         }
       }
 
-      child.computedLeft += computedX;
+      if (childChanged || !child.computedLeft) {
+        child.computedLeft += computedX;
+      }
     } else if (child.computedWidth > this.computedWidth) {
       for (let i = 0; i < childLinesInBounds; ++i) {
         const line = child.lines[i];
@@ -123,6 +146,9 @@ export class VerticalBlock extends Block {
   }
 
   finishLayout(): void {
+    if (!this.hasChanged()) return;
+    this.changed = false;
+
     if (!this.computedY) return;
 
     const heightDiff = this.computedHeight - this.lines.length;

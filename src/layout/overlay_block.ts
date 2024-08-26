@@ -31,28 +31,36 @@ export class OverlayBlock extends Block {
   }
 
   compute(parent: Block): void {
+    super.compute(parent);
+    if (!this.hasChanged()) return;
+
     const [bg, fg] = this.children;
-
-    bg.compute(parent);
-    bg.draw();
-    fg.compute(parent);
-    fg.draw();
-
-    this.computedWidth = bg.computedWidth;
-    this.computedHeight = bg.computedHeight;
 
     this.computedX = normalizeUnit(this.x, bg.computedWidth - fg.computedWidth);
     this.computedY = normalizeUnit(this.y, bg.computedHeight - fg.computedHeight);
+  }
 
-    fg.computedTop += this.computedY;
-    fg.computedLeft += this.computedX;
+  startLayout(): void {
+    const [bg, fg] = this.children;
 
-    this.lines.length = 0;
+    if (this.hasChanged()) {
+      bg.compute(this.parent!);
+      bg.draw();
+      fg.compute(this.parent!);
+      fg.draw();
+      this.computedWidth = bg.computedWidth;
+      this.computedHeight = bg.computedHeight;
+
+      this.lines.length = 0;
+    }
   }
 
   layout(): void {}
 
   finishLayout(): void {
+    if (!this.hasChanged()) return;
+    this.changed = false;
+
     const [bg, fg] = this.children;
     const { computedX, computedY } = this;
 

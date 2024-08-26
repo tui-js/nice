@@ -24,6 +24,7 @@ export class Block {
   width: Unit;
   height: Unit;
 
+  changed = true;
   computedTop = 0;
   computedLeft = 0;
   computedWidth = 0;
@@ -43,6 +44,10 @@ export class Block {
     if (typeof this.width === "number") this.computedWidth = this.width;
     if (typeof this.height === "number") this.computedHeight = this.height;
     createdBlocks.push(this);
+  }
+
+  hasChanged(): boolean {
+    return (this.changed = this.changed || (this.children?.some((block) => block.hasChanged()) ?? false));
   }
 
   boundingRectangle(): BoundingRectangle {
@@ -71,6 +76,10 @@ export class Block {
   }
 
   draw() {
+    if (!this.hasChanged()) {
+      return;
+    }
+
     if (!this.parent) {
       const { rows, columns } = Deno.consoleSize();
       const terminal = new Block({ height: rows, width: columns });
@@ -79,11 +88,16 @@ export class Block {
     }
 
     if (this.children) {
+      this.startLayout();
       for (const child of this.children) {
         this.layout(child);
       }
       this.finishLayout();
     }
+  }
+
+  startLayout(): void {
+    throw new Error("Default block doesn't implement 'Block.startLayout'");
   }
 
   layout(_child: Block): void {
@@ -95,7 +109,12 @@ export class Block {
   }
 
   compute(_parent: Block): void {
-    throw new Error("Default block doesn't implement 'Block.compute'");
+    if (this.hasChanged()) {
+      this.computedTop = 0;
+      this.computedLeft = 0;
+      this.computedWidth = 0;
+      this.computedHeight = 0;
+    }
   }
 
   render(relative = false): string {
