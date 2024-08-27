@@ -3,6 +3,8 @@ import { Block, type BlockOptions } from "../block.ts";
 import { type NoAutoUnit, normalizeUnit, type Unit } from "../unit.ts";
 import { flexibleCompute } from "./shared.ts";
 import type { StringStyler } from "../types.ts";
+import { effect } from "../../../signals/src/computed.ts";
+import { getValue, type MaybeSignal } from "../../../signals/mod.ts";
 
 export interface VerticalBlockOptions {
   string?: StringStyler;
@@ -26,10 +28,18 @@ export class VerticalBlock extends Block {
   computedY = 0;
   computedGap = 0;
 
-  constructor(options: VerticalBlockOptions, ...children: Block[]) {
+  constructor(options: VerticalBlockOptions, ...children: MaybeSignal<Block>[]) {
     options.width ??= "auto";
     options.height ??= "auto";
     super(options as BlockOptions);
+
+    effect(() => {
+      // Associate children signals with this
+      for (const childSignal of children) {
+        getValue(childSignal);
+      }
+      this.changed = true;
+    });
 
     for (const child of children) {
       this.addChild(child);
@@ -52,6 +62,7 @@ export class VerticalBlock extends Block {
     if (this.computedGap < 0) throw new Error("Gap cannot be negative");
 
     this.usedHeight = 0;
+    this.usedWidth = 0;
     flexibleCompute(this, parent, (i, child) => {
       this.usedWidth = Math.max(this.usedWidth, child.computedWidth);
       this.usedHeight += child.computedHeight;
@@ -70,8 +81,10 @@ export class VerticalBlock extends Block {
     }
   }
 
-  layout(child: Block): void {
+  layout(childSignal: MaybeSignal<Block>): void {
     if (!this.hasChanged()) return;
+
+    const child = getValue(childSignal);
 
     const childChanged = child.hasChanged();
     if (childChanged) {

@@ -3,6 +3,8 @@ import { type NoAutoUnit, normalizeUnit, type Unit } from "../unit.ts";
 import { flexibleCompute } from "./shared.ts";
 import type { StringStyler } from "../types.ts";
 import { cropEnd, cropStart } from "@tui/strings";
+import { getValue, type MaybeSignal } from "../../../signals/mod.ts";
+import { effect } from "../../../signals/src/computed.ts";
 
 export interface HorizontalBlockOptions {
   string?: StringStyler;
@@ -16,8 +18,6 @@ export interface HorizontalBlockOptions {
 export class HorizontalBlock extends Block {
   name = "Horizontal";
 
-  declare children: Block[];
-
   string?: StringStyler;
   x: NoAutoUnit;
   y: NoAutoUnit;
@@ -28,10 +28,18 @@ export class HorizontalBlock extends Block {
 
   #occupiedWidth = 0;
 
-  constructor(options: HorizontalBlockOptions, ...children: Block[]) {
+  constructor(options: HorizontalBlockOptions, ...children: MaybeSignal<Block>[]) {
     options.width ??= "auto";
     options.height ??= "auto";
     super(options as BlockOptions);
+
+    effect(() => {
+      // Associate children signals with this
+      for (const childSignal of children) {
+        getValue(childSignal);
+      }
+      this.changed = true;
+    });
 
     for (const child of children) {
       this.addChild(child);
@@ -43,7 +51,7 @@ export class HorizontalBlock extends Block {
     this.string = options.string;
   }
 
-  compute(parent: Block): void {
+  compute(parent: MaybeSignal<Block>): void {
     super.compute(parent);
     if (!this.hasChanged()) return;
 
@@ -51,7 +59,8 @@ export class HorizontalBlock extends Block {
     if (this.computedGap < 0) throw new Error("Gap cannot be negative");
 
     this.usedWidth = 0;
-    flexibleCompute(this, parent, (i, child) => {
+    this.usedHeight = 0;
+    flexibleCompute(this, getValue(parent), (i, child) => {
       if (i !== 0) this.usedWidth += this.computedGap;
 
       this.usedWidth += child.computedWidth;
@@ -70,8 +79,10 @@ export class HorizontalBlock extends Block {
     }
   }
 
-  layout(child: Block): void {
+  layout(childSignal: MaybeSignal<Block>): void {
     if (!this.hasChanged()) return;
+
+    const child = getValue(childSignal);
 
     const childChanged = child.hasChanged();
     if (childChanged) {

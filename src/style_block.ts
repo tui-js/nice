@@ -1,5 +1,5 @@
 import { textWidth } from "@tui/strings/text_width";
-import { type BaseSignal, computed } from "../../../@tui/signals/mod.ts";
+import { type BaseSignal, computed, type MaybeSignal } from "../../../@tui/signals/mod.ts";
 
 import { Block, type BoundingRectangle } from "./block.ts";
 import { normalizeUnit, type Unit } from "./unit.ts";
@@ -20,6 +20,7 @@ import { applyMargin } from "./margin/mod.ts";
 import { type MarginDefinition, type NormalizedMarginDefinition, normalizeMargin } from "./margin/normalization.ts";
 import { type BorderDefinition, normalizeBorder, type NormalizedBorderDefinition } from "./border/normalization.ts";
 import { applyBorder } from "./border/border.ts";
+import { getValue } from "../../signals/src/base.ts";
 
 export interface StyleOptions {
   width?: Unit;
@@ -136,8 +137,10 @@ export class StyleBlock extends Block {
     return rectangle;
   }
 
-  compute(parent?: Block): void {
-    super.compute(this.parent!);
+  compute(parentSignal?: MaybeSignal<Block>): void {
+    const parent = getValue(parentSignal);
+
+    super.compute(parent!);
     if (!this.hasChanged()) return;
 
     if (this.width === "auto") {

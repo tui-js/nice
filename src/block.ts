@@ -1,3 +1,4 @@
+import { type BaseSignal, getValue, type MaybeSignal } from "../../signals/mod.ts";
 import type { Unit } from "./unit.ts";
 
 // FIXME: Negative values
@@ -33,8 +34,8 @@ export class Block {
   usedWidth = 0;
   usedHeight = 0;
 
-  parent?: Block;
-  children?: Block[];
+  parent?: MaybeSignal<Block>;
+  children?: MaybeSignal<Block>[];
 
   lines: string[] = [];
 
@@ -47,18 +48,20 @@ export class Block {
   }
 
   hasChanged(): boolean {
-    return (this.changed = this.changed || (this.children?.some((block) => block.hasChanged()) ?? false));
+    return (this.changed = this.changed || (
+      this.children?.some((block) => getValue(block).hasChanged()) ?? false
+    ));
   }
 
   boundingRectangle(): BoundingRectangle {
     let top = this.computedTop;
     let left = this.computedLeft;
 
-    let parent = this.parent;
+    let parent = getValue(this.parent);
     while (parent) {
       top += parent.computedTop;
       left += parent.computedLeft;
-      parent = parent.parent;
+      parent = getValue(parent.parent);
     }
 
     return {
@@ -69,8 +72,8 @@ export class Block {
     };
   }
 
-  addChild(block: Block): void {
-    block.parent = this;
+  addChild(block: MaybeSignal<Block>): void {
+    getValue(block).parent = this;
     this.children ??= [];
     this.children.push(block);
   }
@@ -100,7 +103,7 @@ export class Block {
     throw new Error("Default block doesn't implement 'Block.startLayout'");
   }
 
-  layout(_child: Block): void {
+  layout(_child: Block | BaseSignal<Block>): void {
     throw new Error("Default block doesn't implement 'Block.layout'");
   }
 
@@ -108,7 +111,7 @@ export class Block {
     throw new Error("Default block doesn't implement 'Block.finishLayout'");
   }
 
-  compute(_parent: Block): void {
+  compute(_parent: Block | BaseSignal<Block>): void {
     if (this.hasChanged()) {
       this.computedTop = 0;
       this.computedLeft = 0;
