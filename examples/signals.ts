@@ -4,23 +4,23 @@ import { computed, signal } from "@tui/signals";
 import { HorizontalBlock, Style } from "../mod.ts";
 
 const style = new Style({
-    width: 20,
-    string: crayon.bgMagenta,
-    text: {
-        horizontalAlign: "center",
-    },
-    padding: { all: 1 },
-    margin: { all: 1 },
-    border: {
-        all: true,
-        style: crayon.black.bgYellow,
-        type: "rounded",
-    },
+  width: 20,
+  string: crayon.bgMagenta,
+  text: {
+    horizontalAlign: "center",
+  },
+  padding: { all: 1 },
+  margin: { all: 1 },
+  border: {
+    all: true,
+    style: crayon.black.bgYellow,
+    type: "rounded",
+  },
 });
 
 const a = signal("Chuj");
 const b = computed(() => {
-    return a.get() + "ek";
+  return a.get() + "ek";
 });
 
 const z = style.create(b);
