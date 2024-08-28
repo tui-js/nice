@@ -106,6 +106,7 @@ export function render() {
   );
 
   const rendered = root.render();
+
   console.log("render time:", performance.now() - start);
   return rendered;
 }

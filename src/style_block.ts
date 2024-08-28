@@ -1,4 +1,5 @@
 import { textWidth } from "@tui/strings/text_width";
+import { type BaseSignal, computed, type MaybeSignal } from "@tui/signals";
 
 import { Block, type BoundingRectangle } from "./block.ts";
 import { normalizeUnit, type Unit } from "./unit.ts";
@@ -19,10 +20,11 @@ import { applyMargin } from "./margin/mod.ts";
 import { type MarginDefinition, type NormalizedMarginDefinition, normalizeMargin } from "./margin/normalization.ts";
 import { type BorderDefinition, normalizeBorder, type NormalizedBorderDefinition } from "./border/normalization.ts";
 import { applyBorder } from "./border/border.ts";
+import { getValue } from "@tui/signals";
 
 export interface StyleOptions {
-  width?: Unit;
-  height?: Unit;
+  width?: MaybeSignal<Unit>;
+  height?: MaybeSignal<Unit>;
   skipIfTooSmall?: boolean;
 
   string: StringStyler;
@@ -34,8 +36,8 @@ export interface StyleOptions {
 }
 
 export class Style {
-  width: Unit;
-  height: Unit;
+  width: MaybeSignal<Unit>;
+  height: MaybeSignal<Unit>;
   skipIfTooSmall: boolean;
 
   string: StringStyler;
@@ -56,7 +58,7 @@ export class Style {
     this.height = height ?? "auto";
   }
 
-  create(content: string, options?: Partial<StyleOptions>): StyleBlock {
+  create(content: string | BaseSignal<string>, options?: Partial<StyleOptions>): StyleBlock {
     return new StyleBlock(options ? this.derive(options) : this, content);
   }
 
@@ -86,23 +88,39 @@ export class Style {
 }
 
 export class StyleBlock extends Block {
-  declare width: Unit;
-  declare height: Unit;
-
   contentWidth?: number;
   contentHeight?: number;
 
   autoParentDependant = false;
-  style: Style;
-  content: string;
+  #style: Style;
 
-  constructor(style: Style, content: string) {
+  #rawLines!: string[];
+
+  constructor(style: Style, content: string | BaseSignal<string>) {
     super(style);
 
-    const lines = content.split("\n");
-    this.style = style;
-    this.lines = lines;
-    this.content = content;
+    this.#style = style;
+    if (typeof content === "string") {
+      this.#rawLines = content.split("\n");
+      this.lines = Array.from(this.#rawLines);
+    } else {
+      computed(() => {
+        this.#rawLines = content.get().split("\n");
+        this.lines.splice(0, Infinity, ...this.#rawLines);
+        this.changed = true;
+      });
+    }
+  }
+
+  get style(): Style {
+    return this.#style;
+  }
+
+  set style(style: Style) {
+    if (this.#style === style) return;
+    this.#style = style;
+    this.lines.splice(0, Infinity, ...this.#rawLines);
+    this.changed = true;
   }
 
   boundingRectangle(includeMargins = false): BoundingRectangle {
@@ -119,7 +137,12 @@ export class StyleBlock extends Block {
     return rectangle;
   }
 
-  compute(parent?: Block): void {
+  compute(parentSignal?: MaybeSignal<Block>): void {
+    const parent = getValue(parentSignal);
+
+    super.compute(parent!);
+    if (!this.hasChanged()) return;
+
     if (this.width === "auto") {
       const { padding, margin, border } = this.style;
 
@@ -181,7 +204,9 @@ export class StyleBlock extends Block {
   }
 
   draw(): void {
-    if (!this.parent) this.compute();
+    super.draw();
+    if (!this.hasChanged()) return;
+    this.changed = false;
 
     const { lines } = this;
     const { text, margin, padding, border } = this.style;

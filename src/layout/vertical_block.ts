@@ -1,16 +1,18 @@
 import { cropEnd, cropStart } from "@tui/strings";
-import { Block, type BlockOptions } from "../block.ts";
+import { effect, getValue, type MaybeSignal } from "@tui/signals";
+
+import { Block } from "../block.ts";
 import { type NoAutoUnit, normalizeUnit, type Unit } from "../unit.ts";
 import { flexibleCompute } from "./shared.ts";
 import type { StringStyler } from "../types.ts";
 
 export interface VerticalBlockOptions {
   string?: StringStyler;
-  width?: Unit;
-  height?: Unit;
-  x?: NoAutoUnit;
-  y?: NoAutoUnit;
-  gap?: NoAutoUnit;
+  width?: MaybeSignal<Unit>;
+  height?: MaybeSignal<Unit>;
+  x?: MaybeSignal<NoAutoUnit>;
+  y?: MaybeSignal<NoAutoUnit>;
+  gap?: MaybeSignal<NoAutoUnit>;
 }
 
 export class VerticalBlock extends Block {
@@ -19,29 +21,38 @@ export class VerticalBlock extends Block {
   declare children: Block[];
 
   string?: StringStyler;
-  x: NoAutoUnit;
-  y: NoAutoUnit;
-  gap: NoAutoUnit;
+  x!: NoAutoUnit;
+  y!: NoAutoUnit;
+  gap!: NoAutoUnit;
 
   computedY = 0;
   computedGap = 0;
 
-  constructor(options: VerticalBlockOptions, ...children: Block[]) {
-    options.width ??= "auto";
-    options.height ??= "auto";
-    super(options as BlockOptions);
+  constructor(options: VerticalBlockOptions, ...children: MaybeSignal<Block>[]) {
+    super({
+      width: options.width ??= "auto",
+      height: options.height ??= "auto",
+      children,
+    });
 
-    for (const child of children) {
-      this.addChild(child);
-    }
+    effect(() => {
+      this.string = getValue(options.string);
+      this.x = getValue(options.x) ?? 0;
+      this.y = getValue(options.y) ?? 0;
+      this.gap = getValue(options.gap) ?? 0;
 
-    this.x = options.x ?? 0;
-    this.y = options.y ?? 0;
-    this.gap = options.gap ?? 0;
-    this.string = options.string;
+      this.changed = true;
+    });
   }
 
   compute(parent: Block): void {
+    super.compute(parent);
+    if (!this.hasChanged()) return;
+
+    this.usedWidth = 0;
+    this.usedHeight = 0;
+    this.computedTop = 0;
+
     this.computedGap = normalizeUnit(this.gap, this.computedHeight);
     if (this.computedGap < 0) throw new Error("Gap cannot be negative");
 
@@ -55,11 +66,25 @@ export class VerticalBlock extends Block {
     this.computedY = normalizeUnit(this.y, this.computedHeight - this.usedHeight);
 
     this.computedTop += this.computedY;
-
-    this.lines.length = 0;
   }
 
-  layout(child: Block): void {
+  startLayout(): void {
+    if (this.hasChanged()) {
+      this.lines.length = 0;
+    }
+  }
+
+  layout(childSignal: MaybeSignal<Block>): void {
+    if (!this.hasChanged()) return;
+
+    const child = getValue(childSignal);
+
+    const childChanged = child.hasChanged();
+    if (childChanged) {
+      child.compute(this);
+      child.draw();
+    }
+
     let freeSpace = this.computedHeight - this.computedY - this.lines.length;
     if (freeSpace <= 0) return;
 
@@ -79,8 +104,10 @@ export class VerticalBlock extends Block {
 
     // TODO: Decide whether child lines should be styled
     //       For now it seems like a good idea, however there might be some odd edge-cases
-
-    child.computedTop += this.lines.length;
+    // TODO: This condition might lead to some issues later on
+    if (childChanged || !child.computedTop) {
+      child.computedTop += this.lines.length;
+    }
     const childLinesInBounds = Math.min(child.lines.length, freeSpace);
 
     if (child.computedWidth < this.computedWidth) {
@@ -107,7 +134,9 @@ export class VerticalBlock extends Block {
         }
       }
 
-      child.computedLeft += computedX;
+      if (childChanged || !child.computedLeft) {
+        child.computedLeft += computedX;
+      }
     } else if (child.computedWidth > this.computedWidth) {
       for (let i = 0; i < childLinesInBounds; ++i) {
         const line = child.lines[i];
@@ -123,6 +152,9 @@ export class VerticalBlock extends Block {
   }
 
   finishLayout(): void {
+    if (!this.hasChanged()) return;
+    this.changed = false;
+
     if (!this.computedY) return;
 
     const heightDiff = this.computedHeight - this.lines.length;
