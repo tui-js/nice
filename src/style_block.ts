@@ -92,32 +92,35 @@ export class StyleBlock extends Block {
   contentHeight?: number;
 
   autoParentDependant = false;
-  style: Style;
+  #style: Style;
 
   #rawLines!: string[];
-  contentLines!: string[];
 
   constructor(style: Style, content: string | BaseSignal<string>) {
     super(style);
 
-    this.style = style;
+    this.#style = style;
     if (typeof content === "string") {
       this.#rawLines = content.split("\n");
-      this.contentLines = Array.from(this.#rawLines);
+      this.lines = Array.from(this.#rawLines);
     } else {
       computed(() => {
         this.#rawLines = content.get().split("\n");
-        this.contentLines = Array.from(this.#rawLines);
+        this.lines.splice(0, Infinity, ...this.#rawLines);
         this.changed = true;
       });
     }
   }
 
-  setStyle(style: Style) {
-    if (this.style === style) return;
-    this.style = style;
+  get style() {
+    return this.#style;
+  }
+
+  set style(style: Style) {
+    if (this.#style === style) return;
+    this.#style = style;
+    this.lines.splice(0, Infinity, ...this.#rawLines);
     this.changed = true;
-    this.contentLines = Array.from(this.#rawLines);
   }
 
   boundingRectangle(includeMargins = false): BoundingRectangle {
@@ -147,7 +150,7 @@ export class StyleBlock extends Block {
       const marginWidth = margin.left + margin.right;
       const borderWidth = (border.left ? 1 : 0) + (border.right ? 1 : 0);
 
-      this.contentWidth = this.contentLines.reduce((maxWidth, line) => Math.max(maxWidth, textWidth(line)), 0);
+      this.contentWidth = this.lines.reduce((maxWidth, line) => Math.max(maxWidth, textWidth(line)), 0);
       this.computedWidth = this.contentWidth + paddingWidth + marginWidth + borderWidth;
     } else {
       const { padding, border, margin } = this.style;
@@ -171,7 +174,7 @@ export class StyleBlock extends Block {
       const marginHeight = margin.top + margin.bottom;
       const borderHeight = (border.top ? 1 : 0) + (border.bottom ? 1 : 0);
 
-      this.contentHeight = this.contentLines.length;
+      this.contentHeight = this.lines.length;
       this.computedHeight = this.contentHeight + paddingHeight + marginHeight +
         borderHeight;
     } else {
@@ -205,7 +208,7 @@ export class StyleBlock extends Block {
     if (!this.hasChanged()) return;
     this.changed = false;
 
-    const { contentLines } = this;
+    const { lines } = this;
     const { text, margin, padding, border } = this.style;
 
     let width = this.contentWidth!;
@@ -223,28 +226,26 @@ export class StyleBlock extends Block {
       );
     }
 
-    wrapLines(contentLines, width, text.wrap);
+    wrapLines(lines, width, text.wrap);
 
-    resizeVertically(contentLines, height, text);
-    alignVertically(contentLines, height, text.verticalAlign);
+    resizeVertically(lines, height, text);
+    alignVertically(lines, height, text.verticalAlign);
 
-    resizeHorizontally(contentLines, width, height, text);
-    alignHorizontally(contentLines, width, height, text.horizontalAlign);
+    resizeHorizontally(lines, width, height, text);
+    alignHorizontally(lines, width, height, text.horizontalAlign);
 
-    applyMargin(contentLines, width, padding);
+    applyMargin(lines, width, padding);
     width += padding.left + padding.right;
     height += padding.top + padding.bottom;
 
-    applyStyle(contentLines, this.style.string);
+    applyStyle(lines, this.style.string);
 
-    applyBorder(contentLines, width, border);
+    applyBorder(lines, width, border);
     width += (border.left ? 1 : 0) + (border.right ? 1 : 0);
     height += (border.top ? 1 : 0) + (border.bottom ? 1 : 0);
 
-    applyMargin(contentLines, width, margin);
+    applyMargin(lines, width, margin);
     width += margin.left + margin.right;
     height += margin.top + margin.bottom;
-
-    this.lines = Array.from(contentLines);
   }
 }
