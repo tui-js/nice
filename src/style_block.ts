@@ -112,7 +112,7 @@ export class StyleBlock extends Block {
     }
   }
 
-  get style() {
+  get style(): Style {
     return this.#style;
   }
 
