@@ -1,47 +1,50 @@
-import { Block } from "../block.ts";
-import { type NoAutoUnit, normalizeUnit } from "../unit.ts";
+import { effect, getValue, type MaybeSignal } from "@tui/signals";
 import { cropStart, insert } from "@tui/strings";
 
+import { Block } from "../block.ts";
+import { type NoAutoUnit, normalizeUnit } from "../unit.ts";
+
 export interface OverlayBlockOptions {
-  bg: Block;
-  fg: Block;
-  x: NoAutoUnit;
-  y: NoAutoUnit;
+  bg: MaybeSignal<Block>;
+  fg: MaybeSignal<Block>;
+  x: MaybeSignal<NoAutoUnit>;
+  y: MaybeSignal<NoAutoUnit>;
 }
 
 // FIXME: Sometimes fg clears style after it
 export class OverlayBlock extends Block {
   name = "Overlay";
 
-  declare children: [bg: Block, fg: Block];
+  declare children: [bg: MaybeSignal<Block>, fg: MaybeSignal<Block>];
 
-  x: NoAutoUnit;
-  y: NoAutoUnit;
+  x!: NoAutoUnit;
+  y!: NoAutoUnit;
   computedX = 0;
   computedY = 0;
 
-  constructor({ bg, fg, x, y }: OverlayBlockOptions) {
-    super({ width: bg.width, height: bg.height });
+  constructor(options: OverlayBlockOptions) {
+    super({ width: 0, height: 0, children: [options.bg, options.fg] });
 
-    this.addChild(bg);
-    this.addChild(fg);
+    effect(() => {
+      this.x = getValue(options.x);
+      this.y = getValue(options.y);
 
-    this.x = x;
-    this.y = y;
+      this.changed = true;
+    });
   }
 
   compute(parent: Block): void {
     super.compute(parent);
     if (!this.hasChanged()) return;
 
-    const [bg, fg] = this.children;
+    const [bg, fg] = this.children.map(getValue);
 
     this.computedX = normalizeUnit(this.x, bg.computedWidth - fg.computedWidth);
     this.computedY = normalizeUnit(this.y, bg.computedHeight - fg.computedHeight);
   }
 
   startLayout(): void {
-    const [bg, fg] = this.children;
+    const [bg, fg] = this.children.map(getValue);
 
     if (this.hasChanged()) {
       bg.compute(this.parent!);
@@ -61,7 +64,7 @@ export class OverlayBlock extends Block {
     if (!this.hasChanged()) return;
     this.changed = false;
 
-    const [bg, fg] = this.children;
+    const [bg, fg] = this.children.map(getValue);
     const { computedX, computedY } = this;
 
     const emptyLine = " ".repeat(bg.computedWidth);
