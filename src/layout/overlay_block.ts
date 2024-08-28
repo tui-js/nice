@@ -23,7 +23,7 @@ export class OverlayBlock extends Block {
   computedY = 0;
 
   constructor(options: OverlayBlockOptions) {
-    super({ width: 0, height: 0, children: [options.bg, options.fg] });
+    super({ width: "auto", height: "auto", children: [options.bg, options.fg] });
 
     effect(() => {
       this.x = getValue(options.x);
@@ -49,10 +49,12 @@ export class OverlayBlock extends Block {
     if (this.hasChanged()) {
       bg.compute(this.parent!);
       bg.draw();
-      fg.compute(this.parent!);
-      fg.draw();
+
       this.computedWidth = bg.computedWidth;
       this.computedHeight = bg.computedHeight;
+
+      fg.compute(this);
+      fg.draw();
 
       this.lines.length = 0;
     }
