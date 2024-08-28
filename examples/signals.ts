@@ -1,6 +1,7 @@
 import crayon from "@crayon/crayon";
+import { computed, signal } from "@tui/signals";
+
 import { HorizontalBlock, Style } from "../mod.ts";
-import { computed, signal } from "../../../@tui/signals/mod.ts";
 
 const style = new Style({
     width: 20,
@@ -30,5 +31,5 @@ a.set("Pen");
 console.log(dog.render());
 a.set("Zen");
 console.log(dog.render());
-z.setStyle(style.derive({ padding: { all: 3 } }));
+z.setStyle(style.derive({ string: crayon.bgRed, padding: { all: 3 } }));
 console.log(dog.render());

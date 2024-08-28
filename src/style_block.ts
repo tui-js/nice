@@ -1,5 +1,5 @@
 import { textWidth } from "@tui/strings/text_width";
-import { type BaseSignal, computed, type MaybeSignal } from "../../../@tui/signals/mod.ts";
+import { type BaseSignal, computed, type MaybeSignal } from "@tui/signals";
 
 import { Block, type BoundingRectangle } from "./block.ts";
 import { normalizeUnit, type Unit } from "./unit.ts";
@@ -20,11 +20,11 @@ import { applyMargin } from "./margin/mod.ts";
 import { type MarginDefinition, type NormalizedMarginDefinition, normalizeMargin } from "./margin/normalization.ts";
 import { type BorderDefinition, normalizeBorder, type NormalizedBorderDefinition } from "./border/normalization.ts";
 import { applyBorder } from "./border/border.ts";
-import { getValue } from "../../signals/src/base.ts";
+import { getValue } from "@tui/signals";
 
 export interface StyleOptions {
-  width?: Unit;
-  height?: Unit;
+  width?: MaybeSignal<Unit>;
+  height?: MaybeSignal<Unit>;
   skipIfTooSmall?: boolean;
 
   string: StringStyler;
@@ -36,8 +36,8 @@ export interface StyleOptions {
 }
 
 export class Style {
-  width: Unit;
-  height: Unit;
+  width: MaybeSignal<Unit>;
+  height: MaybeSignal<Unit>;
   skipIfTooSmall: boolean;
 
   string: StringStyler;
@@ -88,9 +88,6 @@ export class Style {
 }
 
 export class StyleBlock extends Block {
-  declare width: Unit;
-  declare height: Unit;
-
   contentWidth?: number;
   contentHeight?: number;
 
@@ -109,9 +106,9 @@ export class StyleBlock extends Block {
       this.contentLines = Array.from(this.#rawLines);
     } else {
       computed(() => {
-        this.changed = true;
         this.#rawLines = content.get().split("\n");
         this.contentLines = Array.from(this.#rawLines);
+        this.changed = true;
       });
     }
   }

@@ -19,6 +19,7 @@
 
   "imports": {
     "@tui/strings": "jsr:@tui/strings@^0.1.1",
+    "@tui/signals": "jsr:@tui/signals@^0.0.1",
 
     // tests
     "@std/assert": "jsr:@std/assert@^0.218",

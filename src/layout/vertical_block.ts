@@ -1,18 +1,18 @@
 import { cropEnd, cropStart } from "@tui/strings";
-import { Block, type BlockOptions } from "../block.ts";
+import { effect, getValue, type MaybeSignal } from "@tui/signals";
+
+import { Block } from "../block.ts";
 import { type NoAutoUnit, normalizeUnit, type Unit } from "../unit.ts";
 import { flexibleCompute } from "./shared.ts";
 import type { StringStyler } from "../types.ts";
-import { effect } from "../../../signals/src/computed.ts";
-import { getValue, type MaybeSignal } from "../../../signals/mod.ts";
 
 export interface VerticalBlockOptions {
   string?: StringStyler;
-  width?: Unit;
-  height?: Unit;
-  x?: NoAutoUnit;
-  y?: NoAutoUnit;
-  gap?: NoAutoUnit;
+  width?: MaybeSignal<Unit>;
+  height?: MaybeSignal<Unit>;
+  x?: MaybeSignal<NoAutoUnit>;
+  y?: MaybeSignal<NoAutoUnit>;
+  gap?: MaybeSignal<NoAutoUnit>;
 }
 
 export class VerticalBlock extends Block {
@@ -21,48 +21,41 @@ export class VerticalBlock extends Block {
   declare children: Block[];
 
   string?: StringStyler;
-  x: NoAutoUnit;
-  y: NoAutoUnit;
-  gap: NoAutoUnit;
+  x!: NoAutoUnit;
+  y!: NoAutoUnit;
+  gap!: NoAutoUnit;
 
   computedY = 0;
   computedGap = 0;
 
   constructor(options: VerticalBlockOptions, ...children: MaybeSignal<Block>[]) {
-    options.width ??= "auto";
-    options.height ??= "auto";
-    super(options as BlockOptions);
-
-    effect(() => {
-      // Associate children signals with this
-      for (const childSignal of children) {
-        getValue(childSignal);
-      }
-      this.changed = true;
+    super({
+      width: options.width ??= "auto",
+      height: options.height ??= "auto",
+      children,
     });
 
-    for (const child of children) {
-      this.addChild(child);
-    }
+    effect(() => {
+      this.string = getValue(options.string);
+      this.x = getValue(options.x) ?? 0;
+      this.y = getValue(options.y) ?? 0;
+      this.gap = getValue(options.gap) ?? 0;
 
-    this.x = options.x ?? 0;
-    this.y = options.y ?? 0;
-    this.gap = options.gap ?? 0;
-    this.string = options.string;
+      this.changed = true;
+    });
   }
 
   compute(parent: Block): void {
     super.compute(parent);
     if (!this.hasChanged()) return;
 
-    this.computedWidth = 0;
-    this.computedHeight = 0;
+    this.usedWidth = 0;
+    this.usedHeight = 0;
+    this.computedTop = 0;
 
     this.computedGap = normalizeUnit(this.gap, this.computedHeight);
     if (this.computedGap < 0) throw new Error("Gap cannot be negative");
 
-    this.usedHeight = 0;
-    this.usedWidth = 0;
     flexibleCompute(this, parent, (i, child) => {
       this.usedWidth = Math.max(this.usedWidth, child.computedWidth);
       this.usedHeight += child.computedHeight;

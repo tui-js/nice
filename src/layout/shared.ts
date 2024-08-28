@@ -1,7 +1,7 @@
+import { getValue, type MaybeSignal } from "@tui/signals";
+
 import { type NoAutoUnit, normalizeUnit } from "../unit.ts";
 import type { Block } from "../block.ts";
-import type { MaybeSignal } from "../../../signals/mod.ts";
-import { getValue } from "../../../signals/src/base.ts";
 
 type ComputationCallback = (index: number, child: Block) => void;
 type BasicComputableBlock = MaybeSignal<Block & { width: NoAutoUnit; height: NoAutoUnit }>;

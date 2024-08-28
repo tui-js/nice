@@ -1,4 +1,5 @@
-import { type BaseSignal, getValue, type MaybeSignal } from "../../signals/mod.ts";
+import { effect, getValue, type MaybeSignal } from "@tui/signals";
+
 import type { Unit } from "./unit.ts";
 
 // FIXME: Negative values
@@ -6,8 +7,9 @@ import type { Unit } from "./unit.ts";
 export const createdBlocks: Block[] = [];
 
 export interface BlockOptions {
-  width: Unit;
-  height: Unit;
+  width: MaybeSignal<Unit>;
+  height: MaybeSignal<Unit>;
+  children?: MaybeSignal<Block>[];
 }
 
 export interface BoundingRectangle {
@@ -22,8 +24,8 @@ export class Block {
 
   // Whether block depends on parent when width or height are set to "auto"
   autoParentDependant = true;
-  width: Unit;
-  height: Unit;
+  width!: Unit;
+  height!: Unit;
 
   changed = true;
   computedTop = 0;
@@ -40,10 +42,27 @@ export class Block {
   lines: string[] = [];
 
   constructor(options: BlockOptions) {
-    this.width = options.width;
-    this.height = options.height;
-    if (typeof this.width === "number") this.computedWidth = this.width;
-    if (typeof this.height === "number") this.computedHeight = this.height;
+    effect(() => {
+      this.width = getValue(options.width);
+      if (typeof this.width === "number") this.computedWidth = this.width;
+
+      this.height = getValue(options.height);
+      if (typeof this.height === "number") this.computedHeight = this.height;
+
+      this.changed = true;
+    });
+
+    effect(() => {
+      // Associate children signals with this
+      if (options.children) {
+        this.clearChildren();
+        for (const childSignal of options.children) {
+          this.addChild(getValue(childSignal));
+        }
+      }
+      this.changed = true;
+    });
+
     createdBlocks.push(this);
   }
 
@@ -70,6 +89,13 @@ export class Block {
       width: this.computedWidth,
       height: this.computedHeight,
     };
+  }
+
+  clearChildren(): void {
+    if (!this.children) return;
+    for (const child of this.children.splice(0)) {
+      getValue(child).parent = undefined;
+    }
   }
 
   addChild(block: MaybeSignal<Block>): void {
@@ -103,7 +129,7 @@ export class Block {
     throw new Error("Default block doesn't implement 'Block.startLayout'");
   }
 
-  layout(_child: Block | BaseSignal<Block>): void {
+  layout(_child: MaybeSignal<Block>): void {
     throw new Error("Default block doesn't implement 'Block.layout'");
   }
 
@@ -111,7 +137,7 @@ export class Block {
     throw new Error("Default block doesn't implement 'Block.finishLayout'");
   }
 
-  compute(_parent: Block | BaseSignal<Block>): void {
+  compute(_parent: MaybeSignal<Block>): void {
     if (this.hasChanged()) {
       this.computedTop = 0;
       this.computedLeft = 0;
