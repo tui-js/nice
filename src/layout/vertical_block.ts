@@ -155,8 +155,6 @@ export class VerticalBlock extends Block {
     if (!this.hasChanged()) return;
     this.changed = false;
 
-    if (!this.computedY) return;
-
     const heightDiff = this.computedHeight - this.lines.length;
 
     if (this.computedY < 0) {
