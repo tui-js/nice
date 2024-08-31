@@ -104,6 +104,8 @@ export class Block {
     this.children.push(block);
   }
 
+  // TODO: binds for being added and removed
+
   draw() {
     if (!this.hasChanged()) {
       return;

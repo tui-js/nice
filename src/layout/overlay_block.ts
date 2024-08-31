@@ -3,6 +3,7 @@ import { cropStart, insert } from "@tui/strings";
 
 import { Block } from "../block.ts";
 import { type NoAutoUnit, normalizeUnit } from "../unit.ts";
+import { StyleBlock } from "../style_block.ts";
 
 export interface OverlayBlockOptions {
   bg: MaybeSignal<Block>;
@@ -39,25 +40,28 @@ export class OverlayBlock extends Block {
 
     const [bg, fg] = this.children.map(getValue);
 
+    if (!bg.changed && bg instanceof StyleBlock) {
+      bg.updateLines();
+    }
+    bg.compute(this.parent!);
+    bg.draw();
+
+    this.computedWidth = bg.computedWidth;
+    this.computedHeight = bg.computedHeight;
+
+    if (!fg.changed && fg instanceof StyleBlock) {
+      fg.updateLines();
+    }
+    fg.compute(this);
+    fg.draw();
+
     this.computedX = normalizeUnit(this.x, bg.computedWidth - fg.computedWidth);
     this.computedY = normalizeUnit(this.y, bg.computedHeight - fg.computedHeight);
   }
 
   startLayout(): void {
-    const [bg, fg] = this.children.map(getValue);
-
-    if (this.hasChanged()) {
-      bg.compute(this.parent!);
-      bg.draw();
-
-      this.computedWidth = bg.computedWidth;
-      this.computedHeight = bg.computedHeight;
-
-      fg.compute(this);
-      fg.draw();
-
-      this.lines.length = 0;
-    }
+    if (!this.hasChanged()) return;
+    this.lines.length = 0;
   }
 
   layout(): void {}

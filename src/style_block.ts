@@ -106,8 +106,7 @@ export class StyleBlock extends Block {
     } else {
       computed(() => {
         this.#rawLines = content.get().split("\n");
-        this.lines.splice(0, Infinity, ...this.#rawLines);
-        this.changed = true;
+        this.updateLines();
       });
     }
   }
@@ -119,6 +118,10 @@ export class StyleBlock extends Block {
   set style(style: Style) {
     if (this.#style === style) return;
     this.#style = style;
+    this.updateLines();
+  }
+
+  updateLines() {
     this.lines.splice(0, Infinity, ...this.#rawLines);
     this.changed = true;
   }
