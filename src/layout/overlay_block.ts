@@ -58,7 +58,7 @@ export class OverlayBlock extends Block {
     if (!fg.changed && fg instanceof StyleBlock) {
       fg.updateLines();
     }
-    fg.compute(parent);
+    fg.compute(this);
     fg.draw();
 
     this.computedX = normalizeUnit(this.x, bg.computedWidth - fg.computedWidth);
