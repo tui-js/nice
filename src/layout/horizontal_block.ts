@@ -1,11 +1,13 @@
+import { cropEnd, cropStart } from "@tui/strings";
+import { effect, getValue, type MaybeSignal } from "@tui/signals";
+
 import { Block } from "../block.ts";
 import { type NoAutoUnit, normalizeUnit, type Unit } from "../unit.ts";
 import { flexibleCompute } from "./shared.ts";
 import type { StringStyler } from "../types.ts";
-import { cropEnd, cropStart } from "@tui/strings";
-import { effect, getValue, type MaybeSignal } from "@tui/signals";
 
 export interface HorizontalBlockOptions {
+  id?: string;
   string?: MaybeSignal<StringStyler>;
   width?: MaybeSignal<Unit>;
   height?: MaybeSignal<Unit>;
@@ -29,6 +31,7 @@ export class HorizontalBlock extends Block {
 
   constructor(options: HorizontalBlockOptions, ...children: MaybeSignal<Block>[]) {
     super({
+      id: options.id,
       width: options.width ??= "auto",
       height: options.height ??= "auto",
       children,
@@ -89,12 +92,6 @@ export class HorizontalBlock extends Block {
 
     const offsetY = normalizeUnit(this.y, this.computedHeight - child.computedHeight);
 
-    if (childChanged || !child.computedLeft) {
-      child.computedTop += offsetY;
-      child.computedLeft += this.#occupiedWidth;
-      child.computedLeft += this.computedX;
-    }
-
     let gapString = "";
     if (this.#occupiedWidth !== 0 && this.computedGap > 0) {
       const gapLinesInBounds = Math.min(freeSpace, this.computedGap);
@@ -102,6 +99,12 @@ export class HorizontalBlock extends Block {
 
       this.#occupiedWidth += gapLinesInBounds;
       freeSpace -= gapLinesInBounds;
+    }
+
+    if (childChanged || !child.computedLeft) {
+      child.computedTop += offsetY;
+      child.computedLeft += this.#occupiedWidth;
+      child.computedLeft += this.computedX;
     }
 
     if (freeSpace <= 0) return;

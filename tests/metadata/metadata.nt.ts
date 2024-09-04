@@ -37,7 +37,7 @@ function block(padded = false) {
 
 function render() {
   const SCREEN_FG = new VerticalBlock(
-    { x: "70%" },
+    { x: "70%", gap: 1 },
     new VerticalBlock(
       { x: "50%" },
       block(),
@@ -60,11 +60,11 @@ function render() {
       { y: "50%", x: "50%" },
       block(),
       new HorizontalBlock(
-        { y: "20%" },
+        { y: "20%", gap: 1 },
         block(),
         block(),
         new VerticalBlock(
-          { x: "80%" },
+          { x: "80%", gap: 2 },
           block(),
           block(),
           new OverlayBlock(
@@ -73,7 +73,7 @@ function render() {
               y: "50%",
               fg: block(),
               bg: new HorizontalBlock(
-                { width: 30, x: 2 },
+                { width: 30, x: 2, gap: 2 },
                 block(true),
                 block(true),
               ),
@@ -84,6 +84,7 @@ function render() {
     ),
   );
 
+  SCREEN_FG.render();
   console.log(SCREEN_FG.render());
 
   const textEncoder = new TextEncoder();

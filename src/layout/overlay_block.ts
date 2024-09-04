@@ -6,6 +6,7 @@ import { type NoAutoUnit, normalizeUnit } from "../unit.ts";
 import { StyleBlock } from "../style_block.ts";
 
 export interface OverlayBlockOptions {
+  id?: string;
   bg: MaybeSignal<Block>;
   fg: MaybeSignal<Block>;
   x: MaybeSignal<NoAutoUnit>;
@@ -24,7 +25,12 @@ export class OverlayBlock extends Block {
   computedY = 0;
 
   constructor(options: OverlayBlockOptions) {
-    super({ width: "auto", height: "auto", children: [options.bg, options.fg] });
+    super({
+      id: options.id,
+      width: "auto",
+      height: "auto",
+      children: [options.bg, options.fg],
+    });
 
     effect(() => {
       this.x = getValue(options.x);
@@ -43,7 +49,7 @@ export class OverlayBlock extends Block {
     if (!bg.changed && bg instanceof StyleBlock) {
       bg.updateLines();
     }
-    bg.compute(this.parent!);
+    bg.compute(parent);
     bg.draw();
 
     this.computedWidth = bg.computedWidth;
@@ -52,11 +58,14 @@ export class OverlayBlock extends Block {
     if (!fg.changed && fg instanceof StyleBlock) {
       fg.updateLines();
     }
-    fg.compute(this);
+    fg.compute(parent);
     fg.draw();
 
     this.computedX = normalizeUnit(this.x, bg.computedWidth - fg.computedWidth);
     this.computedY = normalizeUnit(this.y, bg.computedHeight - fg.computedHeight);
+
+    fg.computedLeft += this.computedX;
+    fg.computedTop += this.computedY;
   }
 
   startLayout(): void {

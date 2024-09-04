@@ -3,7 +3,6 @@ import crayon from "@crayon/crayon";
 import { Style, StyleBlock } from "../src/style_block.ts";
 import { VerticalBlock } from "../src/layout/vertical_block.ts";
 import { HorizontalBlock } from "../src/layout/horizontal_block.ts";
-import { createdBlocks } from "../src/block.ts";
 import { calc } from "../src/unit.ts";
 
 let h = 1;
@@ -111,35 +110,5 @@ export function render() {
   return rendered;
 }
 
-x: if (import.meta.main) {
-  console.clear();
-  console.log(render());
-
-  if (!Deno.args.includes("bb")) break x;
-
-  const textEncoder = new TextEncoder();
-  const draw = (y: number, x: number, s: string): void => {
-    Deno.stdout.writeSync(textEncoder.encode(
-      `\x1b[${y + 2};${x + 1}H${s}`,
-    ));
-  };
-
-  for (const block of createdBlocks) {
-    const { top, left, width, height } = block.boundingRectangle();
-
-    const style = block instanceof StyleBlock && block.style.string
-      ? block.style.string
-      : (block instanceof VerticalBlock || block instanceof HorizontalBlock) &&
-          block.string
-      ? block.string
-      : undefined;
-    if (!style) continue;
-
-    draw(top, left, style("Q"));
-    draw(top, left + width - 1, style("W"));
-    draw(top + height - 1, left, style("A"));
-    draw(top + height - 1, left + width - 1, style("D"));
-  }
-
-  draw(createdBlocks.at(-2)!.computedHeight, 0, "");
-}
+console.clear();
+console.log(render());

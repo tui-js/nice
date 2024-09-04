@@ -4,8 +4,8 @@
     "specifiers": {
       "jsr:@crayon/crayon@4.0.0-alpha.3": "jsr:@crayon/crayon@4.0.0-alpha.3",
       "jsr:@crayon/literal@1.0.0-alpha.2": "jsr:@crayon/literal@1.0.0-alpha.2",
-      "jsr:@tui/signals@^0.0.1": "jsr:@tui/signals@0.0.1",
-      "jsr:@tui/strings@^0.1.1": "jsr:@tui/strings@0.1.1"
+      "jsr:@tui/signals@^0": "jsr:@tui/signals@0.0.3",
+      "jsr:@tui/strings@^0": "jsr:@tui/strings@0.1.1"
     },
     "jsr": {
       "@crayon/crayon@4.0.0-alpha.3": {
@@ -17,8 +17,8 @@
           "jsr:@crayon/crayon@4.0.0-alpha.3"
         ]
       },
-      "@tui/signals@0.0.1": {
-        "integrity": "57914260083a8645819331a45acfa7b239ce74b0ef8a7ac9e332b513acb8c643"
+      "@tui/signals@0.0.3": {
+        "integrity": "8fa34c140a3bed097fc8d14c630396afbdd68976cc4aec522a99e44859ae2023"
       },
       "@tui/strings@0.1.1": {
         "integrity": "fe9fa432e216458f539046947515a56c65b60b70ebe927b005422d329c25ad08"
@@ -31,8 +31,8 @@
       "jsr:@crayon/crayon@4.0.0-alpha.3",
       "jsr:@crayon/literal@1.0.0-alpha.2",
       "jsr:@std/assert@^0.218",
-      "jsr:@tui/signals@^0.0.1",
-      "jsr:@tui/strings@^0.1.1"
+      "jsr:@tui/signals@^0",
+      "jsr:@tui/strings@^0"
     ]
   }
 }

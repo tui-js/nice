@@ -7,6 +7,7 @@ import { flexibleCompute } from "./shared.ts";
 import type { StringStyler } from "../types.ts";
 
 export interface VerticalBlockOptions {
+  id?: string;
   string?: StringStyler;
   width?: MaybeSignal<Unit>;
   height?: MaybeSignal<Unit>;
@@ -30,6 +31,7 @@ export class VerticalBlock extends Block {
 
   constructor(options: VerticalBlockOptions, ...children: MaybeSignal<Block>[]) {
     super({
+      id: options.id,
       width: options.width ??= "auto",
       height: options.height ??= "auto",
       children,
@@ -113,6 +115,10 @@ export class VerticalBlock extends Block {
     if (child.computedWidth < this.computedWidth) {
       const widthDiff = this.computedWidth - child.computedWidth;
       const computedX = normalizeUnit(this.x, widthDiff);
+
+      if (childChanged || !child.computedLeft) {
+        child.computedLeft += computedX;
+      }
 
       if (computedX < 0) {
         const padRight = " ".repeat(widthDiff - computedX);

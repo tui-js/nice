@@ -31,5 +31,5 @@ a.set("Pen");
 console.log(dog.render());
 a.set("Zen");
 console.log(dog.render());
-z.setStyle(style.derive({ string: crayon.bgRed, padding: { all: 3 } }));
+z.style = style.derive({ string: crayon.bgRed, padding: { all: 3 } });
 console.log(dog.render());

@@ -88,6 +88,8 @@ export class Style {
 }
 
 export class StyleBlock extends Block {
+  content!: string;
+
   contentWidth?: number;
   contentHeight?: number;
 
@@ -97,15 +99,21 @@ export class StyleBlock extends Block {
   #rawLines!: string[];
 
   constructor(style: Style, content: string | BaseSignal<string>) {
-    super(style);
+    super({
+      id: getValue(content),
+      width: style.width,
+      height: style.height,
+    });
 
     this.#style = style;
     if (typeof content === "string") {
+      this.content = content;
       this.#rawLines = content.split("\n");
-      this.lines = Array.from(this.#rawLines);
+      this.updateLines();
     } else {
       computed(() => {
-        this.#rawLines = content.get().split("\n");
+        this.content = content.get();
+        this.#rawLines = this.content.split("\n");
         this.updateLines();
       });
     }
@@ -124,6 +132,25 @@ export class StyleBlock extends Block {
   updateLines() {
     this.lines.splice(0, Infinity, ...this.#rawLines);
     this.changed = true;
+  }
+
+  almostTheSame(other: Block): boolean {
+    if (other instanceof StyleBlock) {
+      if (this.style !== other?.style) return false;
+      else if (this.#rawLines.length !== other.#rawLines.length) return false;
+    }
+
+    return super.almostTheSame(other);
+  }
+
+  forceUpdate(): void {
+    this.updateLines();
+    super.forceUpdate();
+  }
+
+  mount(): void {
+    super.mount();
+    this.updateLines();
   }
 
   boundingRectangle(includeMargins = false): BoundingRectangle {
