@@ -4,9 +4,11 @@ import { cropStart, insert } from "@tui/strings";
 import { Block } from "../block.ts";
 import { type NoAutoUnit, normalizeUnit } from "../unit.ts";
 import { StyleBlock } from "../style_block.ts";
+import type { StringStyler } from "../types.ts";
 
 export interface OverlayBlockOptions {
   id?: string;
+  string?: MaybeSignal<StringStyler>;
   bg: MaybeSignal<Block>;
   fg: MaybeSignal<Block>;
   x: MaybeSignal<NoAutoUnit>;
@@ -19,6 +21,7 @@ export class OverlayBlock extends Block {
 
   declare children: [bg: MaybeSignal<Block>, fg: MaybeSignal<Block>];
 
+  string?: StringStyler;
   x!: NoAutoUnit;
   y!: NoAutoUnit;
   computedX = 0;
@@ -33,6 +36,7 @@ export class OverlayBlock extends Block {
     });
 
     effect(() => {
+      this.string = getValue(options.string);
       this.x = getValue(options.x);
       this.y = getValue(options.y);
 
@@ -80,9 +84,12 @@ export class OverlayBlock extends Block {
     this.changed = false;
 
     const [bg, fg] = this.children.map(getValue);
-    const { computedX, computedY } = this;
+    const { string, computedX, computedY } = this;
 
-    const emptyLine = " ".repeat(bg.computedWidth);
+    const emptyLine = string ? string(" ".repeat(bg.computedWidth)) : " ".repeat(bg.computedWidth);
+
+    const fgWidth = fg.computedWidth;
+    const bgWidth = bg.computedWidth;
 
     for (let bgLinePos = 0; bgLinePos < bg.computedHeight; ++bgLinePos) {
       const fgLinePos = bgLinePos - computedY;
@@ -96,19 +103,17 @@ export class OverlayBlock extends Block {
       const fgLine = fg.lines[fgLinePos];
 
       if (computedX < 0) {
-        this.lines.push(
-          cropStart(fgLine, fg.computedWidth + computedX) +
-            cropStart(bgLine, bg.computedWidth - fg.computedWidth - computedX),
-        );
+        const line = cropStart(fgLine, fgWidth + computedX) + cropStart(bgLine, bgWidth - fgWidth - computedX);
+        this.lines.push(string ? string(line) : line);
+      } else if (fgWidth === bgWidth) {
+        this.lines.push(fgLine);
       } else {
-        if (fg.computedWidth === bg.computedWidth) {
-          this.lines.push(fgLine);
-        } else {
-          // TODO: Just inlining insert and using computedWidths instead of recalculating them
-          //       is an easy way to improve perf, but maybe @tui/strings should add a way to
-          //       set widths if they are known instead
-          this.lines.push(insert(bgLine, fgLine, computedX, true));
-        }
+        // TODO: Just inlining insert and using computedWidths instead of recalculating them
+        //       is an easy way to improve perf, but maybe @tui/strings should add a way to
+        //       set widths if they are known instead
+        const line = insert(bgLine, fgLine, computedX, true);
+
+        this.lines.push(string ? string(line) : line);
       }
     }
   }
