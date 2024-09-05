@@ -11,7 +11,6 @@ export function isBasicComputable(blockSignal: MaybeSignal<Block>): blockSignal 
   return !block.autoParentDependant || (block.width !== "auto" && block.height !== "auto");
 }
 
-// TODO: Use custom basicCompute in layouts, because children might overflow it, so it might need to adjust the final child width
 export function basicCompute(selfSignal: BasicComputableBlock, parent: Block, computation: ComputationCallback): void {
   const self = getValue(selfSignal);
 
