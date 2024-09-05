@@ -92,7 +92,7 @@ export class Block {
       return false;
     }
 
-    if (!this.children) return true;
+    if (!this.children) return false;
 
     for (let i = 0; i < this.children.length; ++i) {
       const child = getValue(this.children[i]);
@@ -212,12 +212,12 @@ export class Block {
   removeChild(blockSignal: MaybeSignal<Block>): void {
     const block = getValue(blockSignal);
     block.parent = undefined;
+    block.unmount();
 
     const index = this.children?.findIndex((value) => value === block || value === blockSignal);
     if (typeof index !== "number" || index === -1) return;
 
     this.children!.splice(index, 1);
-    block.unmount();
     this.changed = true;
   }
 
