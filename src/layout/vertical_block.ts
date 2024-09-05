@@ -87,6 +87,8 @@ export class VerticalBlock extends Block {
       child.draw();
     }
 
+    child.visible = false;
+
     let freeSpace = this.computedHeight - this.computedY - this.lines.length;
     if (freeSpace <= 0) return;
 
@@ -104,9 +106,8 @@ export class VerticalBlock extends Block {
 
     if (freeSpace <= 0) return;
 
-    // TODO: Decide whether child lines should be styled
-    //       For now it seems like a good idea, however there might be some odd edge-cases
-    // TODO: This condition might lead to some issues later on
+    child.visible = true;
+
     if (childChanged || !child.computedTop) {
       child.computedTop += this.lines.length;
     }

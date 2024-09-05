@@ -35,6 +35,7 @@ export class Block {
   width!: Unit;
   height!: Unit;
 
+  visible = true;
   changed = true;
   computedTop = 0;
   computedLeft = 0;
@@ -117,25 +118,50 @@ export class Block {
     ));
   }
 
-  boundingRectangle(): BoundingRectangle {
+  boundingRectangle(): BoundingRectangle | null {
+    if (!this.visible) return null;
+
     let top = this.computedTop;
     let left = this.computedLeft;
 
-    let parent = getValue(this.parent);
-    while (parent) {
-      if (!Number.isFinite(parent.computedTop)) {
-        throw parent;
-      }
-      top += parent.computedTop;
-      left += parent.computedLeft;
-      parent = getValue(parent.parent);
+    const parent = getValue(this.parent);
+
+    let block = parent;
+    while (block) {
+      if (!block.visible) return null;
+      top += block.computedTop;
+      left += block.computedLeft;
+      block = getValue(block.parent);
+    }
+
+    // Clamp bounding box to the parents bounding box
+    // To make sure it doesn't stick out
+    let width = this.computedWidth;
+    let height = this.computedHeight;
+    if (parent) {
+      const parentBB = parent.boundingRectangle()!;
+      const minTop = parentBB.top;
+      const maxTop = parentBB.top + parentBB.height;
+      const minLeft = parentBB.left;
+      const maxLeft = parentBB.left + parentBB.width;
+
+      const actualTop = Math.min(Math.max(top, minTop), maxTop);
+      const actualLeft = Math.min(Math.max(left, minLeft), maxLeft);
+      const topDiff = top - actualTop;
+      const leftDiff = left - actualLeft;
+
+      width -= leftDiff;
+      height -= topDiff;
+
+      top = actualTop;
+      left = actualLeft;
     }
 
     return {
       top,
       left,
-      width: this.computedWidth,
-      height: this.computedHeight,
+      width,
+      height,
     };
   }
 
@@ -247,6 +273,7 @@ export class Block {
 
   compute(_parent: MaybeSignal<Block>): void {
     if (this.hasChanged()) {
+      this.visible = true;
       this.computedTop = 0;
       this.computedLeft = 0;
       this.computedWidth = 0;

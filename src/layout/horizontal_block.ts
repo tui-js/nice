@@ -88,7 +88,10 @@ export class HorizontalBlock extends Block {
     }
 
     let freeSpace = this.computedWidth - this.#occupiedWidth;
-    if (freeSpace <= 0) return;
+    if (freeSpace <= 0) {
+      child.visible = false;
+      return;
+    }
 
     const offsetY = normalizeUnit(this.y, this.computedHeight - child.computedHeight);
 
@@ -101,13 +104,16 @@ export class HorizontalBlock extends Block {
       freeSpace -= gapLinesInBounds;
     }
 
+    if (freeSpace <= 0) {
+      child.visible = false;
+      return;
+    }
+
     if (childChanged || !child.computedLeft) {
       child.computedTop += offsetY;
       child.computedLeft += this.#occupiedWidth;
       child.computedLeft += this.computedX;
     }
-
-    if (freeSpace <= 0) return;
 
     if (child.computedWidth <= freeSpace) {
       // TODO: compute styledLine?

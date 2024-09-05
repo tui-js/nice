@@ -153,8 +153,9 @@ export class StyleBlock extends Block {
     this.updateLines();
   }
 
-  boundingRectangle(includeMargins = false): BoundingRectangle {
+  boundingRectangle(includeMargins = false): BoundingRectangle | null {
     const rectangle = super.boundingRectangle();
+    if (!rectangle) return null;
 
     if (!includeMargins) {
       const { margin } = this.style;

@@ -102,7 +102,9 @@ function render() {
   for (const [i, block] of blocks.entries()) {
     const style = crayon.hsl(i * HUE_STEP, 50, 50);
 
-    const { top, left, width, height } = block.boundingRectangle();
+    const rect = block.boundingRectangle();
+    if (!rect) return;
+    const { top, left, width, height } = rect;
 
     draw(top, left, style("╭"));
     draw(top, left + width - 1, style("╮"));
