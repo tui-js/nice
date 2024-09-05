@@ -137,7 +137,7 @@ export class StyleBlock extends Block {
   almostTheSame(other: Block): boolean {
     if (other instanceof StyleBlock) {
       if (this.style !== other?.style) return false;
-      else if (this.#rawLines.length !== other.#rawLines.length) return false;
+      else if (this.content !== other.content) return false;
     }
 
     return super.almostTheSame(other);
