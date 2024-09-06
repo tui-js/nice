@@ -1,36 +1,30 @@
 {
   "name": "@tui/nice",
-  "version": "0.5.9",
+  "version": "0.5.10",
   "exports": {
     ".": "./mod.ts",
     "./block": "./src/block.ts",
     "./unit": "./src/unit.ts",
-
     "./style_block": "./src/style_block.ts",
     "./margin": "./src/margin/mod.ts",
     "./border": "./src/border/mod.ts",
     "./text": "./src/text/mod.ts",
-
     "./layout": "./src/layout/mod.ts",
     "./layout/horizontal": "./src/layout/horizontal_block.ts",
     "./layout/vertical": "./src/layout/vertical_block.ts",
     "./layout/overlay": "./src/layout/overlay_block.ts"
   },
-
   "imports": {
     "@tui/strings": "jsr:@tui/strings@^0",
     "@tui/signals": "jsr:@tui/signals@^0",
-
     // tests
     "@std/assert": "jsr:@std/assert@^0.218",
     "@crayon/crayon": "jsr:@crayon/crayon@4.0.0-alpha.3",
     "@crayon/literal": "jsr:@crayon/literal@1.0.0-alpha.2"
   },
-
   "fmt": {
     "lineWidth": 120
   },
-
   "tasks": {
     "demo": "deno run --allow-hrtime examples/demo.ts",
     "demo-watch": "deno run --watch --allow-hrtime examples/demo.ts",
