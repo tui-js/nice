@@ -76,6 +76,8 @@ export class Block {
           if (lastChild) this.removeChild(lastChild);
           this.addChild(child, pos);
           lastChild = child;
+
+          getValue(this.parent)?.forceUpdate();
         });
       }
     }
@@ -105,6 +107,8 @@ export class Block {
   }
 
   forceUpdate(): void {
+    if (this.changed) return;
+
     this.changed = true;
     if (!this.children) return;
     for (const child of this.children) {
