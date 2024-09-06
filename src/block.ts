@@ -64,7 +64,7 @@ export class Block {
     });
 
     if (options.children) {
-      for (const childSignal of getValue(options.children)) {
+      for (const [pos, childSignal] of getValue(options.children).entries()) {
         let lastChild: Block | undefined;
         effect(() => {
           const child = getValue(childSignal);
@@ -74,7 +74,7 @@ export class Block {
           }
 
           if (lastChild) this.removeChild(lastChild);
-          this.addChild(child);
+          this.addChild(child, pos);
           lastChild = child;
         });
       }
@@ -190,11 +190,15 @@ export class Block {
     }
   }
 
-  addChild(blockSignal: MaybeSignal<Block>): void {
+  addChild(blockSignal: MaybeSignal<Block>, position?: number): void {
     const block = getValue(blockSignal);
     block.parent = this;
     this.children ??= [];
-    this.children.push(blockSignal);
+    if (typeof position === "number") {
+      this.children.splice(position, 0, blockSignal);
+    } else {
+      this.children.push(blockSignal);
+    }
     block.mount();
     this.changed = true;
   }
