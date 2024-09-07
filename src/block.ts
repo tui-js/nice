@@ -90,17 +90,18 @@ export class Block {
       return false;
     }
 
-    if (this.children?.length !== other.children?.length) {
+    if (this.children?.length) {
+      if (!other.children?.length) return false;
+      if (this.children.length !== other.children.length) return false;
+
+      for (let i = 0; i < this.children.length; ++i) {
+        const child = getValue(this.children[i]);
+        const otherChild = getValue(other.children![i]);
+
+        if (!child.almostTheSame(otherChild)) return false;
+      }
+    } else if (other.children?.length) {
       return false;
-    }
-
-    if (!this.children) return false;
-
-    for (let i = 0; i < this.children.length; ++i) {
-      const child = getValue(this.children[i]);
-      const otherChild = getValue(other.children![i]);
-
-      if (!child.almostTheSame(otherChild)) return false;
     }
 
     return true;

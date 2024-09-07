@@ -6,11 +6,7 @@ export type Dynamic = (size: number) => number;
 export type NoAutoUnit = Percent | Cell | Dynamic;
 export type Unit = NoAutoUnit | Auto;
 
-export function normalizeUnit(
-  value: NoAutoUnit,
-  size: number,
-  usedSize?: number,
-): number {
+export function normalizeUnit(value: NoAutoUnit, size: number, usedSize?: number): number {
   if (typeof value === "number") {
     return value;
   } else if (typeof value === "function") {
