@@ -134,6 +134,15 @@ export class StyleBlock extends Block {
     this.changed = true;
   }
 
+  static i = 0;
+  almostTheSame(other: Block): boolean {
+    if (other instanceof StyleBlock) {
+      if (this.style !== other.style) return false;
+    }
+
+    return super.almostTheSame(other);
+  }
+
   forceUpdate(): void {
     this.updateLines();
     super.forceUpdate();

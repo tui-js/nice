@@ -193,16 +193,16 @@ export class Block {
     }
   }
 
-  addChild(blockSignal: MaybeSignal<Block>, position?: number): void {
-    const block = getValue(blockSignal);
-    block.parent = this;
+  addChild(block: MaybeSignal<Block>, position?: number): void {
+    const blockValue = getValue(block);
+    blockValue.parent = this;
     this.children ??= [];
     if (typeof position === "number") {
-      this.children.splice(position, 0, blockSignal);
+      this.children.splice(position, 0, block);
     } else {
-      this.children.push(blockSignal);
+      this.children.push(block);
     }
-    block.mount();
+    blockValue.mount();
     this.changed = true;
   }
 
@@ -216,12 +216,12 @@ export class Block {
     this.changed = true;
   }
 
-  removeChild(blockSignal: MaybeSignal<Block>): void {
-    const block = getValue(blockSignal);
-    block.parent = undefined;
-    block.unmount();
+  removeChild(block: MaybeSignal<Block>): void {
+    const blockValue = getValue(block);
+    blockValue.parent = undefined;
+    blockValue.unmount();
 
-    const index = this.children?.findIndex((value) => value === block || value === blockSignal);
+    const index = this.children?.findIndex((value) => value === blockValue || value === block);
     if (typeof index !== "number" || index === -1) return;
 
     this.children!.splice(index, 1);
