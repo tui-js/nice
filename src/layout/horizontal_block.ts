@@ -1,10 +1,12 @@
 import { cropEnd, cropStart } from "@tui/strings";
 import { effect, getValue, type MaybeSignal } from "@tui/signals";
 
-import { Block } from "../block.ts";
+import type { Block } from "../block.ts";
 import { type NoAutoUnit, normalizeUnit, type Unit } from "../unit.ts";
 import { flexibleCompute } from "./shared.ts";
 import type { StringStyler } from "../types.ts";
+import { LayoutBlock } from "../layout_block.ts";
+import { maybeComputed } from "../utils.ts";
 
 export interface HorizontalBlockOptions {
   id?: string;
@@ -16,7 +18,7 @@ export interface HorizontalBlockOptions {
   gap?: MaybeSignal<NoAutoUnit>;
 }
 
-export class HorizontalBlock extends Block {
+export class HorizontalBlock extends LayoutBlock {
   name = "Horizontal";
 
   string?: StringStyler;
@@ -37,6 +39,28 @@ export class HorizontalBlock extends Block {
       children,
     });
 
+    const { string, x, y, gap } = options;
+
+    maybeComputed(string, (string) => {
+      this.string = string;
+      this.changed = true;
+    });
+
+    maybeComputed(x, (x) => {
+      this.x = x ?? 0;
+      this.changed = true;
+    });
+
+    maybeComputed(y, (y) => {
+      this.y = y ?? 0;
+      this.changed = true;
+    });
+
+    maybeComputed(gap, (gap) => {
+      this.gap = gap ?? 0;
+      this.changed = true;
+    });
+
     effect(() => {
       this.string = getValue(options.string);
       this.x = getValue(options.x) ?? 0;
@@ -47,9 +71,8 @@ export class HorizontalBlock extends Block {
     });
   }
 
-  compute(parent: MaybeSignal<Block>): void {
+  compute(parent: Block): void {
     super.compute(parent);
-    if (!this.hasChanged()) return;
 
     this.usedWidth = 0;
     this.usedHeight = 0;
@@ -58,9 +81,8 @@ export class HorizontalBlock extends Block {
     this.computedGap = normalizeUnit(this.gap, this.computedHeight);
     if (this.computedGap < 0) throw new Error("Gap cannot be negative");
 
-    flexibleCompute(this, getValue(parent), (i, child) => {
+    flexibleCompute(this, parent, (i, child) => {
       if (i !== 0) this.usedWidth += this.computedGap;
-
       this.usedWidth += child.computedWidth;
       this.usedHeight = Math.max(this.usedHeight, child.computedHeight);
     });
@@ -70,20 +92,12 @@ export class HorizontalBlock extends Block {
   }
 
   startLayout(): void {
-    if (this.hasChanged()) {
-      this.compute(this.parent!);
-      this.lines.length = 0;
-    }
+    this.lines.length = 0;
   }
 
-  layout(childSignal: MaybeSignal<Block>): void {
-    if (!this.hasChanged()) return;
-
-    const child = getValue(childSignal);
-
+  layout(child: Block): void {
     const childChanged = child.hasChanged();
     if (childChanged) {
-      child.compute(this);
       child.draw();
     }
 
@@ -109,14 +123,12 @@ export class HorizontalBlock extends Block {
       return;
     }
 
-    if (childChanged || !child.computedLeft) {
+    if (childChanged) {
       child.computedTop += offsetY;
-      child.computedLeft += this.#occupiedWidth;
-      child.computedLeft += this.computedX;
+      child.computedLeft += this.#occupiedWidth + this.computedX;
     }
 
     if (child.computedWidth <= freeSpace) {
-      // TODO: compute styledLine?
       const emptyLine = " ".repeat(child.computedWidth);
 
       for (let i = 0; i < this.computedHeight; ++i) {
@@ -139,9 +151,6 @@ export class HorizontalBlock extends Block {
   }
 
   finishLayout(): void {
-    if (!this.hasChanged()) return;
-    this.changed = false;
-
     if (this.computedX < 0) {
       const padRight = " ".repeat(this.computedWidth - this.#occupiedWidth - this.computedX);
       const croppedLineWidth = this.computedWidth + this.computedX;

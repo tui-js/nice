@@ -1,19 +1,14 @@
-import { getValue, type MaybeSignal } from "@tui/signals";
-
 import { type NoAutoUnit, normalizeUnit } from "../unit.ts";
 import type { Block } from "../block.ts";
 
 type ComputationCallback = (index: number, child: Block) => void;
-type BasicComputableBlock = MaybeSignal<Block & { width: NoAutoUnit; height: NoAutoUnit }>;
+type BasicComputableBlock = Block & { width: NoAutoUnit; height: NoAutoUnit };
 
-export function isBasicComputable(blockSignal: MaybeSignal<Block>): blockSignal is BasicComputableBlock {
-  const block = getValue(blockSignal);
+export function isBasicComputable(block: Block): block is BasicComputableBlock {
   return !block.autoParentDependant || (block.width !== "auto" && block.height !== "auto");
 }
 
-export function basicCompute(selfSignal: BasicComputableBlock, parent: Block, computation: ComputationCallback): void {
-  const self = getValue(selfSignal);
-
+export function basicCompute(self: BasicComputableBlock, parent: Block, computation: ComputationCallback): void {
   if (!self.children) {
     return;
   }
@@ -22,10 +17,10 @@ export function basicCompute(selfSignal: BasicComputableBlock, parent: Block, co
   self.computedHeight = normalizeUnit(self.height, parent.computedHeight, parent.usedHeight);
 
   let i = 0;
-  for (const childSignal of self.children) {
-    const child = getValue(childSignal);
-    child.compute(self);
-    child.draw();
+  for (const child of self.children) {
+    if (child.hasChanged()) {
+      child.compute(self);
+    }
     computation(i++, child);
   }
 }
@@ -59,17 +54,16 @@ export function flexibleCompute(self: Block, parent: Block, computation: Computa
 
   let i = 0;
   let deferred: Block[] | undefined;
-  for (const childSignal of self.children) {
-    const child = getValue(childSignal);
-
+  for (const child of self.children) {
     if (!isBasicComputable(child)) {
       deferred ??= [];
       deferred.push(child);
       continue;
     }
 
-    child.compute(self);
-    child.draw();
+    if (child.hasChanged()) {
+      child.compute(self);
+    }
     computation(i++, child);
   }
 
@@ -78,8 +72,9 @@ export function flexibleCompute(self: Block, parent: Block, computation: Computa
     if (self.height === "auto") self.computedHeight = self.usedHeight;
 
     for (const child of deferred) {
-      child.compute(self);
-      child.draw();
+      if (child.hasChanged()) {
+        child.compute(self);
+      }
       computation(i++, child);
     }
   }

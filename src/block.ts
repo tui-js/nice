@@ -1,13 +1,18 @@
-import { effect, getValue, type MaybeSignal, signal } from "@tui/signals";
+import { BaseSignal, computed, getValue, type MaybeSignal } from "@tui/signals";
 
 import type { Unit } from "./unit.ts";
+import type { MaybeSignalValues } from "./types.ts";
+import { maybeComputed } from "./utils.ts";
 
-export interface BlockOptions {
-  id?: string;
-  width: MaybeSignal<Unit>;
-  height: MaybeSignal<Unit>;
-  children?: MaybeSignal<Block>[];
-}
+export type BlockOptions =
+  & {
+    id?: string;
+    children?: MaybeSignal<Block>[];
+  }
+  & MaybeSignalValues<{
+    width: Unit;
+    height: Unit;
+  }>;
 
 export interface BoundingRectangle {
   top: number;
@@ -22,8 +27,8 @@ export interface BlockEventListeners {
 }
 
 export class Block {
+  name = "Block";
   id: string;
-  name?: string;
 
   listeners: BlockEventListeners = {
     mount: [],
@@ -45,45 +50,58 @@ export class Block {
   usedWidth = 0;
   usedHeight = 0;
 
-  parent?: MaybeSignal<Block>;
-  children?: MaybeSignal<Block>[];
+  parent?: Block;
+  children?: Block[];
 
   lines: string[] = [];
 
   constructor(options: BlockOptions) {
     this.id = options.id ?? "not set";
 
-    effect(() => {
-      this.width = getValue(options.width);
-      if (typeof this.width === "number") this.computedWidth = this.width;
+    const { width, height } = options;
 
-      this.height = getValue(options.height);
-      if (typeof this.height === "number") this.computedHeight = this.height;
-
+    maybeComputed(width, (width) => {
+      this.width = width;
+      if (typeof this.width === "number") {
+        this.computedWidth = this.width;
+      }
       this.changed = true;
     });
 
-    if (options.children) {
-      for (const [pos, childSignal] of getValue(options.children).entries()) {
-        let lastChild: Block | undefined;
-        effect(() => {
-          const child = getValue(childSignal);
+    maybeComputed(height, (height) => {
+      this.height = height;
+      if (typeof this.height === "number") {
+        this.computedHeight = this.height;
+      }
+      this.changed = true;
+    });
 
-          if (lastChild && child.almostTheSame(lastChild)) {
+    if (!options.children) return;
+
+    for (const [position, child] of options.children.entries()) {
+      if (!(child instanceof BaseSignal)) {
+        this.addChild(child, position);
+        continue;
+      }
+
+      let previousChild: Block | undefined;
+      computed([child], (child) => {
+        if (previousChild) {
+          if (child.similiarTo(previousChild)) {
             return;
           }
+          this.removeChild(previousChild);
+        }
 
-          if (lastChild) this.removeChild(lastChild);
-          this.addChild(child, pos);
-          lastChild = child;
+        this.addChild(child, position);
+        previousChild = child;
 
-          getValue(this.parent)?.forceUpdate();
-        });
-      }
+        this?.parent?.forceChange();
+      });
     }
   }
 
-  almostTheSame(other: Block): boolean {
+  similiarTo(other: Block): boolean {
     if (this === other) return true;
 
     if (this.id !== other.id) {
@@ -98,7 +116,7 @@ export class Block {
         const child = getValue(this.children[i]);
         const otherChild = getValue(other.children![i]);
 
-        if (!child.almostTheSame(otherChild)) return false;
+        if (!child.similiarTo(otherChild)) return false;
       }
     } else if (other.children?.length) {
       return false;
@@ -107,18 +125,17 @@ export class Block {
     return true;
   }
 
-  forceUpdate(): void {
+  forceChange(): void {
     this.changed = true;
     if (!this.children) return;
     for (const child of this.children) {
-      getValue(child).forceUpdate();
+      child.forceChange();
     }
   }
 
   hasChanged(): boolean {
-    return (this.changed = this.changed || (
-      this.children?.some((block) => getValue(block).hasChanged()) ?? false
-    ));
+    // TODO: This might be unnecesarily slow
+    return (this.changed = this.changed || (this.children?.some((block) => block.hasChanged()) ?? false));
   }
 
   boundingRectangle(): BoundingRectangle | null {
@@ -193,16 +210,17 @@ export class Block {
     }
   }
 
-  addChild(block: MaybeSignal<Block>, position?: number): void {
-    const blockValue = getValue(block);
-    blockValue.parent = this;
+  addChild(block: Block, position?: number): void {
+    block.parent = this;
+
     this.children ??= [];
     if (typeof position === "number") {
       this.children.splice(position, 0, block);
     } else {
       this.children.push(block);
     }
-    blockValue.mount();
+
+    block.mount();
     this.changed = true;
   }
 
@@ -216,76 +234,30 @@ export class Block {
     this.changed = true;
   }
 
-  removeChild(block: MaybeSignal<Block>): void {
-    const blockValue = getValue(block);
-    blockValue.parent = undefined;
-    blockValue.unmount();
+  removeChild(block: Block): void {
+    block.parent = undefined;
 
-    const index = this.children?.findIndex((value) => value === blockValue || value === block);
-    if (typeof index !== "number" || index === -1) return;
+    const index = this.children?.findIndex((value) => value === block || value === block);
+    if (typeof index !== "number" || index === -1) {
+      return;
+    }
 
     this.children!.splice(index, 1);
+    block.unmount();
     this.changed = true;
   }
 
   draw() {
-    if (!this.hasChanged()) {
-      return;
-    }
-
-    if (!this.parent) {
-      const size = Deno.consoleSize();
-      const width = signal(size.columns);
-      const height = signal(size.rows);
-
-      Deno.addSignalListener("SIGWINCH", () => {
-        const { columns, rows } = Deno.consoleSize();
-        width.set(columns);
-        height.set(rows);
-
-        terminal.forceUpdate();
-        this.compute(terminal);
-      });
-
-      const terminal = new Block({
-        id: "terminal",
-        width,
-        height,
-      });
-
-      terminal.addChild(this);
-      this.compute(this.parent!);
-    }
-
-    if (this.children) {
-      this.startLayout();
-      for (const child of this.children) {
-        this.layout(child);
-      }
-      this.finishLayout();
-    }
+    throw new Error("Default Block doesn't implement `draw`");
   }
 
-  startLayout(): void {
-    throw new Error("Default block doesn't implement 'Block.startLayout'");
-  }
-
-  layout(_child: MaybeSignal<Block>): void {
-    throw new Error("Default block doesn't implement 'Block.layout'");
-  }
-
-  finishLayout(): void {
-    throw new Error("Default block doesn't implement 'Block.finishLayout'");
-  }
-
-  compute(_parent: MaybeSignal<Block>): void {
-    if (this.hasChanged()) {
-      this.visible = true;
-      this.computedTop = 0;
-      this.computedLeft = 0;
-      this.computedWidth = 0;
-      this.computedHeight = 0;
-    }
+  compute(parent: Block): void;
+  compute(): void {
+    this.visible = true;
+    this.computedTop = 0;
+    this.computedLeft = 0;
+    this.computedWidth = 0;
+    this.computedHeight = 0;
   }
 
   render(relative = false): string {

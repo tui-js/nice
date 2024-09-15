@@ -1,10 +1,12 @@
-import { effect, getValue, type MaybeSignal } from "@tui/signals";
+import { getValue, type MaybeSignal } from "@tui/signals";
 import { cropStart, insert } from "@tui/strings";
 
-import { Block } from "../block.ts";
+import type { Block } from "../block.ts";
 import { type NoAutoUnit, normalizeUnit } from "../unit.ts";
 import { StyleBlock } from "../style_block.ts";
 import type { StringStyler } from "../types.ts";
+import { LayoutBlock } from "../layout_block.ts";
+import { maybeComputed } from "../utils.ts";
 
 export interface OverlayBlockOptions {
   id?: string;
@@ -16,10 +18,10 @@ export interface OverlayBlockOptions {
 }
 
 // FIXME: Sometimes fg clears style after it
-export class OverlayBlock extends Block {
+export class OverlayBlock extends LayoutBlock {
   name = "Overlay";
 
-  declare children: [bg: MaybeSignal<Block>, fg: MaybeSignal<Block>];
+  declare children: [bg: Block, fg: Block];
 
   string?: StringStyler;
   x!: NoAutoUnit;
@@ -28,25 +30,33 @@ export class OverlayBlock extends Block {
   computedY = 0;
 
   constructor(options: OverlayBlockOptions) {
+    const { bg, fg, string, x, y } = options;
+
     super({
       id: options.id,
       width: "auto",
       height: "auto",
-      children: [options.bg, options.fg],
+      children: [bg, fg],
     });
 
-    effect(() => {
-      this.string = getValue(options.string);
-      this.x = getValue(options.x);
-      this.y = getValue(options.y);
+    maybeComputed(string, (string) => {
+      this.string = string;
+      this.changed = true;
+    });
 
+    maybeComputed(x, (x) => {
+      this.x = x;
+      this.changed = true;
+    });
+
+    maybeComputed(y, (y) => {
+      this.y = y;
       this.changed = true;
     });
   }
 
   compute(parent: Block): void {
     super.compute(parent);
-    if (!this.hasChanged()) return;
 
     const [bg, fg] = this.children.map(getValue);
 
@@ -73,16 +83,12 @@ export class OverlayBlock extends Block {
   }
 
   startLayout(): void {
-    if (!this.hasChanged()) return;
     this.lines.length = 0;
   }
 
   layout(): void {}
 
   finishLayout(): void {
-    if (!this.hasChanged()) return;
-    this.changed = false;
-
     const [bg, fg] = this.children.map(getValue);
     const { string, computedX, computedY } = this;
 

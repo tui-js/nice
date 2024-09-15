@@ -1,4 +1,4 @@
-// Shared helper types
+import type { MaybeSignal } from "@tui/signals";
 
 type TypeAorB<A, B> =
   | ({ [keyA in keyof A]: A[keyA] } & { [keyB in Exclude<keyof B, keyof A>]?: never })
@@ -13,3 +13,7 @@ export interface StringStyler {
 }
 
 export type ConsoleDimensions = ReturnType<typeof Deno.consoleSize>;
+
+export type MaybeSignalValues<T> = {
+  [Key in keyof T]: MaybeSignal<T[Key]>;
+};
