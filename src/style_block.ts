@@ -22,7 +22,6 @@ import { type BorderDefinition, normalizeBorder, type NormalizedBorderDefinition
 import { applyBorder } from "./border/border.ts";
 import { getValue } from "@tui/signals";
 import { maybeComputed } from "./utils.ts";
-import { LayoutBlock } from "./layout_block.ts";
 
 export interface StyleOptions {
   width?: MaybeSignal<Unit>;
