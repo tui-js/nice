@@ -26,7 +26,14 @@ export class LayoutBlock extends Block {
             };
 
             resize();
-            Deno.addSignalListener("SIGWINCH", resize);
+
+            // Because SIGWINCH signal is not supported on windows
+            // We just have to check whether size has changed in a loop
+            if (Deno.build.os === "windows") {
+              Deno.unrefTimer(setInterval(resize, 32));
+            } else {
+              Deno.addSignalListener("SIGWINCH", resize);
+            }
 
             parent = new Block({
                 id: "terminal",
