@@ -1,4 +1,4 @@
-import { getValue, type MaybeSignal } from "@tui/signals";
+import type { MaybeSignal } from "@tui/signals";
 import { cropStart, insert } from "@tui/strings";
 
 import type { Block } from "../block.ts";
@@ -57,23 +57,18 @@ export class OverlayBlock extends LayoutBlock {
 
   compute(parent: Block): void {
     super.compute(parent);
+    const [bg, fg] = this.children;
 
-    const [bg, fg] = this.children.map(getValue);
-
-    if (!bg.changed && bg instanceof StyleBlock) {
-      bg.updateLines();
+    if (bg.hasChanged()) {
+      bg.compute(parent);
     }
-    bg.compute(parent);
-    bg.draw();
 
     this.computedWidth = bg.computedWidth;
     this.computedHeight = bg.computedHeight;
 
-    if (!fg.changed && fg instanceof StyleBlock) {
-      fg.updateLines();
+    if (fg.hasChanged()) {
+      fg.compute(parent);
     }
-    fg.compute(this);
-    fg.draw();
 
     this.computedX = normalizeUnit(this.x, bg.computedWidth - fg.computedWidth);
     this.computedY = normalizeUnit(this.y, bg.computedHeight - fg.computedHeight);
@@ -86,10 +81,15 @@ export class OverlayBlock extends LayoutBlock {
     this.lines.length = 0;
   }
 
-  layout(): void {}
+  layout(child: Block): void {
+    if (child.hasChanged()) {
+      child.draw();
+    }
+  }
 
   finishLayout(): void {
-    const [bg, fg] = this.children.map(getValue);
+    const [bg, fg] = this.children;
+
     const { string, computedX, computedY } = this;
 
     const emptyLine = string ? string(" ".repeat(bg.computedWidth)) : " ".repeat(bg.computedWidth);
