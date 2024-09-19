@@ -60,15 +60,6 @@ export class HorizontalBlock extends LayoutBlock {
       this.gap = gap ?? 0;
       this.changed = true;
     });
-
-    effect(() => {
-      this.string = getValue(options.string);
-      this.x = getValue(options.x) ?? 0;
-      this.y = getValue(options.y) ?? 0;
-      this.gap = getValue(options.gap) ?? 0;
-
-      this.changed = true;
-    });
   }
 
   compute(parent: Block): void {

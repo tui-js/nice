@@ -6,6 +6,7 @@ import { type NoAutoUnit, normalizeUnit, type Unit } from "../unit.ts";
 import { flexibleCompute } from "./shared.ts";
 import type { StringStyler } from "../types.ts";
 import { LayoutBlock } from "../layout_block.ts";
+import { maybeComputed } from "../utils.ts";
 
 export interface VerticalBlockOptions {
   id?: string;
@@ -38,12 +39,24 @@ export class VerticalBlock extends LayoutBlock {
       children,
     });
 
-    effect(() => {
-      this.string = getValue(options.string);
-      this.x = getValue(options.x) ?? 0;
-      this.y = getValue(options.y) ?? 0;
-      this.gap = getValue(options.gap) ?? 0;
+    const { string, x, y, gap } = options;
+    maybeComputed(string, (string) => {
+      this.string = string;
+      this.changed = true;
+    });
 
+    maybeComputed(x, (x) => {
+      this.x = x ?? 0;
+      this.changed = true;
+    });
+
+    maybeComputed(y, (y) => {
+      this.y = y ?? 0;
+      this.changed = true;
+    });
+
+    maybeComputed(gap, (gap) => {
+      this.gap = gap ?? 0;
       this.changed = true;
     });
   }
