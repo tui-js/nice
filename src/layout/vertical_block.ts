@@ -1,5 +1,5 @@
 import { cropEnd, cropStart } from "@tui/strings";
-import { effect, getValue, type MaybeSignal } from "@tui/signals";
+import type { MaybeSignal } from "@tui/signals";
 
 import type { Block } from "../block.ts";
 import { type NoAutoUnit, normalizeUnit, type Unit } from "../unit.ts";

@@ -3,7 +3,6 @@ import { cropStart, insert } from "@tui/strings";
 
 import type { Block } from "../block.ts";
 import { type NoAutoUnit, normalizeUnit } from "../unit.ts";
-import { StyleBlock } from "../style_block.ts";
 import type { StringStyler } from "../types.ts";
 import { LayoutBlock } from "../layout_block.ts";
 import { maybeComputed } from "../utils.ts";
