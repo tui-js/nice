@@ -108,7 +108,8 @@ export class OverlayBlock extends LayoutBlock {
       const fgLine = fg.lines[fgLinePos];
 
       if (computedX < 0) {
-        const line = cropStart(fgLine, fgWidth + computedX) + cropStart(bgLine, bgWidth - fgWidth - computedX);
+        const line = cropStart(fgLine, fgWidth + computedX, " ") +
+          cropStart(bgLine, bgWidth - fgWidth - computedX, " ");
         this.lines.push(string ? string(line) : line);
       } else if (fgWidth === bgWidth) {
         this.lines.push(fgLine);
@@ -116,7 +117,7 @@ export class OverlayBlock extends LayoutBlock {
         // TODO: Just inlining insert and using computedWidths instead of recalculating them
         //       is an easy way to improve perf, but maybe @tui/strings should add a way to
         //       set widths if they are known instead
-        const line = insert(bgLine, fgLine, computedX, true);
+        const line = insert(bgLine, fgLine, computedX, true, " ");
 
         this.lines.push(string ? string(line) : line);
       }

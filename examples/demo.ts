@@ -12,6 +12,7 @@ const color = () => crayon.bgHsl(((++h) * 40) % 360, 60, 40);
 const style = new Style({
   string: crayon.bgMagenta,
   text: {
+    overflow: "ellipsis",
     horizontalAlign: "center",
   },
   padding: { all: 1 },
@@ -50,7 +51,7 @@ export function render() {
         { width: calc("50% - 1"), gap: 2, string: crayon.bgLightBlack, x: "50%" },
         style.create(
           "Nice 🔥\n（╯°□°）╯︵┻━┻\ndevanagari आआॠऋॲपॉ\nﾊﾊﾊThis text should get wrapped because widthəəə is explicit as日本verylongstringthaəə💩twillwrapnomatterwhat\nwowə\nلعربيةا",
-          { string: color() },
+          { height: 15, string: color() },
         ),
         new HorizontalBlock(
           { gap: 2, string: color(), y: "50%" },

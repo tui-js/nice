@@ -127,7 +127,7 @@ export class VerticalBlock extends LayoutBlock {
         const croppedLineWidth = child.computedWidth + computedX;
 
         for (let i = 0; i < childLinesInBounds; ++i) {
-          const line = cropStart(child.lines[i], croppedLineWidth);
+          const line = cropStart(child.lines[i], croppedLineWidth, " ");
           const paddedLine = line + padRight;
           this.lines.push(this.string ? this.string(paddedLine) : paddedLine);
         }
@@ -148,7 +148,7 @@ export class VerticalBlock extends LayoutBlock {
     } else if (child.computedWidth > this.computedWidth) {
       for (let i = 0; i < childLinesInBounds; ++i) {
         const line = child.lines[i];
-        const croppedLine = cropEnd(line, this.computedWidth);
+        const croppedLine = cropEnd(line, this.computedWidth, " ");
         this.lines.push(this.string ? this.string(croppedLine) : croppedLine);
       }
     } else {

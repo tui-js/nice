@@ -3,18 +3,25 @@
   "packages": {
     "specifiers": {
       "jsr:@crayon/crayon@4.0.0-alpha.3": "jsr:@crayon/crayon@4.0.0-alpha.3",
+      "jsr:@crayon/literal@1.0.0-alpha.2": "jsr:@crayon/literal@1.0.0-alpha.2",
       "jsr:@tui/signals@^0": "jsr:@tui/signals@0.0.9",
-      "jsr:@tui/strings@^0": "jsr:@tui/strings@0.1.1"
+      "jsr:@tui/strings@^0": "jsr:@tui/strings@0.1.2"
     },
     "jsr": {
       "@crayon/crayon@4.0.0-alpha.3": {
         "integrity": "6fed8d93609926e6b36d1716cfe2a62f7fb2612c2f19f4d5b6d7b4e233d8fff3"
       },
+      "@crayon/literal@1.0.0-alpha.2": {
+        "integrity": "9e2b0a3d75c7af52107f50c41635ee520e03017b1efe5c7fe536a9a74b84409f",
+        "dependencies": [
+          "jsr:@crayon/crayon@4.0.0-alpha.3"
+        ]
+      },
       "@tui/signals@0.0.9": {
         "integrity": "cc9da5e34bc896b3f8a22a5af896af23d11ce3df0325902b6aeb55f1695c4b2b"
       },
-      "@tui/strings@0.1.1": {
-        "integrity": "fe9fa432e216458f539046947515a56c65b60b70ebe927b005422d329c25ad08"
+      "@tui/strings@0.1.2": {
+        "integrity": "bebbc352ca541e0b76bb7b7c42883e50ef419da5a4563ad0b9d349d6218ea648"
       }
     }
   },

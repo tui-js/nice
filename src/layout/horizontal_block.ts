@@ -135,7 +135,7 @@ export class HorizontalBlock extends LayoutBlock {
       for (let i = 0; i < this.computedHeight; ++i) {
         this.lines[i] ??= "";
         const line = child.lines[i - offsetY] ?? emptyLine;
-        this.lines[i] += gapString + cropEnd(line, freeSpace) + "\x1b[0m";
+        this.lines[i] += gapString + cropEnd(line, freeSpace, " ") + "\x1b[0m";
       }
       this.#occupiedWidth += freeSpace;
     }
@@ -147,7 +147,7 @@ export class HorizontalBlock extends LayoutBlock {
       const croppedLineWidth = this.computedWidth + this.computedX;
 
       for (let i = 0; i < this.lines.length; ++i) {
-        const paddedLine = cropStart(this.lines[i], croppedLineWidth) + padRight;
+        const paddedLine = cropStart(this.lines[i], croppedLineWidth, " ") + padRight;
         this.lines[i] = this.string ? this.string(paddedLine) : paddedLine;
       }
       return;
