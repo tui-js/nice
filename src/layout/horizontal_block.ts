@@ -80,6 +80,8 @@ export class HorizontalBlock extends LayoutBlock {
 
     this.usedWidth = Math.min(this.computedWidth, this.usedWidth);
     this.computedX = normalizeUnit(this.x, this.computedWidth - this.usedWidth);
+
+    this.maybeResize();
   }
 
   startLayout(): void {

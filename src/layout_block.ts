@@ -23,7 +23,16 @@ export class LayoutBlock extends Block {
         const { columns, rows } = Deno.consoleSize();
         width.set(columns);
         height.set(rows);
+        parent!.forceChange();
+        parent!.resize();
       };
+
+      parent = new Block({
+        id: "terminal",
+        width,
+        height,
+        children: [this],
+      });
 
       resize();
 
@@ -34,13 +43,6 @@ export class LayoutBlock extends Block {
       } else {
         Deno.addSignalListener("SIGWINCH", resize);
       }
-
-      parent = new Block({
-        id: "terminal",
-        width,
-        height,
-        children: [this],
-      });
     }
 
     this.compute(parent);

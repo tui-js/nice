@@ -24,6 +24,7 @@ export interface BoundingRectangle {
 export interface BlockEventListeners {
   mount: (() => void)[];
   unmount: (() => void)[];
+  resize: (() => void)[];
 }
 
 export class Block {
@@ -33,6 +34,7 @@ export class Block {
   listeners: BlockEventListeners = {
     mount: [],
     unmount: [],
+    resize: [],
   };
 
   // Whether block depends on parent when width or height are set to "auto"
@@ -46,6 +48,9 @@ export class Block {
   computedLeft = 0;
   computedWidth = 0;
   computedHeight = 0;
+
+  previousWidth = 0;
+  previousHeight = 0;
 
   usedWidth = 0;
   usedHeight = 0;
@@ -140,55 +145,23 @@ export class Block {
     return (this.changed = this.changed || (this.children?.some((block) => block.hasChanged()) ?? false));
   }
 
-  boundingRectangle(): BoundingRectangle | null {
-    if (!this.visible) return null;
-
-    let top = this.computedTop;
-    let left = this.computedLeft;
-
-    const parent = getValue(this.parent);
-
-    let block = parent;
-    while (block) {
-      if (!block.visible) return null;
-      top += block.computedTop;
-      left += block.computedLeft;
-      block = getValue(block.parent);
-    }
-
-    // Clamp bounding box to the parents bounding box
-    // To make sure it doesn't stick out
-    let width = this.computedWidth;
-    let height = this.computedHeight;
-    if (parent) {
-      const parentBB = parent.boundingRectangle()!;
-      const minTop = parentBB.top;
-      const maxTop = parentBB.top + parentBB.height;
-      const minLeft = parentBB.left;
-      const maxLeft = parentBB.left + parentBB.width;
-
-      const actualTop = Math.min(Math.max(top, minTop), maxTop);
-      const actualLeft = Math.min(Math.max(left, minLeft), maxLeft);
-      const topDiff = top - actualTop;
-      const leftDiff = left - actualLeft;
-
-      width -= leftDiff;
-      height -= topDiff;
-
-      top = actualTop;
-      left = actualLeft;
-    }
-
-    return {
-      top,
-      left,
-      width,
-      height,
-    };
-  }
-
   addEventListener(event: keyof BlockEventListeners, listener: () => void) {
     this.listeners[event].push(listener);
+  }
+
+  maybeResize() {
+    if (
+      this.computedWidth === this.previousWidth &&
+      this.computedHeight === this.previousHeight
+    ) return;
+
+    this.resize();
+  }
+
+  resize() {
+    for (const listener of this.listeners.resize) {
+      listener();
+    }
   }
 
   mount() {
@@ -255,6 +228,10 @@ export class Block {
   compute(parent: Block): void;
   compute(): void {
     this.visible = true;
+
+    this.previousWidth = this.computedWidth;
+    this.previousHeight = this.computedHeight;
+
     this.computedTop = 0;
     this.computedLeft = 0;
     this.computedWidth = 0;
@@ -275,5 +252,52 @@ export class Block {
     }
 
     return this.lines.join("\n");
+  }
+
+  boundingRectangle(): BoundingRectangle | null {
+    if (!this.visible) return null;
+
+    let top = this.computedTop;
+    let left = this.computedLeft;
+
+    const parent = this.parent;
+
+    let block = parent;
+    while (block) {
+      if (!block.visible) return null;
+      top += block.computedTop;
+      left += block.computedLeft;
+      block = block.parent;
+    }
+
+    // Clamp bounding box to the parents bounding box
+    // To make sure it doesn't stick out
+    let width = this.computedWidth;
+    let height = this.computedHeight;
+    if (parent) {
+      const parentBB = parent.boundingRectangle()!;
+      const minTop = parentBB.top;
+      const maxTop = parentBB.top + parentBB.height;
+      const minLeft = parentBB.left;
+      const maxLeft = parentBB.left + parentBB.width;
+
+      const actualTop = Math.min(Math.max(top, minTop), maxTop);
+      const actualLeft = Math.min(Math.max(left, minLeft), maxLeft);
+      const topDiff = top - actualTop;
+      const leftDiff = left - actualLeft;
+
+      width -= leftDiff;
+      height -= topDiff;
+
+      top = actualTop;
+      left = actualLeft;
+    }
+
+    return {
+      top,
+      left,
+      width,
+      height,
+    };
   }
 }

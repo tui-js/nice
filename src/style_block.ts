@@ -223,6 +223,8 @@ export class StyleBlock extends Block {
       this.computedWidth = 0;
       this.computedHeight = 0;
     }
+
+    this.maybeResize();
   }
 
   draw(): void {

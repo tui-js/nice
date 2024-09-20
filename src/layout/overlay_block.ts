@@ -74,6 +74,8 @@ export class OverlayBlock extends LayoutBlock {
 
     fg.computedLeft += this.computedX;
     fg.computedTop += this.computedY;
+
+    this.maybeResize();
   }
 
   startLayout(): void {

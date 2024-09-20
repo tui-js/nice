@@ -81,6 +81,8 @@ export class VerticalBlock extends LayoutBlock {
     this.computedY = normalizeUnit(this.y, this.computedHeight - this.usedHeight);
 
     this.computedTop += this.computedY;
+
+    this.maybeResize();
   }
 
   startLayout(): void {
