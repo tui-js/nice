@@ -1,4 +1,4 @@
-import { BaseSignal, computed, getValue, type MaybeSignal } from "@tui/signals";
+import { BaseSignal, computed, type MaybeSignal } from "@tui/signals";
 
 import type { Unit } from "./unit.ts";
 import type { MaybeSignalValues } from "./types.ts";
@@ -113,8 +113,8 @@ export class Block {
       if (this.children.length !== other.children.length) return false;
 
       for (let i = 0; i < this.children.length; ++i) {
-        const child = getValue(this.children[i]);
-        const otherChild = getValue(other.children![i]);
+        const child = this.children[i];
+        const otherChild = other.children![i];
 
         if (!child.similiarTo(otherChild)) return false;
       }
@@ -127,9 +127,11 @@ export class Block {
 
   forceChange(): void {
     this.changed = true;
-    if (!this.children) return;
-    for (const child of this.children) {
-      child.forceChange();
+
+    if (this.children) {
+      for (const child of this.children) {
+        child.forceChange();
+      }
     }
   }
 
@@ -196,7 +198,7 @@ export class Block {
     }
 
     if (this.children) {
-      for (const child of this.children) getValue(child).mount();
+      for (const child of this.children) child.mount();
     }
   }
 
@@ -206,7 +208,7 @@ export class Block {
     }
 
     if (this.children) {
-      for (const child of this.children) getValue(child).unmount();
+      for (const child of this.children) child.unmount();
     }
   }
 
@@ -227,9 +229,8 @@ export class Block {
   clearChildren(): void {
     if (!this.children) return;
     for (const child of this.children.splice(0)) {
-      const childValue = getValue(child);
-      childValue.parent = undefined;
-      childValue.unmount();
+      child.parent = undefined;
+      child.unmount();
     }
     this.changed = true;
   }
