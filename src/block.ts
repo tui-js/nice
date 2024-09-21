@@ -150,6 +150,14 @@ export class Block {
     this.listeners[event].push(listener);
   }
 
+  removeEventListener(event: keyof BlockEventListeners, listener: () => void) {
+    const events = this.listeners[event];
+    const index = events.indexOf(listener);
+    if (index !== -1) {
+      events.splice(index, 1);
+    }
+  }
+
   maybeResize() {
     if (
       this.computedWidth === this.previousWidth &&
