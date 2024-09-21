@@ -1,13 +1,33 @@
 import { type NoAutoUnit, normalizeUnit } from "../unit.ts";
 import type { Block } from "../block.ts";
+import type { LayoutBlock } from "../layout_block.ts";
+
+export interface BasicComputableBlock extends Block {
+  width: NoAutoUnit;
+  height: NoAutoUnit;
+}
 
 type ComputationCallback = (index: number, child: Block) => void;
-type BasicComputableBlock = Block & { width: NoAutoUnit; height: NoAutoUnit };
 
+/**
+ * Checks whether {@linkcode block} can be computed only by knowing its own or its parent size.
+ */
 export function isBasicComputable(block: Block): block is BasicComputableBlock {
   return !block.autoParentDependant || (block.width !== "auto" && block.height !== "auto");
 }
 
+/**
+ * {@linkcode Block.compute} of {@linkcode self} depending on its children.
+ *
+ * It's used when both width and height of {@linkcode self} are known to not be `"auto"`,
+ * thus initial size can be computed directly from {@linkcode parent}.
+ *
+ * Most of the time it shouldn't be used directly and {@linkcode flexibleCompute} should be used instead.\
+ * {@linkcode flexibleCompute} detects whether {@linkcode self} is an {@linkcode BasicComputableBlock} and calls
+ * this method when appropriate.
+ *
+ * @example Same as flexibleCompute
+ */
 export function basicCompute(self: BasicComputableBlock, parent: Block, computation: ComputationCallback): void {
   if (!self.children) {
     return;
@@ -26,7 +46,16 @@ export function basicCompute(self: BasicComputableBlock, parent: Block, computat
 }
 
 /**
- * {@linkcode Block.compute} methods which computes width and height depending on its children sizes.
+ * {@linkcode Block.compute} method which computes width and height of {@linkcode self} depending on its children.
+ *
+ * @example
+ * Compute element so its bounding box fits all its children vertically
+ * ```ts
+ * flexibleCompute(this, parent, (i, child) => {
+ *   this.usedWidth = Math.max(this.usedWidth, child.computedWidth);
+ *   this.usedHeight += child.computedHeight;
+ * }
+ * ```
  */
 export function flexibleCompute(self: LayoutBlock, parent: Block, computation: ComputationCallback): void {
   if (!self.children) {
