@@ -44,6 +44,7 @@ export class Block {
 
   visible = true;
   changed = true;
+
   computedTop = 0;
   computedLeft = 0;
   computedWidth = 0;
@@ -52,8 +53,8 @@ export class Block {
   previousWidth = 0;
   previousHeight = 0;
 
-  usedWidth = 0;
-  usedHeight = 0;
+  usedWidth?: number;
+  usedHeight?: number;
 
   parent?: Block;
   children?: Block[];
@@ -101,7 +102,7 @@ export class Block {
         this.addChild(child, position);
         previousChild = child;
 
-        this?.parent?.forceChange();
+        this.parent?.forceChange();
       });
     }
   }

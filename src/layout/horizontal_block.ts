@@ -19,7 +19,7 @@ export interface HorizontalBlockOptions {
 }
 
 export class HorizontalBlock extends LayoutBlock {
-  name = "Horizontal";
+  override name = "Horizontal";
 
   string?: StringStyler;
   x!: NoAutoUnit;
@@ -62,7 +62,7 @@ export class HorizontalBlock extends LayoutBlock {
     });
   }
 
-  compute(parent: Block): void {
+  override compute(parent: Block): void {
     super.compute(parent);
 
     this.usedWidth = 0;
@@ -84,11 +84,11 @@ export class HorizontalBlock extends LayoutBlock {
     this.maybeResize();
   }
 
-  startLayout(): void {
+  override startLayout(): void {
     this.lines.length = 0;
   }
 
-  layout(child: Block): void {
+  override layout(child: Block): void {
     const childChanged = child.hasChanged();
     if (childChanged) {
       child.draw();
@@ -143,7 +143,7 @@ export class HorizontalBlock extends LayoutBlock {
     }
   }
 
-  finishLayout(): void {
+  override finishLayout(): void {
     if (this.computedX < 0) {
       const padRight = " ".repeat(this.computedWidth - this.#occupiedWidth - this.computedX);
       const croppedLineWidth = this.computedWidth + this.computedX;

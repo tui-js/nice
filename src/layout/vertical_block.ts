@@ -19,9 +19,7 @@ export interface VerticalBlockOptions {
 }
 
 export class VerticalBlock extends LayoutBlock {
-  name = "Vertical";
-
-  declare children: Block[];
+  override name = "Vertical";
 
   string?: StringStyler;
   x!: NoAutoUnit;
@@ -61,7 +59,7 @@ export class VerticalBlock extends LayoutBlock {
     });
   }
 
-  compute(parent: Block): void {
+  override compute(parent: Block): void {
     super.compute(parent);
 
     this.usedWidth = 0;
@@ -85,11 +83,11 @@ export class VerticalBlock extends LayoutBlock {
     this.maybeResize();
   }
 
-  startLayout(): void {
+  override startLayout(): void {
     this.lines.length = 0;
   }
 
-  layout(child: Block): void {
+  override layout(child: Block): void {
     const childChanged = child.hasChanged();
     if (childChanged) {
       child.draw();
@@ -161,7 +159,7 @@ export class VerticalBlock extends LayoutBlock {
     }
   }
 
-  finishLayout(): void {
+  override finishLayout(): void {
     const heightDiff = this.computedHeight - this.lines.length;
 
     if (this.computedY < 0) {

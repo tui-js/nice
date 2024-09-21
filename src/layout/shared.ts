@@ -28,7 +28,7 @@ export function basicCompute(self: BasicComputableBlock, parent: Block, computat
 /**
  * {@linkcode Block.compute} methods which computes width and height depending on its children sizes.
  */
-export function flexibleCompute(self: Block, parent: Block, computation: ComputationCallback): void {
+export function flexibleCompute(self: LayoutBlock, parent: Block, computation: ComputationCallback): void {
   if (!self.children) {
     return;
   }

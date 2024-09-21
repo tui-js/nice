@@ -18,8 +18,7 @@ export interface OverlayBlockOptions {
 
 // FIXME: Sometimes fg clears style after it
 export class OverlayBlock extends LayoutBlock {
-  name = "Overlay";
-
+  override name = "Overlay";
   declare children: [bg: Block, fg: Block];
 
   string?: StringStyler;
@@ -54,7 +53,7 @@ export class OverlayBlock extends LayoutBlock {
     });
   }
 
-  compute(parent: Block): void {
+  override compute(parent: Block): void {
     super.compute(parent);
     const [bg, fg] = this.children;
 
@@ -78,17 +77,17 @@ export class OverlayBlock extends LayoutBlock {
     this.maybeResize();
   }
 
-  startLayout(): void {
+  override startLayout(): void {
     this.lines.length = 0;
   }
 
-  layout(child: Block): void {
+  override layout(child: Block): void {
     if (child.hasChanged()) {
       child.draw();
     }
   }
 
-  finishLayout(): void {
+  override finishLayout(): void {
     const [bg, fg] = this.children;
 
     const { string, computedX, computedY } = this;

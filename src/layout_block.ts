@@ -2,18 +2,18 @@ import { signal } from "@tui/signals";
 import { Block } from "./block.ts";
 
 export class LayoutBlock extends Block {
-  name = "Layout";
+  override name = "Layout";
 
-  usedWidth = 0;
-  usedHeight = 0;
+  override usedWidth = 0;
+  override usedHeight = 0;
 
-  compute(parent: Block): void {
+  override compute(parent: Block): void {
     super.compute(parent);
     this.usedWidth = 0;
     this.usedHeight = 0;
   }
 
-  draw() {
+  override draw() {
     let { parent } = this;
     if (!parent) {
       const width = signal(0);

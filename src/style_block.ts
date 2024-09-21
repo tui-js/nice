@@ -89,14 +89,13 @@ export class Style {
 }
 
 export class StyleBlock extends Block {
-  content!: string;
+  override autoParentDependant = false;
 
+  content!: string;
   contentWidth?: number;
   contentHeight?: number;
 
-  autoParentDependant = false;
   #style: Style;
-
   #rawLines!: string[];
 
   constructor(style: Style, content: MaybeSignal<string>) {
@@ -129,7 +128,7 @@ export class StyleBlock extends Block {
     this.changed = true;
   }
 
-  similiarTo(other: Block): boolean {
+  override similiarTo(other: Block): boolean {
     if (other instanceof StyleBlock) {
       if (this.style !== other.style) return false;
     }
@@ -137,17 +136,17 @@ export class StyleBlock extends Block {
     return super.similiarTo(other);
   }
 
-  forceChange(): void {
+  override forceChange(): void {
     this.updateLines();
     super.forceChange();
   }
 
-  mount(): void {
+  override mount(): void {
     super.mount();
     this.updateLines();
   }
 
-  boundingRectangle(includeMargins = false): BoundingRectangle | null {
+  override boundingRectangle(includeMargins = false): BoundingRectangle | null {
     const rectangle = super.boundingRectangle();
     if (!rectangle) return null;
 
@@ -162,7 +161,7 @@ export class StyleBlock extends Block {
     return rectangle;
   }
 
-  compute(parent: Block): void {
+  override compute(parent: Block): void {
     super.compute(parent);
 
     if (this.width === "auto") {
@@ -227,7 +226,7 @@ export class StyleBlock extends Block {
     this.maybeResize();
   }
 
-  draw(): void {
+  override draw(): void {
     // Necessary if someone wants to draw StyleBlock as a root block
     if (!this.contentWidth && !this.contentHeight) {
       try {
