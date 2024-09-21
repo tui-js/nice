@@ -230,6 +230,19 @@ export class Block {
   compute(): void {
     this.visible = true;
 
+    // We call resize in case both units were statically analyzable during construction
+    // Such, they started with a computed width and height already
+    if (
+      (!this.previousWidth && this.computedWidth) &&
+      (!this.previousHeight && this.computedHeight)
+    ) {
+      // We delay the resize call to happen after its children has been computed
+      // to make it consistent to how it works on elements with not precomputed sizes
+      //
+      // queueMicrotask here works, but maybe it can be done cleaner?
+      queueMicrotask(() => this.resize());
+    }
+
     this.previousWidth = this.computedWidth;
     this.previousHeight = this.computedHeight;
 
