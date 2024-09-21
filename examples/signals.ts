@@ -1,4 +1,4 @@
-import crayon from "@crayon/crayon";
+import { crayon } from "@crayon/crayon";
 import { computed, signal } from "@tui/signals";
 
 import { HorizontalBlock, Style } from "../mod.ts";

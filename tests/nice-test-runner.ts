@@ -1,4 +1,4 @@
-import crayon from "@crayon/crayon";
+import { crayon } from "@crayon/crayon";
 import "@crayon/literal";
 
 import { Style } from "../src/style_block.ts";

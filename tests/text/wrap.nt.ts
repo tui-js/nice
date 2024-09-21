@@ -1,4 +1,4 @@
-import crayon from "@crayon/crayon";
+import { crayon } from "@crayon/crayon";
 import { TestCase } from "../nice-test-runner.ts";
 import { Style } from "../../src/style_block.ts";
 import { HorizontalBlock } from "../../src/layout/horizontal_block.ts";

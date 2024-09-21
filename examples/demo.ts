@@ -1,5 +1,5 @@
 // Copyright 2024 Im-Beast. All rights reserved. MIT license.
-import crayon from "@crayon/crayon";
+import { crayon } from "@crayon/crayon";
 import { Style } from "../src/style_block.ts";
 import { VerticalBlock } from "../src/layout/vertical_block.ts";
 import { HorizontalBlock } from "../src/layout/horizontal_block.ts";
