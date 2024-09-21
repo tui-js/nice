@@ -1,10 +1,12 @@
 import { cropEnd, cropStart } from "@tui/strings";
-import { effect, getValue, type MaybeSignal } from "@tui/signals";
+import type { MaybeSignal } from "@tui/signals";
 
-import { Block } from "../block.ts";
+import type { Block } from "../block.ts";
 import { type NoAutoUnit, normalizeUnit, type Unit } from "../unit.ts";
 import { flexibleCompute } from "./shared.ts";
 import type { StringStyler } from "../types.ts";
+import { LayoutBlock } from "../layout_block.ts";
+import { maybeComputed } from "../utils.ts";
 
 export interface HorizontalBlockOptions {
   id?: string;
@@ -16,8 +18,9 @@ export interface HorizontalBlockOptions {
   gap?: MaybeSignal<NoAutoUnit>;
 }
 
-export class HorizontalBlock extends Block {
-  name = "Horizontal";
+export class HorizontalBlock extends LayoutBlock {
+  override name = "Horizontal";
+  declare children: Block[];
 
   string?: StringStyler;
   x!: NoAutoUnit;
@@ -37,19 +40,31 @@ export class HorizontalBlock extends Block {
       children,
     });
 
-    effect(() => {
-      this.string = getValue(options.string);
-      this.x = getValue(options.x) ?? 0;
-      this.y = getValue(options.y) ?? 0;
-      this.gap = getValue(options.gap) ?? 0;
+    const { string, x, y, gap } = options;
 
+    maybeComputed(string, (string) => {
+      this.string = string;
+      this.changed = true;
+    });
+
+    maybeComputed(x, (x) => {
+      this.x = x ?? 0;
+      this.changed = true;
+    });
+
+    maybeComputed(y, (y) => {
+      this.y = y ?? 0;
+      this.changed = true;
+    });
+
+    maybeComputed(gap, (gap) => {
+      this.gap = gap ?? 0;
       this.changed = true;
     });
   }
 
-  compute(parent: MaybeSignal<Block>): void {
+  override compute(parent: Block): void {
     super.compute(parent);
-    if (!this.hasChanged()) return;
 
     this.usedWidth = 0;
     this.usedHeight = 0;
@@ -58,32 +73,25 @@ export class HorizontalBlock extends Block {
     this.computedGap = normalizeUnit(this.gap, this.computedHeight);
     if (this.computedGap < 0) throw new Error("Gap cannot be negative");
 
-    flexibleCompute(this, getValue(parent), (i, child) => {
+    flexibleCompute(this, parent, (i, child) => {
       if (i !== 0) this.usedWidth += this.computedGap;
-
       this.usedWidth += child.computedWidth;
       this.usedHeight = Math.max(this.usedHeight, child.computedHeight);
     });
 
     this.usedWidth = Math.min(this.computedWidth, this.usedWidth);
     this.computedX = normalizeUnit(this.x, this.computedWidth - this.usedWidth);
+
+    this.maybeResize();
   }
 
-  startLayout(): void {
-    if (this.hasChanged()) {
-      this.compute(this.parent!);
-      this.lines.length = 0;
-    }
+  override startLayout(): void {
+    this.lines.length = 0;
   }
 
-  layout(childSignal: MaybeSignal<Block>): void {
-    if (!this.hasChanged()) return;
-
-    const child = getValue(childSignal);
-
+  override layout(child: Block): void {
     const childChanged = child.hasChanged();
     if (childChanged) {
-      child.compute(this);
       child.draw();
     }
 
@@ -109,14 +117,12 @@ export class HorizontalBlock extends Block {
       return;
     }
 
-    if (childChanged || !child.computedLeft) {
+    if (childChanged) {
       child.computedTop += offsetY;
-      child.computedLeft += this.#occupiedWidth;
-      child.computedLeft += this.computedX;
+      child.computedLeft += this.#occupiedWidth + this.computedX;
     }
 
     if (child.computedWidth <= freeSpace) {
-      // TODO: compute styledLine?
       const emptyLine = " ".repeat(child.computedWidth);
 
       for (let i = 0; i < this.computedHeight; ++i) {
@@ -132,22 +138,19 @@ export class HorizontalBlock extends Block {
       for (let i = 0; i < this.computedHeight; ++i) {
         this.lines[i] ??= "";
         const line = child.lines[i - offsetY] ?? emptyLine;
-        this.lines[i] += gapString + cropEnd(line, freeSpace) + "\x1b[0m";
+        this.lines[i] += gapString + cropEnd(line, freeSpace, " ") + "\x1b[0m";
       }
       this.#occupiedWidth += freeSpace;
     }
   }
 
-  finishLayout(): void {
-    if (!this.hasChanged()) return;
-    this.changed = false;
-
+  override finishLayout(): void {
     if (this.computedX < 0) {
       const padRight = " ".repeat(this.computedWidth - this.#occupiedWidth - this.computedX);
       const croppedLineWidth = this.computedWidth + this.computedX;
 
       for (let i = 0; i < this.lines.length; ++i) {
-        const paddedLine = cropStart(this.lines[i], croppedLineWidth) + padRight;
+        const paddedLine = cropStart(this.lines[i], croppedLineWidth, " ") + padRight;
         this.lines[i] = this.string ? this.string(paddedLine) : paddedLine;
       }
       return;

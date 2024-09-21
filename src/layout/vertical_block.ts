@@ -1,10 +1,12 @@
 import { cropEnd, cropStart } from "@tui/strings";
-import { effect, getValue, type MaybeSignal } from "@tui/signals";
+import type { MaybeSignal } from "@tui/signals";
 
-import { Block } from "../block.ts";
+import type { Block } from "../block.ts";
 import { type NoAutoUnit, normalizeUnit, type Unit } from "../unit.ts";
 import { flexibleCompute } from "./shared.ts";
 import type { StringStyler } from "../types.ts";
+import { LayoutBlock } from "../layout_block.ts";
+import { maybeComputed } from "../utils.ts";
 
 export interface VerticalBlockOptions {
   id?: string;
@@ -16,9 +18,8 @@ export interface VerticalBlockOptions {
   gap?: MaybeSignal<NoAutoUnit>;
 }
 
-export class VerticalBlock extends Block {
-  name = "Vertical";
-
+export class VerticalBlock extends LayoutBlock {
+  override name = "Vertical";
   declare children: Block[];
 
   string?: StringStyler;
@@ -37,19 +38,30 @@ export class VerticalBlock extends Block {
       children,
     });
 
-    effect(() => {
-      this.string = getValue(options.string);
-      this.x = getValue(options.x) ?? 0;
-      this.y = getValue(options.y) ?? 0;
-      this.gap = getValue(options.gap) ?? 0;
+    const { string, x, y, gap } = options;
+    maybeComputed(string, (string) => {
+      this.string = string;
+      this.changed = true;
+    });
 
+    maybeComputed(x, (x) => {
+      this.x = x ?? 0;
+      this.changed = true;
+    });
+
+    maybeComputed(y, (y) => {
+      this.y = y ?? 0;
+      this.changed = true;
+    });
+
+    maybeComputed(gap, (gap) => {
+      this.gap = gap ?? 0;
       this.changed = true;
     });
   }
 
-  compute(parent: Block): void {
+  override compute(parent: Block): void {
     super.compute(parent);
-    if (!this.hasChanged()) return;
 
     this.usedWidth = 0;
     this.usedHeight = 0;
@@ -68,22 +80,17 @@ export class VerticalBlock extends Block {
     this.computedY = normalizeUnit(this.y, this.computedHeight - this.usedHeight);
 
     this.computedTop += this.computedY;
+
+    this.maybeResize();
   }
 
-  startLayout(): void {
-    if (this.hasChanged()) {
-      this.lines.length = 0;
-    }
+  override startLayout(): void {
+    this.lines.length = 0;
   }
 
-  layout(childSignal: MaybeSignal<Block>): void {
-    if (!this.hasChanged()) return;
-
-    const child = getValue(childSignal);
-
+  override layout(child: Block): void {
     const childChanged = child.hasChanged();
     if (childChanged) {
-      child.compute(this);
       child.draw();
     }
 
@@ -94,7 +101,6 @@ export class VerticalBlock extends Block {
 
     if (freeSpace < this.computedHeight && this.computedGap > 0) {
       const emptyLine = " ".repeat(this.computedWidth);
-      // TODO: compute styledLine?
       const styledLine = this.string ? this.string(emptyLine) : emptyLine;
 
       const gapLinesInBounds = Math.min(freeSpace, this.computedGap);
@@ -107,26 +113,22 @@ export class VerticalBlock extends Block {
     if (freeSpace <= 0) return;
 
     child.visible = true;
-
-    if (childChanged || !child.computedTop) {
+    if (childChanged) {
       child.computedTop += this.lines.length;
     }
+
     const childLinesInBounds = Math.min(child.lines.length, freeSpace);
 
     if (child.computedWidth < this.computedWidth) {
       const widthDiff = this.computedWidth - child.computedWidth;
       const computedX = normalizeUnit(this.x, widthDiff);
 
-      if (childChanged || !child.computedLeft) {
-        child.computedLeft += computedX;
-      }
-
       if (computedX < 0) {
         const padRight = " ".repeat(widthDiff - computedX);
         const croppedLineWidth = child.computedWidth + computedX;
 
         for (let i = 0; i < childLinesInBounds; ++i) {
-          const line = cropStart(child.lines[i], croppedLineWidth);
+          const line = cropStart(child.lines[i], croppedLineWidth, " ");
           const paddedLine = line + padRight;
           this.lines.push(this.string ? this.string(paddedLine) : paddedLine);
         }
@@ -141,13 +143,13 @@ export class VerticalBlock extends Block {
         }
       }
 
-      if (childChanged || !child.computedLeft) {
+      if (childChanged) {
         child.computedLeft += computedX;
       }
     } else if (child.computedWidth > this.computedWidth) {
       for (let i = 0; i < childLinesInBounds; ++i) {
         const line = child.lines[i];
-        const croppedLine = cropEnd(line, this.computedWidth);
+        const croppedLine = cropEnd(line, this.computedWidth, " ");
         this.lines.push(this.string ? this.string(croppedLine) : croppedLine);
       }
     } else {
@@ -158,10 +160,7 @@ export class VerticalBlock extends Block {
     }
   }
 
-  finishLayout(): void {
-    if (!this.hasChanged()) return;
-    this.changed = false;
-
+  override finishLayout(): void {
     const heightDiff = this.computedHeight - this.lines.length;
 
     if (this.computedY < 0) {

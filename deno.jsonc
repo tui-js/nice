@@ -19,8 +19,8 @@
     "@tui/signals": "jsr:@tui/signals@^0",
     // tests
     "@std/assert": "jsr:@std/assert@^0.218",
-    "@crayon/crayon": "jsr:@crayon/crayon@4.0.0-alpha.3",
-    "@crayon/literal": "jsr:@crayon/literal@1.0.0-alpha.2"
+    "@crayon/crayon": "jsr:@crayon/crayon@4.0.0-alpha.4",
+    "@crayon/literal": "jsr:@crayon/literal@1.0.0-alpha.4"
   },
   "fmt": {
     "lineWidth": 120

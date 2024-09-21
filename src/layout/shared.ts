@@ -1,19 +1,34 @@
-import { getValue, type MaybeSignal } from "@tui/signals";
-
 import { type NoAutoUnit, normalizeUnit } from "../unit.ts";
 import type { Block } from "../block.ts";
+import type { LayoutBlock } from "../layout_block.ts";
+
+export interface BasicComputableBlock extends Block {
+  width: NoAutoUnit;
+  height: NoAutoUnit;
+}
 
 type ComputationCallback = (index: number, child: Block) => void;
-type BasicComputableBlock = MaybeSignal<Block & { width: NoAutoUnit; height: NoAutoUnit }>;
 
-export function isBasicComputable(blockSignal: MaybeSignal<Block>): blockSignal is BasicComputableBlock {
-  const block = getValue(blockSignal);
+/**
+ * Checks whether {@linkcode block} can be computed only by knowing its own or its parent size.
+ */
+export function isBasicComputable(block: Block): block is BasicComputableBlock {
   return !block.autoParentDependant || (block.width !== "auto" && block.height !== "auto");
 }
 
-export function basicCompute(selfSignal: BasicComputableBlock, parent: Block, computation: ComputationCallback): void {
-  const self = getValue(selfSignal);
-
+/**
+ * {@linkcode Block.compute} of {@linkcode self} depending on its children.
+ *
+ * It's used when both width and height of {@linkcode self} are known to not be `"auto"`,
+ * thus initial size can be computed directly from {@linkcode parent}.
+ *
+ * Most of the time it shouldn't be used directly and {@linkcode flexibleCompute} should be used instead.\
+ * {@linkcode flexibleCompute} detects whether {@linkcode self} is an {@linkcode BasicComputableBlock} and calls
+ * this method when appropriate.
+ *
+ * @example Same as flexibleCompute
+ */
+export function basicCompute(self: BasicComputableBlock, parent: Block, computation: ComputationCallback): void {
   if (!self.children) {
     return;
   }
@@ -22,18 +37,27 @@ export function basicCompute(selfSignal: BasicComputableBlock, parent: Block, co
   self.computedHeight = normalizeUnit(self.height, parent.computedHeight, parent.usedHeight);
 
   let i = 0;
-  for (const childSignal of self.children) {
-    const child = getValue(childSignal);
-    child.compute(self);
-    child.draw();
+  for (const child of self.children) {
+    if (child.hasChanged()) {
+      child.compute(self);
+    }
     computation(i++, child);
   }
 }
 
 /**
- * {@linkcode Block.compute} methods which computes width and height depending on its children sizes.
+ * {@linkcode Block.compute} method which computes width and height of {@linkcode self} depending on its children.
+ *
+ * @example
+ * Compute element so its bounding box fits all its children vertically
+ * ```ts
+ * flexibleCompute(this, parent, (i, child) => {
+ *   this.usedWidth = Math.max(this.usedWidth, child.computedWidth);
+ *   this.usedHeight += child.computedHeight;
+ * }
+ * ```
  */
-export function flexibleCompute(self: Block, parent: Block, computation: ComputationCallback): void {
+export function flexibleCompute(self: LayoutBlock, parent: Block, computation: ComputationCallback): void {
   if (!self.children) {
     return;
   }
@@ -59,17 +83,16 @@ export function flexibleCompute(self: Block, parent: Block, computation: Computa
 
   let i = 0;
   let deferred: Block[] | undefined;
-  for (const childSignal of self.children) {
-    const child = getValue(childSignal);
-
+  for (const child of self.children) {
     if (!isBasicComputable(child)) {
       deferred ??= [];
       deferred.push(child);
       continue;
     }
 
-    child.compute(self);
-    child.draw();
+    if (child.hasChanged()) {
+      child.compute(self);
+    }
     computation(i++, child);
   }
 
@@ -78,8 +101,9 @@ export function flexibleCompute(self: Block, parent: Block, computation: Computa
     if (self.height === "auto") self.computedHeight = self.usedHeight;
 
     for (const child of deferred) {
-      child.compute(self);
-      child.draw();
+      if (child.hasChanged()) {
+        child.compute(self);
+      }
       computation(i++, child);
     }
   }

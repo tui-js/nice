@@ -19,14 +19,17 @@ export function resizeLineHorizontally(
   { ellipsisString, overflow }: NormalizedTextDefinition,
 ): string {
   const lineWidth = textWidth(line);
-  if (lineWidth < desiredWidth) {
+  if (lineWidth <= desiredWidth) {
     return line;
   }
 
   switch (overflow) {
     case "clip":
-      return cropEnd(line, desiredWidth, "");
-    case "ellipsis":
-      return cropEnd(line, desiredWidth, ellipsisString);
+      return cropEnd(line, desiredWidth, " ");
+    case "ellipsis": {
+      const ellipsisWidth = textWidth(ellipsisString);
+      const cropped = cropEnd(line, desiredWidth, ellipsisString);
+      return cropped.slice(0, -ellipsisWidth) + ellipsisString;
+    }
   }
 }

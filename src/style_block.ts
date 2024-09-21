@@ -1,5 +1,5 @@
 import { textWidth } from "@tui/strings/text_width";
-import { type BaseSignal, computed, type MaybeSignal } from "@tui/signals";
+import type { BaseSignal, MaybeSignal } from "@tui/signals";
 
 import { Block, type BoundingRectangle } from "./block.ts";
 import { normalizeUnit, type Unit } from "./unit.ts";
@@ -21,6 +21,7 @@ import { type MarginDefinition, type NormalizedMarginDefinition, normalizeMargin
 import { type BorderDefinition, normalizeBorder, type NormalizedBorderDefinition } from "./border/normalization.ts";
 import { applyBorder } from "./border/border.ts";
 import { getValue } from "@tui/signals";
+import { maybeComputed } from "./utils.ts";
 
 export interface StyleOptions {
   width?: MaybeSignal<Unit>;
@@ -88,17 +89,16 @@ export class Style {
 }
 
 export class StyleBlock extends Block {
-  content!: string;
+  override autoParentDependant = false;
 
+  content!: string;
   contentWidth?: number;
   contentHeight?: number;
 
-  autoParentDependant = false;
   #style: Style;
-
   #rawLines!: string[];
 
-  constructor(style: Style, content: string | BaseSignal<string>) {
+  constructor(style: Style, content: MaybeSignal<string>) {
     super({
       id: getValue(content),
       width: style.width,
@@ -106,17 +106,11 @@ export class StyleBlock extends Block {
     });
 
     this.#style = style;
-    if (typeof content === "string") {
+    maybeComputed(content, (content) => {
       this.content = content;
       this.#rawLines = content.split("\n");
       this.updateLines();
-    } else {
-      computed(() => {
-        this.content = content.get();
-        this.#rawLines = this.content.split("\n");
-        this.updateLines();
-      });
-    }
+    });
   }
 
   get style(): Style {
@@ -134,26 +128,25 @@ export class StyleBlock extends Block {
     this.changed = true;
   }
 
-  static i = 0;
-  almostTheSame(other: Block): boolean {
+  override similiarTo(other: Block): boolean {
     if (other instanceof StyleBlock) {
       if (this.style !== other.style) return false;
     }
 
-    return super.almostTheSame(other);
+    return super.similiarTo(other);
   }
 
-  forceUpdate(): void {
+  override forceChange(): void {
     this.updateLines();
-    super.forceUpdate();
+    super.forceChange();
   }
 
-  mount(): void {
+  override mount(): void {
     super.mount();
     this.updateLines();
   }
 
-  boundingRectangle(includeMargins = false): BoundingRectangle | null {
+  override boundingRectangle(includeMargins = false): BoundingRectangle | null {
     const rectangle = super.boundingRectangle();
     if (!rectangle) return null;
 
@@ -168,11 +161,8 @@ export class StyleBlock extends Block {
     return rectangle;
   }
 
-  compute(parentSignal?: MaybeSignal<Block>): void {
-    const parent = getValue(parentSignal);
-
-    super.compute(parent!);
-    if (!this.hasChanged()) return;
+  override compute(parent: Block): void {
+    super.compute(parent);
 
     if (this.width === "auto") {
       const { padding, margin, border } = this.style;
@@ -195,7 +185,7 @@ export class StyleBlock extends Block {
         );
       }
 
-      this.computedWidth = normalizeUnit(this.width, parent!.computedWidth, parent!.usedWidth);
+      this.computedWidth = normalizeUnit(this.width, parent.computedWidth, parent.usedWidth);
       this.contentWidth = this.computedWidth - paddingWidth - marginWidth - borderWidth;
     }
 
@@ -220,8 +210,8 @@ export class StyleBlock extends Block {
 
       this.computedHeight = normalizeUnit(
         this.height,
-        parent!.computedHeight,
-        parent!.usedHeight,
+        parent.computedHeight,
+        parent.usedHeight,
       );
       this.contentHeight = this.computedHeight - paddingHeight - marginHeight -
         borderHeight;
@@ -232,20 +222,28 @@ export class StyleBlock extends Block {
       this.computedWidth = 0;
       this.computedHeight = 0;
     }
+
+    this.maybeResize();
   }
 
-  draw(): void {
-    super.draw();
-    if (!this.hasChanged()) return;
-    this.changed = false;
+  override draw(): void {
+    // Necessary if someone wants to draw StyleBlock as a root block
+    if (!this.contentWidth && !this.contentHeight) {
+      try {
+        this.compute(this.parent!);
+      } catch {
+        throw new Error("Tried to draw StyleBlock while its size cannot be computed because it has no parent");
+      }
+    }
 
     const { lines } = this;
-    const { text, margin, padding, border } = this.style;
+    const { text, margin, padding, border, string } = this.style;
 
     let width = this.contentWidth!;
     let height = this.contentHeight!;
 
     if (this.style.skipIfTooSmall && (width < 0 || height < 0)) {
+      this.changed = false;
       return;
     } else if (width < 0) {
       throw new Error(
@@ -269,7 +267,7 @@ export class StyleBlock extends Block {
     width += padding.left + padding.right;
     height += padding.top + padding.bottom;
 
-    applyStyle(lines, this.style.string);
+    applyStyle(lines, string);
 
     applyBorder(lines, width, border);
     width += (border.left ? 1 : 0) + (border.right ? 1 : 0);
@@ -278,5 +276,7 @@ export class StyleBlock extends Block {
     applyMargin(lines, width, margin);
     width += margin.left + margin.right;
     height += margin.top + margin.bottom;
+
+    this.changed = false;
   }
 }
