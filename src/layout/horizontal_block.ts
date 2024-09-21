@@ -20,6 +20,7 @@ export interface HorizontalBlockOptions {
 
 export class HorizontalBlock extends LayoutBlock {
   override name = "Horizontal";
+  declare children: Block[];
 
   string?: StringStyler;
   x!: NoAutoUnit;

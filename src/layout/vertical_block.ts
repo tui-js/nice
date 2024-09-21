@@ -20,6 +20,7 @@ export interface VerticalBlockOptions {
 
 export class VerticalBlock extends LayoutBlock {
   override name = "Vertical";
+  declare children: Block[];
 
   string?: StringStyler;
   x!: NoAutoUnit;
