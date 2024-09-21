@@ -288,6 +288,9 @@ export class Block {
     // To make sure it doesn't stick out
     let width = this.computedWidth;
     let height = this.computedHeight;
+
+    if (!width || !height) return null;
+
     if (parent) {
       const parentBB = parent.boundingRectangle()!;
       const minTop = parentBB.top;
