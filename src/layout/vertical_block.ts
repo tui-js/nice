@@ -10,7 +10,7 @@ import { maybeComputed } from "../utils.ts";
 
 export interface VerticalBlockOptions {
   id?: string;
-  string?: StringStyler;
+  string?: MaybeSignal<StringStyler>;
   width?: MaybeSignal<Unit>;
   height?: MaybeSignal<Unit>;
   x?: MaybeSignal<NoAutoUnit>;
